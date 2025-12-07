@@ -2,16 +2,21 @@ import React from 'react';
 import { Ghost, LogOut, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { useSessionTimer } from '../hooks/useSessionTimer';
+
 interface HeaderProps {
   nomeUsuario: string;
   onLogout: () => void;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
-  timeLeft?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme, timeLeft }) => {
+const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme }) => {
+  // Timer local apenas para visualização
+  const { timeLeft } = useSessionTimer(true, true);
+
   return (
+    // ... same return
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}

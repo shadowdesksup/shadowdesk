@@ -24,8 +24,8 @@ import { useSessionTimer } from './hooks/useSessionTimer';
 function App() {
   const { usuario, dadosUsuario, estaAutenticado, login, registrar, logout, carregando: authCarregando } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
-  // Timer de sessão
-  const { timeLeft, isExpired, resetSession } = useSessionTimer(estaAutenticado);
+  // Timer de sessão - Apenas verificação de expiração, sem countdown visual para evitar re-render
+  const { isExpired, resetSession } = useSessionTimer(estaAutenticado, false);
 
   const {
     registros,
@@ -285,7 +285,6 @@ function App() {
               onLogout={logout}
               theme={theme}
               onToggleTheme={toggleTheme}
-              timeLeft={timeLeft}
             />
 
             <main className="flex-1 overflow-hidden py-8 pl-8 pr-0">
