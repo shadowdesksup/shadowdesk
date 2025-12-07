@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Ghost - UNESP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-center;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #06b6d4;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .info-box h2 {
+            color: #06b6d4;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .info-box p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .warning-box h3 {
+            color: #ef4444;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .solution-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .solution-box h3 {
+            color: #22c55e;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #06b6d4;
+        }
+
+        .command {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            color: #22c55e;
+            border-left: 4px solid #22c55e;
+        }
+
+        ul {
+            margin-left: 25px;
+            margin-top: 15px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        a {
+            color: #06b6d4;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👻</div>
+            <h1>IT Ghost</h1>
+            <p class="subtitle">Sistema de Registro de Atendimentos Informais - UNESP</p>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Problema Detectado</h3>
+            <p>Sua versão do Node.js (<strong>v14.14.0</strong>) é muito antiga para executar este projeto.</p>
+            <p>O Vite e React modernos requerem <strong>Node.js versão 18 ou superior</strong>.</p>
+        </div>
+
+        <div class="solution-box">
+            <h3>✅ Soluções Disponíveis</h3>
+            
+            <h4 style="color: #22c55e; margin-top: 20px; margin-bottom: 10px;">Opção 1: Atualizar o Node.js (Recomendado)</h4>
+            <p>1. Baixe a versão LTS mais recente do Node.js:</p>
+            <div class="command">https://nodejs.org/</div>
+            
+            <p>2. Instale a nova versão</p>
+            
+            <p>3. Verifique a instalação:</p>
+            <div class="command">node --version</div>
+            
+            <p>4. Reinstale as dependências do projeto:</p>
+            <div class="command">
+                cd c:\Users\Administrator\Documents\shadowdesk<br>
+                npm install<br>
+                npm run dev
+            </div>
+
+            <h4 style="color: #22c55e; margin-top: 30px; margin-bottom: 10px;">Opção 2: Usar NVM (Node Version Manager)</h4>
+            <p>Se você precisa de múltiplas versões do Node:</p>
+            <div class="command">
+                # Baixe NVM for Windows:<br>
+                https://github.com/coreybutler/nvm-windows/releases<br>
+                <br>
+                # Depois de instalar:<br>
+                nvm install 20<br>
+                nvm use 20<br>
+                <br>
+                # Reinstale as dependências:<br>
+                cd c:\Users\Administrator\Documents\shadowdesk<br>
+                npm install<br>
+                npm run dev
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h2>📋 Sobre o IT Ghost</h2>
+            <p>O IT Ghost é um sistema web completo para registrar atendimentos técnicos informais que posteriormente precisam ser formalizados no Service Desk.</p>
+            
+            <h3 style="color: #06b6d4; margin-top: 25px; margin-bottom: 15px;">Funcionalidades Implementadas:</h3>
+            <ul>
+                <li>✅ Sistema de login com autenticação</li>
+                <li>✅ Dashboard com estatísticas em tempo real</li>
+                <li>✅ Formulário completo de registro de atendimentos</li>
+                <li>✅ Listagem e histórico de registros</li>
+                <li>✅ Filtros e busca avançada</li>
+                <li>✅ Armazenamento local (LocalStorage)</li>
+                <li>✅ Interface moderna e responsiva</li>
+                <li>✅ Dados de exemplo pré-carregados</li>
+            </ul>
+
+            <h3 style="color: #06b6d4; margin-top: 25px; margin-bottom: 15px;">Credenciais Padrão:</h3>
+            <p><strong>Usuário:</strong> <code>admin</code></p>
+            <p><strong>Senha:</strong> <code>admin123</code></p>
+
+            <h3 style="color: #06b6d4; margin-top: 25px; margin-bottom: 15px;">Campos de Registro:</h3>
+            <ul>
+                <li>Nome do Solicitante</li>
+                <li>Tipo (Docente, Aluno, Funcionário, Estagiário, Visitante, Outro)</li>
+                <li>Local/Setor</li>
+                <li>Descrição da Requisição</li>
+                <li>Data e Hora</li>
+                <li>Status (Pendente/Atendido)</li>
+                <li>Observações (opcional)</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h2>🚀 Próximos Passos</h2>
+            <p>Após atualizar o Node.js e executar o projeto com sucesso:</p>
+            <ol style="margin-left: 25px; margin-top: 15px;">
+                <li style="margin-bottom: 15px;">Teste todas as funcionalidades (login, criar registro, editar, deletar)</li>
+                <li style="margin-bottom: 15px;">Personalize os dados de exemplo conforme necessário</li>
+                <li style="margin-bottom: 15px;">Configure o sistema de relatórios em PDF (em desenvolvimento)</li>
+                <li style="margin-bottom: 15px;">Considere implementar um backend real para produção</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            <p>IT Ghost v1.0.0 - Desenvolvido para Suporte Técnico UNESP</p>
+            <p style="margin-top: 10px;">Todos os arquivos estão em: <code>c:\Users\Administrator\Documents\shadowdesk</code></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+import React from 'react';
+import { Ghost, LogOut, Sun, Moon } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+interface HeaderProps {
+  nomeUsuario: string;
+  onLogout: () => void;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme }) => {
+  return (
+    <motion.header
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className={`flex items-center justify-between border-b px-8 py-4 backdrop-blur-md z-20 transition-all duration-300 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white/80 shadow-sm'
+        }`}
+    >
+      <div className={`flex items-center gap-4 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+        }`}>
+        <div className="p-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-white/10 shadow-lg">
+          <Ghost className="text-cyan-400" size={24} />
+        </div>
+        <h2 className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+          }`}>ShadowDesk</h2>
+      </div>
+
+      <div className="flex items-center gap-4">
+        {/* Theme Toggle Button */}
+        {onToggleTheme && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleTheme}
+            className={`p-2 rounded-xl border transition-all duration-300 ${theme === 'dark'
+              ? 'border-white/10 bg-white/5 text-yellow-400 hover:bg-yellow-400/10'
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            title={theme === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'}
+          >
+            <motion.div
+              initial={false}
+              animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+              transition={{ duration: 0.3 }}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </motion.div>
+          </motion.button>
+        )}
+
+        <div className={`flex items-center gap-3 pl-4 border-l ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
+          }`}>
+          <div className="text-right">
+            <p className={`text-sm font-bold leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+              }`}>{nomeUsuario}</p>
+            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>Suporte Técnico</p>
+          </div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="relative rounded-full p-0.5 bg-gradient-to-tr from-cyan-500 to-blue-600"
+          >
+            <div className="size-10 rounded-full border-2 border-slate-900 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">
+                {nomeUsuario.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05, backgroundColor: "rgba(239,68,68,0.1)" }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onLogout}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors ${theme === 'dark'
+            ? 'border-white/10 bg-transparent text-slate-400 hover:text-red-400 hover:border-red-500/30'
+            : 'border-slate-200 bg-white text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 shadow-sm'
+            }`}
+          title="Sair"
+        >
+          <LogOut size={18} />
+          <span className="text-sm font-medium">Sair</span>
+        </motion.button>
+      </div>
+    </motion.header>
+  );
+};
+
+export default Header;
