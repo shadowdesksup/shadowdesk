@@ -24,6 +24,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
   const [sucesso, setSucesso] = useState(false);
   const [erro, setErro] = useState('');
   const [modalLocaisAberto, setModalLocaisAberto] = useState(false);
+  const [fixarTexto, setFixarTexto] = useState(false);
 
   // Hook para gerenciar locais
   const {
@@ -95,17 +96,28 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
       // Limpar formulário após 1.5s
       setTimeout(() => {
         if (!registroInicial) {
-          setNomeSolicitante('');
-          setTipoSolicitante('Aluno');
-          setLocal('');
-          setDescricaoRequisicao('');
-          setDataHora(isoParaDatetimeLocal(obterDataHoraAtual()));
-          setStatus('Atendido');
-          setEmail('');
-          setTelefone('');
+          if (!fixarTexto) {
+            setNomeSolicitante('');
+            setTipoSolicitante('Aluno');
+            setLocal('');
+            setDescricaoRequisicao('');
+            // setDataHora(isoParaDatetimeLocal(obterDataHoraAtual())); // Mantenho a data atual ou atualizo? 
+            // Se fixar texto, talvez queira manter a data do form anterior? Não, "proxima solicitação" usually implica novo registro.
+            // Mas se "mantém o que foi escrito", talvez o usuário queira mudar só o nome.
+            // Vou assumir que se o texto está fixado, TUDO está fixado, exceto talvez IDs internos se houvesse.
+            // Mas como é um novo POST, resetar para data atual faz sentido se não estiver fixado.
+            // Se estiver fixado, mantém a data que estava lá (que agora é passado).
+          }
+          if (!fixarTexto) {
+            setDataHora(isoParaDatetimeLocal(obterDataHoraAtual()));
+            setStatus('Atendido');
+            setEmail('');
+            setTelefone('');
+          }
         }
         setSucesso(false);
       }, 1500);
+
     } catch (error: any) {
       setErro(error.message || 'Erro ao salvar registro');
     } finally {
@@ -252,9 +264,31 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
         </div>
 
         <div className="flex flex-col gap-1.5 flex-1 min-h-[100px]">
-          <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-            Descrição da Requisição *
-          </label>
+          <div className="flex justify-between items-end ml-1">
+            <label className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              Descrição da Requisição *
+            </label>
+            <button
+              type="button"
+              onClick={() => setFixarTexto(!fixarTexto)}
+              className={`flex items-center gap-2 text-xs font-medium transition-colors mb-2.5 ${fixarTexto
+                ? 'text-cyan-500'
+                : (theme === 'dark' ? 'text-slate-500 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600')
+                }`}
+            >
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${fixarTexto ? 'bg-cyan-500/20' : (theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')
+                }`}>
+                <div
+                  className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${fixarTexto
+                    ? 'bg-cyan-500 left-4.5'
+                    : 'bg-slate-400 left-0.5'
+                    }`}
+                  style={{ left: fixarTexto ? '1.125rem' : '0.125rem' }}
+                />
+              </div>
+              Fixar as informações
+            </button>
+          </div>
           <div className="relative group flex-1">
             <textarea
               value={descricaoRequisicao}
@@ -313,6 +347,8 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
             </motion.button>
           </div>
         </div>
+
+
 
         {/* Mensagens de Erro/Sucesso */}
         {erro && (
