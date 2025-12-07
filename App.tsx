@@ -25,7 +25,7 @@ function App() {
   const { usuario, dadosUsuario, estaAutenticado, login, registrar, logout, carregando: authCarregando } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   // Timer de sessão - Apenas verificação de expiração, sem countdown visual para evitar re-render
-  const { isExpired, resetSession } = useSessionTimer(estaAutenticado, false);
+  const { isExpired, resetSession } = useSessionTimer(estaAutenticado, usuario?.uid, false);
 
   const {
     registros,
@@ -282,6 +282,7 @@ function App() {
           <div className="flex flex-1 flex-col overflow-hidden">
             <Header
               nomeUsuario={dadosUsuario?.nomeCompleto || usuario?.displayName || usuario?.email || 'Usuário'}
+              userId={usuario?.uid}
               onLogout={() => {
                 logout();
                 setTelaAuth('login');

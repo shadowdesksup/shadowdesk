@@ -6,14 +6,15 @@ import { useSessionTimer } from '../hooks/useSessionTimer';
 
 interface HeaderProps {
   nomeUsuario: string;
+  userId?: string;
   onLogout: () => void;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 'dark', onToggleTheme }) => {
   // Timer local apenas para visualização
-  const { timeLeft } = useSessionTimer(true, true);
+  const { timeLeft } = useSessionTimer(true, userId, true);
 
   return (
     // ... same return
