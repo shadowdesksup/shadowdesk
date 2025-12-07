@@ -14,6 +14,7 @@ import { useTheme } from './hooks/useTheme';
 import { recuperarSenha } from './firebase/auth';
 import ProfilePage from './components/ProfilePage';
 import RelatoriosPage from './components/Relatorios/RelatoriosPage';
+import { SessionExpiredModal } from './components/SessionExpiredModal';
 
 type TelasAuth = 'login' | 'registro' | 'esqueci-senha';
 
@@ -46,6 +47,7 @@ function App() {
     isOpen: false,
     id: null
   });
+  const [mostrarModalExpiracao, setMostrarModalExpiracao] = useState(false);
 
   // Efeito para redirecionar para dashboard ao logar
   React.useEffect(() => {
@@ -57,7 +59,7 @@ function App() {
   // Efeito para lidar com sessão expirada
   React.useEffect(() => {
     if (isExpired) {
-      alert('Sua sessão expirou. Por favor, faça login novamente.');
+      setMostrarModalExpiracao(true);
       logout();
       setTelaAuth('login');
       resetSession();
@@ -78,31 +80,42 @@ function App() {
 
   // Telas de autenticação
   if (!estaAutenticado) {
+    let authScreen;
+
     if (telaAuth === 'registro') {
-      return (
+      authScreen = (
         <RegisterPage
           onRegistrar={registrar}
           onVoltarLogin={() => setTelaAuth('login')}
         />
       );
-    }
-
-    if (telaAuth === 'esqueci-senha') {
-      return (
+    } else if (telaAuth === 'esqueci-senha') {
+      authScreen = (
         <ForgotPasswordPage
           onEnviarEmail={recuperarSenha}
           onVoltar={() => setTelaAuth('login')}
         />
       );
+    } else {
+      // Tela de login (padrão)
+      authScreen = (
+        <LoginPage
+          onLogin={login}
+          onCriarConta={() => setTelaAuth('registro')}
+          onEsqueciSenha={() => setTelaAuth('esqueci-senha')}
+        />
+      );
     }
 
-    // Tela de login (padrão)
     return (
-      <LoginPage
-        onLogin={login}
-        onCriarConta={() => setTelaAuth('registro')}
-        onEsqueciSenha={() => setTelaAuth('esqueci-senha')}
-      />
+      <>
+        {authScreen}
+        <SessionExpiredModal
+          isOpen={mostrarModalExpiracao}
+          onClose={() => setMostrarModalExpiracao(false)}
+          theme={theme}
+        />
+      </>
     );
   }
 
