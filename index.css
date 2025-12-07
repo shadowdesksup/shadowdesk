@@ -1,0 +1,8 @@
+/* Fix caret blinking on non-input elements */
+body {
+  caret-color: transparent;
+}
+
+input, textarea, [contenteditable="true"] {
+  caret-color: auto;
+}
