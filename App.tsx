@@ -17,9 +17,16 @@ import RelatoriosPage from './components/Relatorios/RelatoriosPage';
 
 type TelasAuth = 'login' | 'registro' | 'esqueci-senha';
 
+import { useSessionTimer } from './hooks/useSessionTimer';
+
+
+
 function App() {
   const { usuario, dadosUsuario, estaAutenticado, login, registrar, logout, carregando: authCarregando } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
+  // Timer de sessão
+  const { timeLeft, isExpired, resetSession } = useSessionTimer(estaAutenticado);
+
   const {
     registros,
     criar,
@@ -39,6 +46,23 @@ function App() {
     isOpen: false,
     id: null
   });
+
+  // Efeito para redirecionar para dashboard ao logar
+  React.useEffect(() => {
+    if (estaAutenticado) {
+      setPaginaAtual('dashboard');
+    }
+  }, [estaAutenticado]);
+
+  // Efeito para lidar com sessão expirada
+  React.useEffect(() => {
+    if (isExpired) {
+      alert('Sua sessão expirou. Por favor, faça login novamente.');
+      logout();
+      setTelaAuth('login');
+      resetSession();
+    }
+  }, [isExpired, logout, resetSession]);
 
   // Mostrar tela de carregamento
   if (authCarregando) {
@@ -261,6 +285,7 @@ function App() {
               onLogout={logout}
               theme={theme}
               onToggleTheme={toggleTheme}
+              timeLeft={timeLeft}
             />
 
             <main className="flex-1 overflow-hidden py-8 pl-8 pr-0">

@@ -7,9 +7,10 @@ interface HeaderProps {
   onLogout: () => void;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  timeLeft?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', onToggleTheme, timeLeft }) => {
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -28,6 +29,18 @@ const Header: React.FC<HeaderProps> = ({ nomeUsuario, onLogout, theme = 'dark', 
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Session Timer */}
+        {timeLeft && (
+          <div className={`px-3 py-1.5 rounded-lg border font-mono text-xs font-bold mr-2 ${theme === 'dark'
+            ? 'bg-slate-800 border-slate-700 shadow-[0_0_10px_-3px_rgba(254,85,85,0.2)]'
+            : 'bg-white border-slate-200 shadow-sm'
+            }`}
+            style={{ color: 'hsl(0, 99%, 67%)' }}
+          >
+            {timeLeft}
+          </div>
+        )}
+
         {/* Theme Toggle Button */}
         {onToggleTheme && (
           <motion.button

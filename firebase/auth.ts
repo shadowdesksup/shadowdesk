@@ -29,6 +29,11 @@ export const registrarUsuario = async (
   nomeCompleto: string
 ): Promise<UserCredential> => {
   try {
+    // Validar domínio do email
+    if (!email.endsWith('@unesp.br')) {
+      throw new Error('Apenas emails @unesp.br são permitidos.');
+    }
+
     // Criar usuário no Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
     const user = userCredential.user;
