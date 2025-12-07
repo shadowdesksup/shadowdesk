@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react';
 
-const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 horas em milissegundos
-
-interface UseSessionTimerReturn {
-import { useState, useEffect } from 'react';
-
 const SESSION_DURATION = 5 * 60 * 1000; // 5 minutos para testes
 
 interface UseSessionTimerReturn {
@@ -12,7 +7,6 @@ interface UseSessionTimerReturn {
   isExpired: boolean;
   resetSession: () => void;
 }
-
 
 export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updateCountdown: boolean = true): UseSessionTimerReturn => {
   const [timeLeft, setTimeLeft] = useState<string>('00:05:00');
@@ -35,18 +29,11 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
         }
       }
     } else {
-      // Limpar sessão ao deslogar ou se perder userId
-      // Mas cuidado: se userId mudar, o efeito roda com novo Id.
-      // A limpeza deve ocorrer apenas se !isAuthenticated explicitamente.
-      // Se apenas mudou de user A para B, o componente remonta?
-      // Se isAuthenticated for false, limpamos TUDO related active session?
-      // Não, limpamos apenas o estado local. O storage do user deve ser apagado no logout?
-      // Sim, logout deve matar a sessão DO USUARIO.
       if (!isAuthenticated && userId) {
         // Se desconectou, a sessão daquele user acabou.
         localStorage.removeItem(`sessionStart_${userId}`);
       }
-      setTimeLeft('04:00:00');
+      setTimeLeft('00:05:00');
       setIsExpired(false);
     }
   }, [isAuthenticated, storageKey]);
@@ -67,8 +54,6 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
       if (remaining <= 0) {
         setIsExpired(true);
         if (updateCountdown) setTimeLeft('00:00:00');
-        // Remover chave ao expirar?
-        // localStorage.removeItem(storageKey); // Melhor não, deixa o estado "expired" persistir até logout
         clearInterval(interval);
       } else {
         if (updateCountdown) {
@@ -94,14 +79,10 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
   const resetSession = () => {
     if (storageKey) {
       localStorage.removeItem(storageKey);
-      // Iniciar nova imediatamente? 
-      // Se resetar, o próximo ciclo do useEffect init vai criar?
-      // Não, useEffect init roda na mudança de dep.
-      // Forçamos recriação:
       localStorage.setItem(storageKey, Date.now().toString());
     }
     setIsExpired(false);
-    setTimeLeft('04:00:00');
+    setTimeLeft('00:05:00');
   };
 
   return { timeLeft, isExpired, resetSession };
