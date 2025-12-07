@@ -8,7 +8,7 @@ import {
   User,
   UserCredential
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { auth, db } from './config';
 
 // Interface para dados do usuário
@@ -135,6 +135,22 @@ export const obterDadosUsuario = async (uid: string): Promise<UserData | null> =
     console.error('Erro ao obter dados do usuário:', error);
     return null;
   }
+};
+
+/**
+ * Escutar atualizações dos dados do usuário em tempo real
+ */
+export const escutarDadosUsuario = (uid: string, callback: (dados: UserData | null) => void): Unsubscribe => {
+  return onSnapshot(doc(db, 'users', uid), (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data() as UserData);
+    } else {
+      callback(null);
+    }
+  }, (error) => {
+    console.error('Erro ao escutar dados do usuário:', error);
+    callback(null);
+  });
 };
 
 /**

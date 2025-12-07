@@ -282,7 +282,10 @@ function App() {
           <div className="flex flex-1 flex-col overflow-hidden">
             <Header
               nomeUsuario={dadosUsuario?.nomeCompleto || usuario?.displayName || usuario?.email || 'Usuário'}
-              onLogout={logout}
+              onLogout={() => {
+                logout();
+                setTelaAuth('login');
+              }}
               theme={theme}
               onToggleTheme={toggleTheme}
             />
