@@ -25,6 +25,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
   const [erro, setErro] = useState('');
   const [modalLocaisAberto, setModalLocaisAberto] = useState(false);
   const [fixarTexto, setFixarTexto] = useState(false);
+  const [usarHorarioAtual, setUsarHorarioAtual] = useState(false);
 
   // Hook para gerenciar locais
   const {
@@ -84,7 +85,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
         tipoSolicitante,
         local: local.trim(),
         descricaoRequisicao: descricaoRequisicao.trim(),
-        dataHora: new Date(dataHora).toISOString(),
+        dataHora: new Date(usarHorarioAtual ? obterDataHoraAtual() : dataHora).toISOString(),
         status,
         email: email.trim(),
         telefone: telefone.trim(),
@@ -252,11 +253,12 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
                 type="datetime-local"
                 value={dataHora}
                 onChange={(e) => setDataHora(e.target.value)}
-                className={`w-full rounded-xl border h-11 pl-10 pr-4 focus:outline-none transition-all ${theme === 'dark'
+                disabled={usarHorarioAtual}
+                className={`w-full rounded-xl border h-11 pl-10 pr-4 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${theme === 'dark'
                   ? 'border-white/10 bg-slate-900/50 text-slate-200 focus:border-cyan-500/50 focus:bg-slate-900/80'
                   : 'border-slate-200 bg-slate-50 text-slate-900 focus:border-cyan-500 focus:bg-white'
                   }`}
-                required
+                required={!usarHorarioAtual}
               />
               <Calendar className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'} group-focus-within:text-cyan-500`} size={18} />
             </div>
@@ -268,26 +270,48 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
             <label className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
               Descrição da Requisição *
             </label>
-            <button
-              type="button"
-              onClick={() => setFixarTexto(!fixarTexto)}
-              className={`flex items-center gap-2 text-xs font-medium transition-colors mb-2.5 ${fixarTexto
-                ? 'text-cyan-500'
-                : (theme === 'dark' ? 'text-slate-500 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600')
-                }`}
-            >
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${fixarTexto ? 'bg-cyan-500/20' : (theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')
-                }`}>
-                <div
-                  className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${fixarTexto
-                    ? 'bg-cyan-500 left-4.5'
-                    : 'bg-slate-400 left-0.5'
-                    }`}
-                  style={{ left: fixarTexto ? '1.125rem' : '0.125rem' }}
-                />
-              </div>
-              Fixar as informações
-            </button>
+            <div className="flex items-center gap-6 mb-2.5">
+              <button
+                type="button"
+                onClick={() => setUsarHorarioAtual(!usarHorarioAtual)}
+                className={`flex items-center gap-2 text-xs font-medium transition-colors ${usarHorarioAtual
+                  ? 'text-cyan-500'
+                  : (theme === 'dark' ? 'text-slate-500 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600')
+                  }`}
+              >
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${usarHorarioAtual ? 'bg-cyan-500/20' : (theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')
+                  }`}>
+                  <div
+                    className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${usarHorarioAtual
+                      ? 'bg-cyan-500 left-4.5'
+                      : 'bg-slate-400 left-0.5'
+                      }`}
+                    style={{ left: usarHorarioAtual ? '1.125rem' : '0.125rem' }}
+                  />
+                </div>
+                Horário atual
+              </button>
+              <button
+                type="button"
+                onClick={() => setFixarTexto(!fixarTexto)}
+                className={`flex items-center gap-2 text-xs font-medium transition-colors ${fixarTexto
+                  ? 'text-cyan-500'
+                  : (theme === 'dark' ? 'text-slate-500 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600')
+                  }`}
+              >
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${fixarTexto ? 'bg-cyan-500/20' : (theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')
+                  }`}>
+                  <div
+                    className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${fixarTexto
+                      ? 'bg-cyan-500 left-4.5'
+                      : 'bg-slate-400 left-0.5'
+                      }`}
+                    style={{ left: fixarTexto ? '1.125rem' : '0.125rem' }}
+                  />
+                </div>
+                Fixar as informações
+              </button>
+            </div>
           </div>
           <div className="relative group flex-1">
             <textarea
