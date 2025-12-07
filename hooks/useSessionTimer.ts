@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const SESSION_DURATION = 5 * 60 * 1000; // 5 minutos para testes
+const SESSION_DURATION = 3.5 * 60 * 60 * 1000; // 3 horas e 30 minutos
 
 interface UseSessionTimerReturn {
   timeLeft: string;
@@ -10,7 +10,7 @@ interface UseSessionTimerReturn {
 }
 
 export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updateCountdown: boolean = true): UseSessionTimerReturn => {
-  const [timeLeft, setTimeLeft] = useState<string>('00:05:00');
+  const [timeLeft, setTimeLeft] = useState<string>('03:30:00');
   const [isExpired, setIsExpired] = useState(false);
 
   const storageKey = userId ? `sessionStart_${userId}` : null;
