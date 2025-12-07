@@ -108,16 +108,22 @@ export const listarRegistros = async (userId: string): Promise<RegistroAtendimen
     const registros: RegistroAtendimento[] = [];
 
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
       registros.push({
         id: doc.id,
-        ...doc.data()
+        ...data,
+        // Garantir que timestamps sejam convertidos para string ISO
+        criadoEm: data.criadoEm?.toDate ? data.criadoEm.toDate().toISOString() : data.criadoEm,
+        atualizadoEm: data.atualizadoEm?.toDate ? data.atualizadoEm.toDate().toISOString() : data.atualizadoEm,
       } as RegistroAtendimento);
     });
 
-    // Ordenação no cliente (mais recente primeiro)
-    return registros.sort((a, b) =>
-      new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()
-    );
+    // Ordenação no cliente (mais recente primeiro - baseado na criação)
+    return registros.sort((a, b) => {
+      const dataA = a.criadoEm ? new Date(a.criadoEm).getTime() : new Date(a.dataHora).getTime();
+      const dataB = b.criadoEm ? new Date(b.criadoEm).getTime() : new Date(b.dataHora).getTime();
+      return dataB - dataA;
+    });
   } catch (error) {
     console.error('Erro ao listar registros:', error);
     throw new Error('Erro ao carregar registros. Tente novamente.');
@@ -142,16 +148,21 @@ export const filtrarPorStatus = async (
     const registros: RegistroAtendimento[] = [];
 
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
       registros.push({
         id: doc.id,
-        ...doc.data()
+        ...data,
+        criadoEm: data.criadoEm?.toDate ? data.criadoEm.toDate().toISOString() : data.criadoEm,
+        atualizadoEm: data.atualizadoEm?.toDate ? data.atualizadoEm.toDate().toISOString() : data.atualizadoEm,
       } as RegistroAtendimento);
     });
 
     // Ordenação no cliente
-    return registros.sort((a, b) =>
-      new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()
-    );
+    return registros.sort((a, b) => {
+      const dataA = a.criadoEm ? new Date(a.criadoEm).getTime() : new Date(a.dataHora).getTime();
+      const dataB = b.criadoEm ? new Date(b.criadoEm).getTime() : new Date(b.dataHora).getTime();
+      return dataB - dataA;
+    });
   } catch (error) {
     console.error('Erro ao filtrar registros:', error);
     throw new Error('Erro ao filtrar registros. Tente novamente.');
@@ -178,16 +189,21 @@ export const filtrarPorPeriodo = async (
     const registros: RegistroAtendimento[] = [];
 
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
       registros.push({
         id: doc.id,
-        ...doc.data()
+        ...data,
+        criadoEm: data.criadoEm?.toDate ? data.criadoEm.toDate().toISOString() : data.criadoEm,
+        atualizadoEm: data.atualizadoEm?.toDate ? data.atualizadoEm.toDate().toISOString() : data.atualizadoEm,
       } as RegistroAtendimento);
     });
 
     // Ordenação no cliente
-    return registros.sort((a, b) =>
-      new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()
-    );
+    return registros.sort((a, b) => {
+      const dataA = a.criadoEm ? new Date(a.criadoEm).getTime() : new Date(a.dataHora).getTime();
+      const dataB = b.criadoEm ? new Date(b.criadoEm).getTime() : new Date(b.dataHora).getTime();
+      return dataB - dataA;
+    });
   } catch (error) {
     console.error('Erro ao filtrar por período:', error);
     throw new Error('Erro ao filtrar por período. Tente novamente.');
