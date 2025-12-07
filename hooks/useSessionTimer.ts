@@ -6,6 +6,7 @@ interface UseSessionTimerReturn {
   timeLeft: string;
   isExpired: boolean;
   resetSession: () => void;
+  clearSession: () => void;
 }
 
 export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updateCountdown: boolean = true): UseSessionTimerReturn => {
@@ -30,13 +31,13 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
       }
     } else {
       if (!isAuthenticated && userId) {
-        // Se desconectou, a sessão daquele user acabou.
-        localStorage.removeItem(`sessionStart_${userId}`);
+        // Se desconectou, a sessão daquele user deve ser limpa
+        // Mas para garantir, usamos o clearSession no logout explícito
       }
       setTimeLeft('00:05:00');
       setIsExpired(false);
     }
-  }, [isAuthenticated, storageKey]);
+  }, [isAuthenticated, storageKey, userId]);
 
   // Timer regressivo
   useEffect(() => {
@@ -76,6 +77,14 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
     return () => clearInterval(interval);
   }, [isAuthenticated, isExpired, updateCountdown, storageKey]);
 
+  const clearSession = () => {
+    if (storageKey) {
+      localStorage.removeItem(storageKey);
+    }
+    setIsExpired(false);
+    setTimeLeft('00:05:00');
+  };
+
   const resetSession = () => {
     if (storageKey) {
       localStorage.removeItem(storageKey);
@@ -85,5 +94,5 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
     setTimeLeft('00:05:00');
   };
 
-  return { timeLeft, isExpired, resetSession };
+  return { timeLeft, isExpired, resetSession, clearSession };
 };

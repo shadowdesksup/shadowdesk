@@ -26,7 +26,7 @@ function App() {
   const { usuario, dadosUsuario, estaAutenticado, login, registrar, logout, carregando: authCarregando } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   // Timer de sessão - Apenas verificação de expiração, sem countdown visual para evitar re-render
-  const { isExpired, resetSession } = useSessionTimer(estaAutenticado, usuario?.uid, false);
+  const { isExpired, resetSession, clearSession } = useSessionTimer(estaAutenticado, usuario?.uid, false);
 
   const {
     registros,
@@ -62,9 +62,9 @@ function App() {
       setMostrarModalExpiracao(true);
       logout();
       setTelaAuth('login');
-      resetSession();
+      clearSession();
     }
-  }, [isExpired, logout, resetSession]);
+  }, [isExpired, logout, clearSession]);
 
   // Mostrar tela de carregamento
   if (authCarregando) {
@@ -299,6 +299,7 @@ function App() {
               onLogout={() => {
                 logout();
                 setTelaAuth('login');
+                clearSession();
               }}
               theme={theme}
               onToggleTheme={toggleTheme}
