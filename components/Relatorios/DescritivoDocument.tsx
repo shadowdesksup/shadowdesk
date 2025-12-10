@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
     marginBottom: 0
   },
   headerImage: {
-    width: 271.59,
-    height: 36.85,
+    width: 305.59,
+    height: 46.85,
     marginBottom: 0
   },
   listingTitle: {
@@ -208,8 +208,8 @@ const DescritivoDocument: React.FC<DescritivoProps> = ({ descritivo }) => {
                 <Image
                   src={img}
                   style={{
-                    maxWidth: 500,
-                    maxHeight: 600,
+                    maxWidth: '100%',
+                    maxHeight: 700,
                     objectFit: 'contain'
                   }}
                 />

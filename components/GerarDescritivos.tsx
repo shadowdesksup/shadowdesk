@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
-import { Save, Download, Plus, Trash2, LayoutTemplate, GripVertical } from 'lucide-react';
+import { Save, Download, Plus, Trash2, LayoutTemplate, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DescricaoEquipamento } from '../types';
 import { pdf, PDFViewer } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
@@ -82,36 +82,60 @@ const DraggableItem = ({ item, onChange, onRemove, isDark, placeholderItem, plac
   );
 };
 
-// Subcomponente para Imagem Arrastável
-const DraggableImage = ({ img, onRemove }: { img: ImagemComId, onRemove: (id: string) => void }) => {
-  // Imagem é arrastável diretamente (padrão dragListener=true do Reorder.Item)
+// Subcomponente para Imagem com Setas de Ordenação
+const ImageCard = ({
+  img,
+  onRemove,
+  onMove,
+  index,
+  total
+}: {
+  img: ImagemComId;
+  onRemove: (id: string) => void;
+  onMove: (index: number, direction: 'left' | 'right') => void;
+  index: number;
+  total: number;
+}) => {
   return (
-    <Reorder.Item
-      value={img}
-      id={img.id}
-      className="relative group rounded-xl overflow-hidden border border-slate-700/50 bg-black w-[200px] aspect-video cursor-grab active:cursor-grabbing flex-shrink-0 shadow-sm hover:shadow-md transition-all"
+    <div
+      className="relative group rounded-xl overflow-hidden border border-slate-700/50 bg-black w-[200px] aspect-video flex-shrink-0 shadow-sm hover:shadow-md transition-all"
     >
-      <img src={img.file} alt="Equipamento" className="w-full h-full object-cover pointer-events-none select-none opacity-80 group-hover:opacity-100 transition-opacity" />
+      <img src={img.file} alt="Equipamento" className="w-full h-full object-cover pointer-events-none select-none opacity-90 group-hover:opacity-100 transition-opacity" />
 
-      {/* Visual Grab Indicator */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <div className="bg-black/50 p-2 rounded-full backdrop-blur-sm text-white/80">
-          <GripVertical size={24} className="rotate-90" />
-        </div>
+      {/* Botões de Ordenação (Setas) */}
+      <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        {/* Seta Esquerda */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onMove(index, 'left'); }}
+          disabled={index === 0}
+          className={`pointer-events-auto p-1.5 rounded-full backdrop-blur-sm transition-all ${index === 0 ? 'bg-black/20 text-white/30 cursor-not-allowed' : 'bg-black/60 hover:bg-black/80 text-white hover:scale-110 cursor-pointer'
+            }`}
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        {/* Seta Direita */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onMove(index, 'right'); }}
+          disabled={index === total - 1}
+          className={`pointer-events-auto p-1.5 rounded-full backdrop-blur-sm transition-all ${index === total - 1 ? 'bg-black/20 text-white/30 cursor-not-allowed' : 'bg-black/60 hover:bg-black/80 text-white hover:scale-110 cursor-pointer'
+            }`}
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
 
       {/* Botão Remover */}
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onRemove(img.id)}
-          className="bg-red-500/80 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors backdrop-blur-sm"
+          onClick={(e) => { e.stopPropagation(); onRemove(img.id); }}
+          className="bg-red-500/80 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors backdrop-blur-sm shadow-sm"
           title="Remover"
         >
           <Trash2 size={16} />
         </button>
       </div>
-    </Reorder.Item>
+    </div>
   );
 }
 
@@ -173,6 +197,20 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
   const removeImage = (id: string) => {
     setImagensEquipamento(prev => prev.filter(img => img.id !== id));
+  };
+
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    if (direction === 'left' && index === 0) return;
+    if (direction === 'right' && index === imagensEquipamento.length - 1) return;
+
+    setImagensEquipamento(prev => {
+      const newArr = [...prev];
+      const targetIndex = direction === 'left' ? index - 1 : index + 1;
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
   };
 
   // Handlers para Componentes
@@ -427,11 +465,18 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
           {imagensEquipamento.length > 0 && (
             <div className="mt-6 w-full overflow-x-auto pb-4 custom-scrollbar">
-              <Reorder.Group axis="x" values={imagensEquipamento} onReorder={setImagensEquipamento} className="flex gap-4 min-w-max">
-                {imagensEquipamento.map((img) => (
-                  <DraggableImage key={img.id} img={img} onRemove={removeImage} />
+              <div className="flex gap-4 min-w-max">
+                {imagensEquipamento.map((img, index) => (
+                  <ImageCard
+                    key={img.id}
+                    img={img}
+                    onRemove={removeImage}
+                    onMove={moveImage}
+                    index={index}
+                    total={imagensEquipamento.length}
+                  />
                 ))}
-              </Reorder.Group>
+              </div>
             </div>
           )}
         </div>
