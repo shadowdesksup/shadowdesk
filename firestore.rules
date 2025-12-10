@@ -18,5 +18,10 @@ service cloud.firestore {
     match /registros/{document=**} {
       allow read, write: if request.auth != null;
     }
+
+    // Regras para Locais (Selectors)
+    match /locais/{document=**} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
