@@ -67,3 +67,46 @@ export interface Estatisticas {
     atendidos: number;
   };
 }
+
+// Descrição de Equipamento (Laudo Técnico)
+export interface DescricaoEquipamento {
+  id: string;
+
+  // Header info
+  dataLaudo: string; // ISO 8601 format
+
+  // Informações Técnicas
+  equipamento: string;
+  marca: string;
+  modelo: string;
+  patrimonio: string;
+  ns: string; // Número de Série
+
+  // Descrição da Avaliação Técnica Geral
+  descricaoAvaliacao: string;
+
+  // Avaliações detalhadas por componente (Lista Dinâmica)
+  componentes: Array<{
+    item: string;
+    status: string; // "Boas condições", "Danificado", etc.
+    observacao: string; // Detalhes extras
+  }>;
+
+  // Acessórios
+  acessorios: Array<{
+    item: string;
+    status: string;
+    observacao: string;
+  }>;
+
+  // Conclusão
+  conclusao: string;
+
+  // Imagens do Equipamento (base64)
+  imagensEquipamento?: string[]; // Array de imagens em base64
+
+  // Metadata
+  criadoPor: string; // user ID
+  criadoEm: string; // timestamp de criação
+  atualizadoEm?: string; // timestamp de última atualização
+}
