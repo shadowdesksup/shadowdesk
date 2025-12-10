@@ -454,7 +454,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
           >
             <Download size={20} /> {gerandoPDF ? 'Gerando...' : 'Baixar PDF'}
           </button>
-        </motion.div>
+        </div>
 
       </div>
 
