@@ -445,7 +445,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="h-full flex gap-4 overflow-hidden p-2 relative"
+      className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 relative"
     >
 
       {/* MODAL */}
@@ -537,7 +537,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       </AnimatePresence>
 
       {/* LEFT COLUMN: FORM */}
-      <div className={`flex-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar ${showPreview ? 'max-w-[50%]' : 'max-w-full'}`}>
+      <div className={`flex-1 flex flex-col gap-4 pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
 
         {/* Header Compacto */}
         <div
@@ -794,9 +794,9 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
       </div>
 
-      {/* RIGHT COLUMN: PREVIEW */}
+      {/* RIGHT COLUMN: PREVIEW - Hidden on mobile (<768px), visible and stacked on tablet (768-1089px), side-by-side on wide (≥1090px) */}
       {showPreview && (
-        <div className="flex-1 h-full rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900">
+        <div className="hidden md:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full">
           <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true}>
             <DescritivoDocument descritivo={dadosAtuais} />
           </PDFViewer>

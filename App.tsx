@@ -63,6 +63,7 @@ function App() {
 
   const [mostrarModalExpiracao, setMostrarModalExpiracao] = useState(false);
   const [mostrarModalSuspenso, setMostrarModalSuspenso] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Efeito para redirecionar para dashboard ao logar
   React.useEffect(() => {
@@ -182,8 +183,8 @@ function App() {
 
       case 'novo':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full overflow-hidden">
-            <div className="lg:col-span-7 h-full overflow-hidden flex flex-col">
+          <div className="flex flex-col wide:grid wide:grid-cols-12 gap-8 wide:h-full wide:overflow-hidden">
+            <div className="wide:col-span-7 wide:h-full wide:overflow-hidden flex flex-col">
               <FormularioRegistro
                 onSalvar={async (dados) => {
                   if (registroEditando) {
@@ -207,7 +208,7 @@ function App() {
                 theme={theme}
               />
             </div>
-            <div className="lg:col-span-5 h-full overflow-hidden flex flex-col">
+            <div className="wide:col-span-5 wide:h-full wide:overflow-hidden flex flex-col">
               <ListaRegistros
                 registros={registros}
                 limite={10}
@@ -331,6 +332,8 @@ function App() {
               setRegistroEditando(null);
             }}
             theme={theme}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
           />
 
           {/* Main Content Area */}
@@ -345,9 +348,10 @@ function App() {
               }}
               theme={theme}
               onToggleTheme={toggleTheme}
+              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             />
 
-            <main className="flex-1 overflow-hidden py-8 pl-8 pr-0">
+            <main className="flex-1 overflow-y-auto wide:overflow-hidden py-8 px-8 wide:pl-8 wide:pr-0">
               {renderizarConteudo()}
             </main>
           </div>

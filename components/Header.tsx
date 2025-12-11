@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ghost, LogOut, Sun, Moon } from 'lucide-react';
+import { Ghost, LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useSessionTimer } from '../hooks/useSessionTimer';
@@ -10,9 +10,10 @@ interface HeaderProps {
   onLogout: () => void;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onToggleSidebar?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 'dark', onToggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 'dark', onToggleTheme, onToggleSidebar }) => {
   // Timer local apenas para visualização
   const { timeLeft } = useSessionTimer(true, userId, true);
 
@@ -27,7 +28,20 @@ const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 
     >
       <div className={`flex items-center gap-4 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
         }`}>
-        <div className="p-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-white/10 shadow-lg">
+        {/* Mobile Menu Button - Shows only on mobile */}
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className={`md:hidden p-2 rounded-lg transition-colors ${theme === 'dark'
+              ? 'hover:bg-white/10 text-slate-400 hover:text-white'
+              : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+              }`}
+            aria-label="Toggle menu"
+          >
+            <Menu size={24} />
+          </button>
+        )}
+        <div className="p-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-white/10 shadow-lg hidden md:block">
           <Ghost className="text-cyan-400" size={24} />
         </div>
         <h2 className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'

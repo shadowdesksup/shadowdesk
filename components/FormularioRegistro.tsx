@@ -133,7 +133,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className={`flex flex-col h-[calc(100vh-8rem)] rounded-2xl border shadow-2xl transition-colors duration-300 overflow-hidden ${theme === 'dark'
+      className={`flex flex-col wide:h-[calc(100vh-8rem)] rounded-2xl border shadow-2xl transition-colors duration-300 overflow-hidden ${theme === 'dark'
         ? 'border-white/10 bg-slate-900/80 shadow-black/20'
         : 'border-slate-200 bg-white shadow-slate-200/50'
         }`}

@@ -195,7 +195,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
         minHeight: customMinHeight || '500px'
       }}
     >
-      <div className={`sticky top-0 z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 -mx-8 px-8 pt-2 -mt-2 ${theme === 'dark'
+      <div className={`z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 -mx-8 px-8 pt-2 -mt-2 ${theme === 'dark'
         ? 'border-white/5 backdrop-blur'
         : 'border-slate-300 bg-white/95 backdrop-blur'
         }`}>
