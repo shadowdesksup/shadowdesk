@@ -61,9 +61,9 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
       {/* Left Column: Header + Filters */}
       <div className={`flex-1 flex flex-col gap-4 pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
         {/* Header */}
-        <div className="flex flex-col gap-6 bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className={`flex flex-col gap-6 p-4 rounded-2xl border shadow-sm ${theme === 'dark' ? 'bg-slate-900/50 border-white/10' : 'bg-white border-slate-200'}`}>
           <div>
-            <h2 className={`text-3xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <h2 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
               Relatório de Atendimentos
             </h2>
             <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -131,18 +131,17 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
               Email
             </button>
 
-            <div className={`w-px h-8 mx-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
+            <div className={`hidden wide:block w-px h-8 mx-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
 
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
+              className={`hidden wide:flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
                 ? 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border border-slate-500/20'
                 : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
                 } ${!showPreview ? 'opacity-50' : ''}`}
               title={showPreview ? "Ocultar Preview" : "Mostrar Preview"}
             >
               <LayoutTemplate size={18} />
-              {showPreview ? 'Ocultar' : 'Preview'}
             </button>
           </div>
         </div>
@@ -173,7 +172,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
                     : 'bg-white border-slate-200 text-slate-700 focus:border-cyan-500'
                     }`}
                 />
-                <span className={`font-bold text-center sm:text-left ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                <span className={`font-bold text-center sm:text-left ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>→</span>
                 <input
                   type="date"
                   value={dataFim}
