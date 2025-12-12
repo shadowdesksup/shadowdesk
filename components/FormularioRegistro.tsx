@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, MapPin, FileText, Calendar, Save, AlertCircle, ChevronDown, CheckCircle2, Mail, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TipoSolicitante, StatusAtendimento } from '../types';
-import { isoParaDatetimeLocal, obterDataHoraAtual } from '../utils/helpers';
+import { isoParaDatetimeLocal, obterDataHoraAtual, formatarTelefone } from '../utils/helpers';
 import { useLocais } from '../hooks/useLocais';
 import LocalSelector from './LocalSelector';
 import ModalGerenciarLocais from './ModalGerenciarLocais';
@@ -233,7 +233,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
               <input
                 type="text"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                 placeholder="(11) 99999-9999"
                 className={`w-full rounded-xl border h-11 pl-10 pr-4 focus:outline-none transition-all ${theme === 'dark'
                   ? 'border-white/10 bg-slate-900/50 text-slate-200 focus:border-cyan-500/50 focus:bg-slate-900/80 placeholder:text-slate-600'

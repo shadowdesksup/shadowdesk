@@ -184,3 +184,20 @@ export const obterDiasRestantesEncerramento = (): { diasRestantes: number; dataE
 
   return { diasRestantes, dataEncerramento, progressoMes };
 };
+
+// Formatar telefone (Máscara: (11)99999-9999 or (11)4444-0000)
+export const formatarTelefone = (valor: string): string => {
+  if (!valor) return '';
+  const apenasDigitos = valor.replace(/\D/g, '');
+
+  // Limita a 11 dígitos
+  const digitosLimitados = apenasDigitos.slice(0, 11);
+
+  if (digitosLimitados.length <= 10) {
+    // Formato Fixo: (11)4444-0000
+    return digitosLimitados.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1)$2-$3').replace(/-$/, '');
+  } else {
+    // Formato Celular: (11)99999-9999
+    return digitosLimitados.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1)$2-$3').replace(/-$/, '');
+  }
+};

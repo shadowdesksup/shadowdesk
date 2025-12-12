@@ -13,17 +13,23 @@ export const generateHTMLContent = (registros: RegistroAtendimento[]) => {
     <div style="background-color: #f9f9f9; border-left: 5px solid ${r.status === 'Atendido' || r.status === 'Concluído' ? '#27ae60' : '#f39c12'}; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
-          <td style="padding: 5px 0; font-weight: bold; width: 120px;">DATA/HORA:</td>
-          <td style="padding: 5px 0;">${new Date(r.dataHora).toLocaleString('pt-BR')}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0; font-weight: bold;">SOLICITANTE:</td>
+          <td style="padding: 5px 0; font-weight: bold; width: 120px;">SOLICITANTE:</td>
           <td style="padding: 5px 0;">${r.nomeSolicitante}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; font-weight: bold;">VÍNCULO:</td>
           <td style="padding: 5px 0;">${r.tipoSolicitante}</td>
         </tr>
+        ${r.email ? `
+        <tr>
+          <td style="padding: 5px 0; font-weight: bold;">EMAIL:</td>
+          <td style="padding: 5px 0;">${r.email}</td>
+        </tr>` : ''}
+        ${r.telefone ? `
+        <tr>
+          <td style="padding: 5px 0; font-weight: bold;">CONTATO:</td>
+          <td style="padding: 5px 0;">${r.telefone}</td>
+        </tr>` : ''}
         <tr>
           <td style="padding: 5px 0; font-weight: bold;">LOCAL:</td>
           <td style="padding: 5px 0;">${r.local}</td>
@@ -35,6 +41,15 @@ export const generateHTMLContent = (registros: RegistroAtendimento[]) => {
               ${r.status}
             </span>
           </td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; font-weight: bold;">DATA:</td>
+          <td style="padding: 5px 0;">${(() => {
+      const date = new Date(r.dataHora);
+      const diaSemana = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+      const diaSemanaCap = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+      return `${diaSemanaCap}, ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    })()}</td>
         </tr>
         <tr>
           <td style="padding: 5px 0; font-weight: bold; vertical-align: top;">DESCRIÇÃO:</td>
