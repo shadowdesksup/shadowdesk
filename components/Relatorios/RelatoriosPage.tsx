@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { motion } from 'framer-motion';
-import { FileDown, FileSpreadsheet, FileText, Image, Mail, LayoutTemplate } from 'lucide-react';
+import { FileDown, FileSpreadsheet, FileText, Image, Mail, LayoutTemplate, Check } from 'lucide-react';
 import { RegistroAtendimento, StatusAtendimento, TipoSolicitante } from '../../types';
 import LaudoDocument from './LaudoDocument';
 import { exportToExcel } from './ExcelGenerator';
@@ -33,6 +33,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
   const [dataInicio, setDataInicio] = useState('2025-01-01');
   const [dataFim, setDataFim] = useState(getDataFimAtual());
   const [status, setStatus] = useState<StatusAtendimento | 'Nenhum' | 'Todos'>('Nenhum');
+  const [apenasServiceDesk, setApenasServiceDesk] = useState(false); // New Checkbox State
   const [tipo, setTipo] = useState<TipoSolicitante | 'Nenhum' | 'Todos'>('Nenhum');
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string | null>('todo');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -49,12 +50,45 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
 
       const matchInicio = !dataInicioDate || dataRegistro >= new Date(dataInicioDate.setHours(0, 0, 0, 0));
       const matchFim = !dataFimDate || new Date(r.dataHora) <= dataFimDate;
-      const matchStatus = status === 'Todos' || r.status === status;
       const matchTipo = tipo === 'Todos' || r.tipoSolicitante === tipo;
+
+      const isRegistrado = r.status === 'Registrado';
+
+      // Status Logic
+      // Status Logic
+      let matchStatus = false;
+      if (apenasServiceDesk) {
+        // Checkbox Checked: ONLY show Registrado
+        matchStatus = isRegistrado;
+      } else {
+        // Checkbox Unchecked: Standard filters
+        // User Request: 'Todos' and 'Atendido' should INCLUDE 'Registrado'
+        // But they will be masked as 'Atendido' later in registrosProcessados
+
+        if (status === 'Atendido') {
+          matchStatus = r.status === 'Atendido' || r.status === 'Registrado';
+        } else if (status === 'Todos' || status === 'Nenhum') {
+          matchStatus = true; // Show ALL, including Registrado
+        } else {
+          matchStatus = r.status === status;
+        }
+      }
 
       return matchInicio && matchFim && matchStatus && matchTipo;
     }).sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
-  }, [registros, dataInicio, dataFim, status, tipo]);
+  }, [registros, dataInicio, dataFim, status, tipo, apenasServiceDesk]);
+
+  // Transform records for report display
+  // If "Apenas ServiceDesk" is OFF, items with 'Registrado' status should appear as 'Atendido' (Green)
+  // If "Apenas ServiceDesk" is ON, they stay as 'Registrado' (Yellow)
+  const registrosProcessados = useMemo(() => {
+    return registrosFiltrados.map(r => {
+      if (!apenasServiceDesk && r.status === 'Registrado') {
+        return { ...r, status: 'Atendido' as StatusAtendimento };
+      }
+      return r;
+    });
+  }, [registrosFiltrados, apenasServiceDesk]);
 
   return (
     <div className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 relative">
@@ -73,7 +107,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
 
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => exportToTXT(registrosFiltrados, `Laudo_ShadowDesk_${new Date().getTime()}`)}
+              onClick={() => exportToTXT(registrosProcessados, `Laudo_ShadowDesk_${new Date().getTime()}`)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
                 ? 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border border-slate-500/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -84,7 +118,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
             </button>
 
             <button
-              onClick={() => exportToExcel(registrosFiltrados, `Laudo_ShadowDesk_${new Date().getTime()}`)}
+              onClick={() => exportToExcel(registrosProcessados, `Laudo_ShadowDesk_${new Date().getTime()}`)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
                 ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
@@ -106,7 +140,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
             </button>
 
             <PDFDownloadLink
-              document={<LaudoDocument registros={registrosFiltrados} usuario={usuario} />}
+              document={<LaudoDocument registros={registrosProcessados} usuario={usuario} />}
               fileName={`Laudo_ShadowDesk_${new Date().getTime()}.pdf`}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
                 ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
@@ -319,9 +353,10 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
               <select
                 value={status}
                 onChange={e => setStatus(e.target.value as any)}
+                disabled={apenasServiceDesk}
                 className={`w-full rounded-xl px-4 py-3 text-sm border-2 focus:ring-2 focus:ring-cyan-500 outline-none transition-all ${theme === 'dark'
-                  ? 'bg-slate-700 border-white/30 text-white focus:border-cyan-500'
-                  : 'bg-white border-slate-200 text-slate-700 focus:border-cyan-500'
+                  ? 'bg-slate-700 border-white/30 text-white focus:border-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'bg-white border-slate-200 text-slate-700 focus:border-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed'
                   }`}
               >
                 <option value="Nenhum">Nenhum</option>
@@ -329,6 +364,36 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
                 <option value="Atendido">Atendido</option>
                 <option value="Todos">Todos</option>
               </select>
+
+              <div
+                onClick={() => setApenasServiceDesk(!apenasServiceDesk)}
+                className={`mt-6 w-full rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer border-2 transition-all duration-200 group relative overflow-hidden ${theme === 'dark'
+                  ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20'
+                  : 'bg-cyan-50 border-cyan-500 text-cyan-700 hover:bg-cyan-100'
+                  }`}
+              >
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all duration-300 ${apenasServiceDesk
+                    ? 'bg-cyan-500 border-cyan-500 shadow-lg shadow-cyan-500/20'
+                    : theme === 'dark' ? 'border-cyan-500/50 bg-slate-800' : 'border-cyan-300 bg-white'
+                    }`}>
+                    {apenasServiceDesk && <Check size={14} className="text-white" strokeWidth={3} />}
+                  </div>
+                  <span className={`text-sm font-semibold select-none transition-colors ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
+                    }`}>
+                    Apenas ServiceDesk
+                  </span>
+                </div>
+
+                {/* Visual Indicator of "Registrados" context */}
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border transition-colors ${theme === 'dark' ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300' : 'bg-cyan-100 border-cyan-200 text-cyan-700'
+                  }`}>
+                  Registrados
+                </span>
+
+                {/* Background Glow Effect - Always visible but subtle */}
+                <div className={`absolute inset-0 opacity-20 z-0 ${theme === 'dark' ? 'bg-cyan-500/10' : 'bg-cyan-500/5'}`}></div>
+              </div>
             </div>
 
             {/* Type Filter */}
@@ -369,7 +434,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
                   Registros Encontrados
                 </p>
                 <p className={`text-3xl font-bold leading-none mt-1 ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                  {registrosFiltrados.length}
+                  {registrosProcessados.length}
                 </p>
               </div>
               <div className={`p-3 rounded-2xl shadow-lg shadow-cyan-500/10 ${theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white'}`}>
@@ -385,7 +450,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
       {showPreview && (
         <div className={`hidden wide:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full`}>
           <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true} className="border-none">
-            <LaudoDocument registros={registrosFiltrados} usuario={usuario} />
+            <LaudoDocument registros={registrosProcessados} usuario={usuario} />
           </PDFViewer>
         </div>
       )}
@@ -408,7 +473,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
         </div>
 
         <div className="flex flex-col gap-4">
-          {registrosFiltrados.map((item, index) => (
+          {registrosProcessados.map((item, index) => (
             <div key={index} className="border border-slate-200 rounded-lg p-4 bg-slate-50 break-inside-avoid">
               <div className="flex justify-between items-start mb-2 border-b border-slate-200 pb-2">
                 <div>
@@ -449,7 +514,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
             </div>
           ))}
 
-          {registrosFiltrados.length === 0 && (
+          {registrosProcessados.length === 0 && (
             <div className="text-center py-8 text-slate-400">
               Nenhum registro encontrado para o filtro selecionado.
             </div>
@@ -463,7 +528,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
       <EmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
-        registros={registrosFiltrados}
+        registros={registrosProcessados}
         usuario={usuario}
         theme={theme}
       />
