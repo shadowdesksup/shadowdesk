@@ -14,8 +14,8 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', pagina: 'dashboard' },
     { icon: <PlusCircle size={20} />, label: 'Novo Registro', pagina: 'novo' },
+    { icon: <List size={20} />, label: 'Meus Registros', pagina: 'historico' },
     { icon: <FileEdit size={20} />, label: 'Gerar Descritivos', pagina: 'descritivos' },
-    { icon: <List size={20} />, label: 'Histórico', pagina: 'historico' },
     { icon: <FileText size={20} />, label: 'Relatórios', pagina: 'relatorios' },
     { icon: <User size={20} />, label: 'Perfil', pagina: 'perfil' },
   ];

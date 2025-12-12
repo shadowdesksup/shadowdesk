@@ -10,7 +10,7 @@ export const generateTXTContent = (registros: RegistroAtendimento[]) => {
 
     // Helper para formatar linha com TABs (Mapeamento Manual Solicitado)
     const formatLine = (label: string, value: string) => {
-      const prefix = `   ${label}`;
+      const prefix = `- ${label}`;
 
       const tabMap: Record<string, number> = {
         'SOLICITANTE': 1,

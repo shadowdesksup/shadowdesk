@@ -19,11 +19,15 @@ interface ListaRegistrosProps {
 
 const StatusBadge = ({ status, id, onAtualizar }: { status: StatusAtendimento; id: string; onAtualizar?: (id: string, s: StatusAtendimento) => Promise<void> }) => {
   const isPendente = status === 'Pendente';
+  const isAtendido = status === 'Atendido';
+  const isRegistrado = status === 'Registrado';
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isPendente && onAtualizar) {
       await onAtualizar(id, 'Atendido');
+    } else if (isAtendido && onAtualizar) {
+      await onAtualizar(id, 'Registrado');
     }
   };
 
@@ -34,7 +38,9 @@ const StatusBadge = ({ status, id, onAtualizar }: { status: StatusAtendimento; i
         px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border transition-all duration-300
         ${isPendente
           ? `bg-yellow-500/10 text-yellow-500 border-yellow-500/20 ${onAtualizar ? 'cursor-pointer hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/20 group/badge' : ''}`
-          : 'bg-green-500/10 text-green-500 border-green-500/20'}
+          : isRegistrado
+            ? 'bg-slate-500/10 text-slate-500 border-slate-500/20 grayscale opacity-75'
+            : `bg-green-500/10 text-green-500 border-green-500/20 ${onAtualizar ? 'cursor-pointer hover:bg-slate-500/10 hover:text-slate-500 hover:border-slate-500/20 hover:grayscale group/badge' : ''}`}
       `}
     >
       {isPendente ? (
@@ -47,10 +53,16 @@ const StatusBadge = ({ status, id, onAtualizar }: { status: StatusAtendimento; i
           <span className={onAtualizar ? "group-hover/badge:hidden" : ""}>Pendente</span>
           {onAtualizar && <span className="hidden group-hover/badge:inline">Marcar Atendido</span>}
         </>
+      ) : isRegistrado ? (
+        <>
+          <CheckCircle2 size={12} />
+          Registrado
+        </>
       ) : (
         <>
           <CheckCircle2 size={12} />
-          Atendido
+          <span className={onAtualizar ? "group-hover/badge:hidden" : ""}>Atendido</span>
+          {onAtualizar && <span className="hidden group-hover/badge:inline">Marcar Registrado</span>}
         </>
       )}
     </div>
@@ -102,6 +114,34 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
   const [pagina, setPagina] = useState(1);
   const itemsPerPage = limite || 10;
 
+  const [showServiceDesk, setShowServiceDesk] = useState(false); // New state for ServiceDesk view
+
+  // Logic for Selection Mode
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isFocused, setIsFocused] = useState(false); // Restore isFocused state for search input animation
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedItems([]);
+  };
+
+  const toggleItemSelection = (id: string) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(selectedItems.filter(item => item !== id));
+    } else {
+      setSelectedItems([...selectedItems, id]);
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (onAtualizarStatus) {
+      await Promise.all(selectedItems.map(id => onAtualizarStatus(id, 'Registrado')));
+      setIsSelectionMode(false);
+      setSelectedItems([]);
+    }
+  };
+
   // Filtragem combinada
   const registrosFiltrados = registros.filter(r => {
     const matchTexto = !termoBusca || (
@@ -115,12 +155,22 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
     const matchStatus = filtroStatus === 'Todos' || r.status === filtroStatus;
     const matchTipo = filtroTipo === 'Todos' || r.tipoSolicitante === filtroTipo;
 
-    return matchTexto && matchStatus && matchTipo;
+    // ServiceDesk Logic:
+    // If showServiceDesk is true, ONLY show 'Registrado'.
+    // If showServiceDesk is false, show EVERYTHING EXCEPT 'Registrado' (unless specifically filtered otherwise, but user requested hiding them from main view).
+    const isRegistrado = r.status === 'Registrado';
+
+    if (showServiceDesk) {
+      return matchTexto && isRegistrado && matchTipo; // Ignore main status filter in SD mode? or Keep it? Assuming SD mode overrides regular status filter
+    } else {
+      // Main View: Hide Registrado by default
+      return matchTexto && matchStatus && matchTipo && !isRegistrado;
+    }
   });
 
   useEffect(() => {
     setPagina(1);
-  }, [termoBusca, filtroStatus, filtroTipo]);
+  }, [termoBusca, filtroStatus, filtroTipo, showServiceDesk]);
 
   const totalPaginas = Math.ceil(registrosFiltrados.length / itemsPerPage);
   const registrosExibir = registrosFiltrados.slice((pagina - 1) * itemsPerPage, pagina * itemsPerPage);
@@ -198,16 +248,56 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
       <div className={`z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 -mx-8 px-8 pt-2 -mt-2 ${theme === 'dark'
         ? 'border-white/5 backdrop-blur'
         : 'border-slate-300 bg-white/95 backdrop-blur'
-        }`}>
+        } relative`}> {/* Added relative for absolute positioning of bulk action */}
+
+        {/* Floating Action Bar - Header Position */}
+        <AnimatePresence>
+          {isSelectionMode && selectedItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: -20, x: '-50%' }}
+              className="absolute left-1/2 top-1/2 flex items-center gap-3 z-50 pointer-events-none md:pointer-events-auto"
+            >
+              {/* Desktop View: Centered */}
+              <div className={`hidden md:flex items-center gap-3 px-4 py-2 rounded-xl shadow-lg border backdrop-blur-md ${theme === 'dark' ? 'bg-slate-900/90 border-cyan-500/30' : 'bg-white/90 border-cyan-200'
+                }`}>
+                <span className={`font-bold text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-700'}`}>
+                  {selectedItems.length} selecionados
+                </span>
+                <div className={`h-4 w-px mx-1 ${theme === 'dark' ? 'bg-white/20' : 'bg-slate-300'}`}></div>
+                <button
+                  onClick={handleBulkUpdate}
+                  className="flex items-center gap-2 text-sm font-bold text-cyan-500 hover:text-cyan-400 transition-colors"
+                >
+                  <CheckCircle2 size={16} />
+                  Marcar como Registrado
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex items-center gap-3">
           <h3 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
             }`}>
-            {limite ? 'Registros Recentes' : 'Todos os Registros'}
+            {showServiceDesk ? 'ServiceDesk' : (limite ? 'Registros Recentes' : 'Todos os Registros')}
           </h3>
         </div>
 
         {!ocultarBusca && (
           <div className="flex gap-2 w-full md:w-auto relative">
+            <button
+              onClick={() => setShowServiceDesk(!showServiceDesk)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-bold transition-all ${showServiceDesk
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/20 shadow-lg'
+                : theme === 'dark'
+                  ? 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                  : 'bg-white border-slate-300 text-slate-500 hover:text-slate-800 hover:bg-slate-50 shadow-sm'
+                }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${showServiceDesk ? 'bg-white animate-pulse' : 'bg-emerald-500/50'}`}></div>
+              ServiceDesk
+            </button>
             <div className="relative flex-1 md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
@@ -297,6 +387,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                           <option value="Todos">Todos</option>
                           <option value="Pendente">Pendente</option>
                           <option value="Atendido">Atendido</option>
+                          <option value="Registrado">Registrado</option>
                         </select>
                       </div>
 
@@ -323,6 +414,22 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Hide Selection Toggle in ServiceDesk Mode */}
+              {!showServiceDesk && (
+                <button
+                  onClick={toggleSelectionMode}
+                  className={`ml-2 p-2 rounded-xl border transition-colors ${isSelectionMode
+                    ? 'bg-cyan-500 text-white border-cyan-500 shadow-lg shadow-cyan-500/20'
+                    : theme === 'dark'
+                      ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                      : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-slate-900 shadow-sm'
+                    }`}
+                  title="Selecionar Itens"
+                >
+                  <CheckCircle2 size={20} />
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -362,119 +469,140 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
             Nenhum registro encontrado
           </div>
         ) : (
-          registrosExibir.map((registro) => (
-            <motion.div
-              key={registro.id}
-              variants={{
-                hidden: { opacity: 0, y: 10 },
-                show: { opacity: 1, y: 0 }
-              }}
-              whileHover={{
-                scale: 1.005,
-                transition: { duration: 0.2 }
-              }}
-              className={`group relative flex flex-col gap-4 rounded-xl border p-5 transition-all duration-300 ${theme === 'dark'
-                ? 'border-white/5 bg-white/5 hover:border-cyan-500/30 hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
-                : 'border-slate-100 bg-white hover:border-cyan-500/30 hover:shadow-lg shadow-sm'
-                }`}
-            >
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TipoBadge tipo={registro.tipoSolicitante} />
-                    <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-400'}`}>•</span>
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 truncate ${theme === 'dark'
-                      ? 'text-slate-400 border-slate-500/20 bg-slate-500/10'
-                      : 'text-slate-600 border-slate-300 bg-slate-100'
-                      }`}>
-                      {registro.local}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-white/5 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
-                      <User size={16} />
+          registrosExibir.map((registro) => {
+            const isRegistrado = registro.status === 'Registrado';
+            return (
+              <motion.div
+                key={registro.id}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  show: { opacity: 1, y: 0 }
+                }}
+                whileHover={{
+                  scale: 1.005,
+                  transition: { duration: 0.2 }
+                }}
+                className={`group relative flex flex-col gap-4 rounded-xl border p-5 transition-all duration-300 ${isSelectionMode ? 'cursor-pointer' : ''
+                  } ${isSelectionMode && selectedItems.includes(registro.id)
+                    ? theme === 'dark' ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-cyan-50 border-cyan-200'
+                    : theme === 'dark'
+                      ? 'border-white/5 bg-white/5 hover:border-cyan-500/30 hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                      : 'border-slate-100 bg-white hover:border-cyan-500/30 hover:shadow-lg shadow-sm'
+                  }`}
+                onClick={() => !isRegistrado && isSelectionMode && toggleItemSelection(registro.id)}
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TipoBadge tipo={registro.tipoSolicitante} />
+                      <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-400'}`}>•</span>
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 truncate ${theme === 'dark'
+                        ? 'text-slate-400 border-slate-500/20 bg-slate-500/10'
+                        : 'text-slate-600 border-slate-300 bg-slate-100'
+                        }`}>
+                        {registro.local}
+                      </span>
                     </div>
-                    <h4 className={`font-bold text-xl leading-tight transition-colors truncate ${theme === 'dark'
-                      ? 'text-white group-hover:text-cyan-400'
-                      : 'text-slate-800 group-hover:text-cyan-600'
-                      }`}>
-                      {registro.nomeSolicitante}
-                    </h4>
+
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-white/5 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+                        <User size={16} />
+                      </div>
+                      <h4 className={`font-bold text-xl leading-tight transition-colors truncate ${theme === 'dark'
+                        ? 'text-white group-hover:text-cyan-400'
+                        : 'text-slate-800 group-hover:text-cyan-600'
+                        }`}>
+                        {registro.nomeSolicitante}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {/* Checkbox moved to flex row */}
+                    {isSelectionMode && !isRegistrado && (
+                      <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedItems.includes(registro.id)
+                        ? 'bg-cyan-500 border-cyan-500'
+                        : theme === 'dark' ? 'border-slate-600 bg-slate-900' : 'border-slate-300 bg-white'
+                        }`}>
+                        {selectedItems.includes(registro.id) && <Check size={14} className="text-white" />}
+                      </div>
+                    )}
+
+                    <StatusBadge
+                      status={registro.status}
+                      id={registro.id}
+                      onAtualizar={isSelectionMode ? undefined : onAtualizarStatus}
+                    />
                   </div>
                 </div>
-                <StatusBadge
-                  status={registro.status}
-                  id={registro.id}
-                  onAtualizar={onAtualizarStatus}
-                />
-              </div>
 
-              <div className={`relative p-4 rounded-lg border ${theme === 'dark'
-                ? 'bg-black/20 border-white/5'
-                : 'bg-slate-50 border-slate-200/60'
-                }`}>
-                <div className="flex gap-3">
-                  <div className={`mt-0.5 shrink-0 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                    <FileText size={16} />
+                <div className={`relative p-4 rounded-lg border ${theme === 'dark'
+                  ? 'bg-black/20 border-white/5'
+                  : 'bg-slate-50 border-slate-200/60'
+                  }`}>
+                  <div className="flex gap-3">
+                    <div className={`mt-0.5 shrink-0 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <FileText size={16} />
+                    </div>
+                    <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {registro.descricaoRequisicao}
+                    </p>
                   </div>
-                  <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
-                    {registro.descricaoRequisicao}
-                  </p>
-                </div>
-              </div>
-
-              <div className={`flex justify-between items-center pt-3 border-t mt-auto ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                  <Clock size={14} className={theme === 'dark' ? 'text-cyan-500/70' : 'text-cyan-600/70'} />
-                  <span>{formatarDataHora(registro.dataHora)}</span>
-                  <span className="text-slate-300">•</span>
-                  <span>{tempoRelativo(registro.dataHora)}</span>
                 </div>
 
-                {(onEditar || onDeletar || onVisualizar) && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
-                    {onVisualizar && (
-                      <button
-                        onClick={() => onVisualizar(registro)}
-                        className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                          ? 'hover:bg-blue-500/20 text-slate-400 hover:text-blue-400'
-                          : 'hover:bg-blue-100 text-slate-500 hover:text-blue-700'
-                          }`}
-                        title="Visualizar"
-                      >
-                        <Eye size={16} />
-                      </button>
-                    )}
-                    {onEditar && (
-                      <button
-                        onClick={() => onEditar(registro)}
-                        className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                          ? 'hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400'
-                          : 'hover:bg-cyan-100 text-slate-500 hover:text-cyan-700'
-                          }`}
-                        title="Editar"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                    )}
-                    {onDeletar && (
-                      <button
-                        onClick={() => onDeletar(registro.id)}
-                        className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                          ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
-                          : 'hover:bg-red-100 text-slate-500 hover:text-red-700'
-                          }`}
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+                <div className={`flex justify-between items-center pt-3 border-t mt-auto ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                    <Clock size={14} className={theme === 'dark' ? 'text-cyan-500/70' : 'text-cyan-600/70'} />
+                    <span>{formatarDataHora(registro.dataHora)}</span>
+                    <span className="text-slate-300">•</span>
+                    <span>{tempoRelativo(registro.dataHora)}</span>
                   </div>
-                )}
-              </div>
-            </motion.div>
-          ))
+
+                  {(onEditar || onDeletar || onVisualizar) && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+                      {onVisualizar && (
+                        <button
+                          onClick={() => onVisualizar(registro)}
+                          className={`p-2 rounded-lg transition-colors ${theme === 'dark'
+                            ? 'hover:bg-blue-500/20 text-slate-400 hover:text-blue-400'
+                            : 'hover:bg-blue-100 text-slate-500 hover:text-blue-700'
+                            }`}
+                          title="Visualizar"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      )}
+                      {/* Hide Edit/Delete for Registrado items */}
+                      {!isRegistrado && onEditar && (
+                        <button
+                          onClick={() => onEditar(registro)}
+                          className={`p-2 rounded-lg transition-colors ${theme === 'dark'
+                            ? 'hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400'
+                            : 'hover:bg-cyan-100 text-slate-500 hover:text-cyan-700'
+                            }`}
+                          title="Editar"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
+                      {!isRegistrado && onDeletar && (
+                        <button
+                          onClick={() => onDeletar(registro.id)}
+                          className={`p-2 rounded-lg transition-colors ${theme === 'dark'
+                            ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
+                            : 'hover:bg-red-100 text-slate-500 hover:text-red-700'
+                            }`}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })
         )}
       </motion.div>
 
@@ -518,7 +646,8 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
           </button>
         </div>
       )}
-    </motion.section>
+
+    </motion.section >
   );
 };
 

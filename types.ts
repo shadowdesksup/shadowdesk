@@ -4,7 +4,7 @@ import React from 'react';
 export type TipoSolicitante = 'Docente' | 'Aluno' | 'Aluno - Educação Especial' | 'Aluno - Permanência' | 'Servidor' | 'Estagiário' | 'Visitante' | 'Faxineiro(a)' | 'Médico' | 'Secretário(a)' | 'Terceirizado' | 'Outro';
 
 // Status do atendimento
-export type StatusAtendimento = 'Pendente' | 'Atendido';
+export type StatusAtendimento = 'Pendente' | 'Atendido' | 'Registrado';
 
 // Registro de atendimento informal
 export interface RegistroAtendimento {

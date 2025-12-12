@@ -174,7 +174,10 @@ function App() {
                 setModalConfirmacao({ isOpen: true, id });
               }}
               onAtualizarStatus={async (id, novoStatus) => {
-                await atualizar(id, { status: novoStatus });
+                await atualizar(id, {
+                  status: novoStatus,
+                  dataHora: new Date().toISOString()
+                });
               }}
               theme={theme}
             />
@@ -223,7 +226,10 @@ function App() {
                   setModalConfirmacao({ isOpen: true, id });
                 }}
                 onAtualizarStatus={async (id, novoStatus) => {
-                  await atualizar(id, { status: novoStatus });
+                  await atualizar(id, {
+                    status: novoStatus,
+                    dataHora: new Date().toISOString()
+                  });
                 }}
                 theme={theme}
               />
@@ -245,7 +251,10 @@ function App() {
                 setModalConfirmacao({ isOpen: true, id });
               }}
               onAtualizarStatus={async (id, novoStatus) => {
-                await atualizar(id, { status: novoStatus });
+                await atualizar(id, {
+                  status: novoStatus,
+                  dataHora: new Date().toISOString()
+                });
               }}
               theme={theme}
             />
