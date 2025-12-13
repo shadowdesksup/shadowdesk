@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Bell,
@@ -10,7 +10,14 @@ import {
   Send,
   Search,
   User,
-  Play
+  Play,
+  Check,
+  BellRing,
+  AlertTriangle,
+  Music,
+  Siren,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { Lembrete, CorLembrete, SomNotificacao } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
@@ -31,21 +38,25 @@ interface LembreteModalProps {
   buscarUsuarios?: (termo: string) => Promise<Array<{ uid: string; email: string; nomeCompleto: string }>>;
 }
 
-const CORES: { valor: CorLembrete; label: string; classe: string }[] = [
-  { valor: 'amarelo', label: 'Amarelo', classe: 'bg-yellow-200 hover:bg-yellow-300' },
-  { valor: 'rosa', label: 'Rosa', classe: 'bg-pink-200 hover:bg-pink-300' },
-  { valor: 'azul', label: 'Azul', classe: 'bg-blue-200 hover:bg-blue-300' },
-  { valor: 'verde', label: 'Verde', classe: 'bg-green-200 hover:bg-green-300' },
-  { valor: 'laranja', label: 'Laranja', classe: 'bg-orange-200 hover:bg-orange-300' },
-  { valor: 'roxo', label: 'Roxo', classe: 'bg-purple-200 hover:bg-purple-300' }
+const CORES: { valor: CorLembrete; label: string; classe: string; border: string }[] = [
+  { valor: 'rose', label: 'Rose', classe: 'bg-rose-200 hover:bg-rose-300', border: 'border-rose-300' },
+  { valor: 'blush', label: 'Blush', classe: 'bg-red-200 hover:bg-red-300', border: 'border-red-300' },
+  { valor: 'peach', label: 'Peach', classe: 'bg-orange-200 hover:bg-orange-300', border: 'border-orange-300' },
+  { valor: 'sand', label: 'Sand', classe: 'bg-amber-200 hover:bg-amber-300', border: 'border-amber-300' },
+  { valor: 'mint', label: 'Mint', classe: 'bg-emerald-200 hover:bg-emerald-300', border: 'border-emerald-300' },
+  { valor: 'sage', label: 'Sage', classe: 'bg-green-200 hover:bg-green-300', border: 'border-green-300' },
+  { valor: 'sky', label: 'Sky', classe: 'bg-cyan-200 hover:bg-cyan-300', border: 'border-cyan-300' },
+  { valor: 'periwinkle', label: 'Peri', classe: 'bg-indigo-300 hover:bg-indigo-400', border: 'border-indigo-400' },
+  { valor: 'lavender', label: 'Lavender', classe: 'bg-purple-300 hover:bg-purple-400', border: 'border-purple-400' },
+  { valor: 'mist', label: 'Mist', classe: 'bg-slate-300 hover:bg-slate-400', border: 'border-slate-400' }
 ];
 
-const SONS: { valor: SomNotificacao; label: string; emoji: string }[] = [
-  { valor: 'sino', label: 'Sino', emoji: '🔔' },
-  { valor: 'campainha', label: 'Campainha', emoji: '🛎️' },
-  { valor: 'alerta', label: 'Alerta', emoji: '⚠️' },
-  { valor: 'gentil', label: 'Gentil', emoji: '🎵' },
-  { valor: 'urgente', label: 'Urgente', emoji: '🚨' }
+const SONS: { valor: SomNotificacao; label: string; icon: React.ElementType }[] = [
+  { valor: 'sino', label: 'Sino Digital', icon: Bell },
+  { valor: 'campainha', label: 'Campainha', icon: BellRing },
+  { valor: 'alerta', label: 'Alerta Sistema', icon: AlertTriangle },
+  { valor: 'gentil', label: 'Melodia Suave', icon: Music },
+  { valor: 'urgente', label: 'Sirene Urgente', icon: Siren }
 ];
 
 const LembreteModal: React.FC<LembreteModalProps> = ({
@@ -80,8 +91,12 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
     agora.setHours(agora.getHours() + 1);
     return `${String(agora.getHours()).padStart(2, '0')}:00`;
   });
-  const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'amarelo');
+
+  const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'rose');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
+
+  // View State for Sound Selection Overlay
+  const [view, setView] = useState<'form' | 'sound_selection'>('form');
 
   // Estados de compartilhamento
   const [mostrarEnviar, setMostrarEnviar] = useState(false);
@@ -166,291 +181,350 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <AnimatePresence>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-lg rounded-2xl border overflow-hidden ${theme === 'dark'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-lg rounded-2xl border overflow-hidden flex flex-col relative max-h-[85vh] ${theme === 'dark'
             ? 'bg-slate-900 border-white/10'
             : 'bg-white border-slate-200 shadow-2xl'
-          }`}
-      >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
-          }`}>
-          <h2 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
-            }`}>
-            <Bell className="text-cyan-400" size={24} />
-            {lembrete ? 'Editar Lembrete' : 'Novo Lembrete'}
-          </h2>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-100'
-              }`}
-          >
-            <X size={20} className={theme === 'dark' ? 'text-white' : 'text-slate-600'} />
-          </motion.button>
-        </div>
-
-        {/* Conteúdo */}
-        <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* Título */}
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-              }`}>
-              Título *
-            </label>
-            <input
-              type="text"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex: Reunião importante"
-              className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
-                  ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
-                  : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-            />
-          </div>
-
-          {/* Descrição */}
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-              }`}>
-              Descrição
-            </label>
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Detalhes do lembrete..."
-              rows={3}
-              className={`w-full px-4 py-2 rounded-lg border resize-none ${theme === 'dark'
-                  ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
-                  : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-            />
-          </div>
-
-          {/* Data e Hora */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1 flex items-center gap-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-                }`}>
-                <Calendar size={14} />
-                Data
-              </label>
-              <input
-                type="date"
-                value={data}
-                onChange={(e) => setData(e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
-                    ? 'bg-white/5 border-white/10 text-white'
-                    : 'bg-white border-slate-200 text-slate-800'
-                  } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-              />
+            }`}
+        >
+          {/* Main Content (Form) */}
+          <div className={`flex flex-col h-full transition-transform duration-300 ${view === 'form' ? 'translate-x-0' : '-translate-x-full'}`}>
+            {/* Header */}
+            <div className={`flex items-center justify-between p-4 border-b shrink-0 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+              <h2 className={`text-lg font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                <Bell className="text-cyan-400" size={20} />
+                {lembrete ? 'Editar' : 'Novo Lembrete'}
+              </h2>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className={`p-1.5 rounded-lg ${theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-100'}`}
+              >
+                <X size={18} className={theme === 'dark' ? 'text-white' : 'text-slate-600'} />
+              </motion.button>
             </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1 flex items-center gap-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-                }`}>
-                <Clock size={14} />
-                Hora
-              </label>
-              <input
-                type="time"
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
-                    ? 'bg-white/5 border-white/10 text-white'
-                    : 'bg-white border-slate-200 text-slate-800'
-                  } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-              />
-            </div>
-          </div>
 
-          {/* Cor */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 flex items-center gap-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-              }`}>
-              <Palette size={14} />
-              Cor do Lembrete
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {CORES.map((c) => (
-                <motion.button
-                  key={c.valor}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setCor(c.valor)}
-                  className={`w-10 h-10 rounded-lg ${c.classe} ${cor === c.valor ? 'ring-2 ring-cyan-500 ring-offset-2' : ''
-                    } transition-all`}
-                  title={c.label}
+            {/* Conteúdo Scrollable */}
+            <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+              {/* Título */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Ex: Reunião importante"
+                  className={`w-full px-3 py-2 rounded-lg border text-sm ${theme === 'dark'
+                    ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
+                    : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                    } focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all`}
                 />
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Som de Notificação */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 flex items-center gap-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-              }`}>
-              <Volume2 size={14} />
-              Som de Notificação
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {SONS.map((s) => (
-                <motion.button
-                  key={s.valor}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSomNotificacao(s.valor)}
-                  className={`px-3 py-2 rounded-lg flex items-center gap-2 ${somNotificacao === s.valor
-                      ? 'bg-cyan-500 text-white'
-                      : theme === 'dark'
-                        ? 'bg-white/10 text-slate-300 hover:bg-white/20'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    } transition-all`}
-                >
-                  <span>{s.emoji}</span>
-                  <span className="text-sm">{s.label}</span>
-                  <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.8 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTestarSom(s.valor);
-                    }}
-                    className="ml-1 opacity-60 hover:opacity-100"
-                    title="Testar som"
+              {/* Descrição */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Descrição <span className="text-[10px] font-normal lowercase opacity-70">(opcional)</span>
+                </label>
+                <textarea
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Detalhes..."
+                  rows={2}
+                  className={`w-full px-3 py-2 rounded-lg border resize-none text-sm ${theme === 'dark'
+                    ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
+                    : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                    } focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all`}
+                />
+              </div>
+
+              {/* Data e Hora */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Data
+                  </label>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <Calendar size={14} className="text-cyan-500 shrink-0" />
+                    <input
+                      type="date"
+                      value={data}
+                      onChange={(e) => setData(e.target.value)}
+                      className="bg-transparent border-none p-0 text-sm focus:ring-0 w-full text-inherit outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Hora
+                  </label>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <Clock size={14} className="text-cyan-500 shrink-0" />
+                    <input
+                      type="time"
+                      value={hora}
+                      onChange={(e) => setHora(e.target.value)}
+                      className="bg-transparent border-none p-0 text-sm focus:ring-0 w-full text-inherit outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Cor e Som Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                {/* Som Selection Trigger - More Compact */}
+                <div>
+                  <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Som
+                  </label>
+                  <button
+                    onClick={() => setView('sound_selection')}
+                    className={`w-full px-3 py-2 rounded-lg border flex items-center justify-between text-sm ${theme === 'dark'
+                      ? 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                      : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                      } transition-colors`}
                   >
-                    <Play size={12} />
+                    <div className="flex items-center gap-2 truncate">
+                      {(() => {
+                        const sound = SONS.find(s => s.valor === somNotificacao);
+                        const Icon = sound?.icon || Bell;
+                        return <Icon className="text-cyan-500 shrink-0" size={16} />;
+                      })()}
+                      <span className="truncate">
+                        {SONS.find(s => s.valor === somNotificacao)?.label}
+                      </span>
+                    </div>
+                    <ChevronRight size={16} className="opacity-50 shrink-0" />
+                  </button>
+                </div>
+
+                {/* Cor Selection - Compact */}
+                <div>
+                  <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Cor
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {CORES.slice(0, 5).map((c) => ( // First row
+                      <motion.button
+                        key={c.valor}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setCor(c.valor)}
+                        className={`w-8 h-8 rounded-full ${c.classe} border ${cor === c.valor ? 'border-cyan-500 shadow-md scale-110' : 'border-transparent'
+                          } transition-all relative flex items-center justify-center`}
+                        title={c.label}
+                      >
+                        {cor === c.valor && (
+                          <div className="text-slate-800/60">
+                            <Check size={14} strokeWidth={3} />
+                          </div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {CORES.slice(5).map((c) => ( // Second row
+                      <motion.button
+                        key={c.valor}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setCor(c.valor)}
+                        className={`w-8 h-8 rounded-full ${c.classe} border ${cor === c.valor ? 'border-cyan-500 shadow-md scale-110' : 'border-transparent'
+                          } transition-all relative flex items-center justify-center`}
+                        title={c.label}
+                      >
+                        {cor === c.valor && (
+                          <div className="text-slate-800/60">
+                            <Check size={14} strokeWidth={3} />
+                          </div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Erro */}
+              {erro && (
+                <div className="p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
+                  {erro}
+                </div>
+              )}
+
+              {/* Enviar para Alguém */}
+              {lembrete && onEnviar && (
+                <div className={`border-t pt-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setMostrarEnviar(!mostrarEnviar)}
+                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm ${theme === 'dark'
+                      ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                      } transition-colors`}
+                  >
+                    <Send size={14} />
+                    Enviar para amigo
                   </motion.button>
-                </motion.button>
-              ))}
-            </div>
-          </div>
 
-          {/* Erro */}
-          {erro && (
-            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
-              {erro}
+                  <AnimatePresence>
+                    {mostrarEnviar && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 overflow-hidden"
+                      >
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                          <input
+                            type="text"
+                            value={termoBusca}
+                            onChange={(e) => setTermoBusca(e.target.value)}
+                            placeholder="Email do amigo"
+                            className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${theme === 'dark'
+                              ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
+                              : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                              } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                          />
+                        </div>
+                        {/* Compact user list logic would go here if needed, keeping simple for now */}
+                        {!buscando && usuariosEncontrados.length > 0 && (
+                          <div className={`mt-2 rounded-lg border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                            {usuariosEncontrados.map((usuario) => (
+                              <motion.button
+                                key={usuario.uid}
+                                whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                                onClick={() => handleEnviarPara(usuario)}
+                                className={`w-full flex items-center gap-3 p-2 text-left text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                              >
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                                  {usuario.nomeCompleto.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="truncate">
+                                  <p className="font-medium truncate">{usuario.nomeCompleto}</p>
+                                </div>
+                              </motion.button>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Seção de Enviar para Alguém (apenas para edição) */}
-          {lembrete && onEnviar && (
-            <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
-              }`}>
+            {/* Footer */}
+            <div className={`flex gap-3 p-4 border-t shrink-0 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setMostrarEnviar(!mostrarEnviar)}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark'
-                    ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                onClick={onClose}
+                className={`py-2 px-4 rounded-lg font-medium text-sm ${theme === 'dark'
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                   } transition-colors`}
               >
-                <Send size={16} />
-                Enviar para alguém
+                Cancelar
               </motion.button>
-
-              {mostrarEnviar && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-4"
-                >
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                      type="text"
-                      value={termoBusca}
-                      onChange={(e) => setTermoBusca(e.target.value)}
-                      placeholder="Buscar usuário por nome ou email..."
-                      className={`w-full pl-10 pr-4 py-2 rounded-lg border ${theme === 'dark'
-                          ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
-                          : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
-                        } focus:outline-none focus:ring-2 focus:ring-purple-500`}
-                    />
-                  </div>
-
-                  {buscando && (
-                    <div className="mt-2 text-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto" />
-                    </div>
-                  )}
-
-                  {!buscando && usuariosEncontrados.length > 0 && (
-                    <div className={`mt-2 rounded-lg border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
-                      }`}>
-                      {usuariosEncontrados.map((usuario) => (
-                        <motion.button
-                          key={usuario.uid}
-                          whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
-                          onClick={() => handleEnviarPara(usuario)}
-                          className={`w-full flex items-center gap-3 p-3 text-left ${theme === 'dark' ? 'text-white' : 'text-slate-800'
-                            }`}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                            {usuario.nomeCompleto.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium">{usuario.nomeCompleto}</p>
-                            <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                              {usuario.email}
-                            </p>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  )}
-
-                  {!buscando && termoBusca.length >= 2 && usuariosEncontrados.length === 0 && (
-                    <p className={`mt-2 text-center py-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-                      }`}>
-                      Nenhum usuário encontrado
-                    </p>
-                  )}
-                </motion.div>
-              )}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSalvar}
+                disabled={salvando}
+                className="flex-1 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 disabled:opacity-50 transition-all"
+              >
+                {salvando ? 'Salvando...' : lembrete ? 'Salvar' : 'Criar Lembrete'}
+              </motion.button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className={`flex gap-3 p-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
-          }`}>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onClose}
-            className={`flex-1 py-2 rounded-lg font-medium ${theme === 'dark'
-                ? 'bg-white/10 text-white hover:bg-white/20'
-                : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
-              } transition-colors`}
-          >
-            Cancelar
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSalvar}
-            disabled={salvando}
-            className="flex-1 py-2 rounded-lg font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 disabled:opacity-50 transition-all"
-          >
-            {salvando ? 'Salvando...' : lembrete ? 'Salvar Alterações' : 'Criar Lembrete'}
-          </motion.button>
-        </div>
+          {/* Sound Selection Overlay */}
+          <div className={`absolute inset-0 z-20 flex flex-col transition-transform duration-300 ${view === 'sound_selection' ? 'translate-x-0' : 'translate-x-full'} ${theme === 'dark' ? 'bg-slate-900' : 'bg-white'}`}>
+            <div className={`flex items-center gap-3 p-4 border-b shrink-0 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+              <button
+                onClick={() => setView('form')}
+                className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-100'}`}
+              >
+                <ChevronLeft size={20} className={theme === 'dark' ? 'text-white' : 'text-slate-800'} />
+              </button>
+              <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                Escolher Som
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {SONS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={s.valor}
+                    className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${somNotificacao === s.valor
+                      ? (theme === 'dark' ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-cyan-50 border border-cyan-100')
+                      : (theme === 'dark' ? 'bg-white/5 border border-transparent hover:bg-white/10' : 'bg-slate-50 border border-transparent hover:bg-slate-100')
+                      }`}
+                    onClick={() => {
+                      setSomNotificacao(s.valor);
+                      handleTestarSom(s.valor);
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-full ${somNotificacao === s.valor ? 'bg-cyan-500 text-white' : (theme === 'dark' ? 'bg-white/10 text-slate-400' : 'bg-white text-slate-400')
+                        }`}>
+                        <Icon size={18} />
+                      </div>
+                      <span className={`font-medium text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                        {s.label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTestarSom(s.valor);
+                        }}
+                        className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-white/20' : 'hover:bg-white'
+                          }`}
+                        title="Ouvir"
+                      >
+                        <Play size={14} className={somNotificacao === s.valor ? 'text-cyan-500' : (theme === 'dark' ? 'text-slate-400' : 'text-slate-500')} />
+                      </button>
+                      {somNotificacao === s.valor && <Check size={18} className="text-cyan-500" />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className={`p-4 border-t shrink-0 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+              <button
+                onClick={() => setView('form')}
+                className="w-full py-3 rounded-xl font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-opacity"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </AnimatePresence>
   );
 };
 

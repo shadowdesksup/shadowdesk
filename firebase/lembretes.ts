@@ -212,9 +212,38 @@ export const escutarLembretes = (
       (a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime()
     );
 
+
     callback(ordenados);
   }, (error) => {
     console.error("Erro no listener de lembretes:", error);
+  });
+};
+
+/**
+ * Escutar apenas convites de lembretes (pendentes)
+ */
+export const escutarLembretesPendentes = (
+  userId: string,
+  callback: (lembretes: Lembrete[]) => void
+): Unsubscribe => {
+  const q = query(
+    collection(db, COLLECTION_NAME),
+    where('compartilhadoCom', '==', userId),
+    where('aceito', '==', null)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const lembretes: Lembrete[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      lembretes.push({
+        id: docSnap.id,
+        ...data,
+      } as Lembrete);
+    });
+
+    // Mais recentes primeiro
+    callback(lembretes.sort((a, b) => new Date(b.criadoEm || 0).getTime() - new Date(a.criadoEm || 0).getTime()));
   });
 };
 

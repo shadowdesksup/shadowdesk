@@ -18,6 +18,11 @@ interface LembreteCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onFinish?: () => void;
+  readonly?: boolean;
+  onLongPress?: () => void;
+  onSelect?: () => void;
+  selected?: boolean;
+  selectionMode?: boolean;
 }
 
 // Cores dos post-its com variações
@@ -27,48 +32,98 @@ const COR_ESTILOS: Record<CorLembrete, {
   border: string;
   text: string;
   pin: string;
+  gradientStart: string;
+  gradientEnd: string;
 }> = {
-  amarelo: {
-    bg: 'bg-yellow-100',
-    bgLight: 'bg-yellow-50',
-    border: 'border-yellow-300',
-    text: 'text-yellow-900',
-    pin: 'bg-red-500'
+  rose: {
+    bg: 'bg-rose-100',
+    bgLight: 'bg-rose-50',
+    border: 'border-rose-300',
+    text: 'text-rose-900',
+    pin: 'bg-rose-500',
+    gradientStart: '#ffe4e6', // rose-100
+    gradientEnd: '#fecdd3'    // rose-200
   },
-  rosa: {
-    bg: 'bg-pink-100',
-    bgLight: 'bg-pink-50',
-    border: 'border-pink-300',
-    text: 'text-pink-900',
-    pin: 'bg-red-600'
+  blush: {
+    bg: 'bg-red-100',
+    bgLight: 'bg-red-50',
+    border: 'border-red-300',
+    text: 'text-red-900',
+    pin: 'bg-red-500',
+    gradientStart: '#fee2e2', // red-100
+    gradientEnd: '#fecaca'    // red-200
   },
-  azul: {
-    bg: 'bg-blue-100',
-    bgLight: 'bg-blue-50',
-    border: 'border-blue-300',
-    text: 'text-blue-900',
-    pin: 'bg-red-500'
-  },
-  verde: {
-    bg: 'bg-green-100',
-    bgLight: 'bg-green-50',
-    border: 'border-green-300',
-    text: 'text-green-900',
-    pin: 'bg-red-500'
-  },
-  laranja: {
+  peach: {
     bg: 'bg-orange-100',
     bgLight: 'bg-orange-50',
     border: 'border-orange-300',
     text: 'text-orange-900',
-    pin: 'bg-red-500'
+    pin: 'bg-orange-500',
+    gradientStart: '#ffedd5', // orange-100
+    gradientEnd: '#fed7aa'    // orange-200
   },
-  roxo: {
+  sand: {
+    bg: 'bg-amber-100',
+    bgLight: 'bg-amber-50',
+    border: 'border-amber-300',
+    text: 'text-amber-900',
+    pin: 'bg-amber-600',
+    gradientStart: '#fef3c7', // amber-100
+    gradientEnd: '#fde68a'    // amber-200
+  },
+  mint: {
+    bg: 'bg-emerald-100',
+    bgLight: 'bg-emerald-50',
+    border: 'border-emerald-300',
+    text: 'text-emerald-900',
+    pin: 'bg-emerald-500',
+    gradientStart: '#d1fae5', // emerald-100
+    gradientEnd: '#a7f3d0'    // emerald-200
+  },
+  sage: {
+    bg: 'bg-green-100',
+    bgLight: 'bg-green-50',
+    border: 'border-green-300',
+    text: 'text-green-900',
+    pin: 'bg-green-600',
+    gradientStart: '#dcfce7', // green-100
+    gradientEnd: '#bbf7d0'    // green-200
+  },
+  sky: {
+    bg: 'bg-sky-100',
+    bgLight: 'bg-sky-50',
+    border: 'border-sky-300',
+    text: 'text-sky-900',
+    pin: 'bg-sky-500',
+    gradientStart: '#e0f2fe', // sky-100
+    gradientEnd: '#bae6fd'    // sky-200
+  },
+  periwinkle: {
+    bg: 'bg-indigo-100',
+    bgLight: 'bg-indigo-50',
+    border: 'border-indigo-300',
+    text: 'text-indigo-900',
+    pin: 'bg-indigo-500',
+    gradientStart: '#e0e7ff', // indigo-100
+    gradientEnd: '#c7d2fe'    // indigo-200
+  },
+  lavender: {
     bg: 'bg-purple-100',
     bgLight: 'bg-purple-50',
     border: 'border-purple-300',
     text: 'text-purple-900',
-    pin: 'bg-red-500'
+    pin: 'bg-purple-500',
+    gradientStart: '#f3e8ff', // purple-100
+    gradientEnd: '#e9d5ff'    // purple-200
+  },
+  mist: {
+    bg: 'bg-slate-100',
+    bgLight: 'bg-slate-50',
+    border: 'border-slate-300',
+    text: 'text-slate-900',
+    pin: 'bg-slate-500',
+    gradientStart: '#f1f5f9', // slate-100
+    gradientEnd: '#e2e8f0'    // slate-200
   }
 };
 
@@ -78,32 +133,87 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
   onView,
   onEdit,
   onDelete,
-  onFinish
+  onFinish,
+  readonly = false,
+  onLongPress,
+  onSelect,
+  selected = false,
+  selectionMode = false
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const estilos = COR_ESTILOS[lembrete.cor];
+  const estilos = COR_ESTILOS[lembrete.cor] || COR_ESTILOS['rose'];
+  const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+  const ignoreNextClick = React.useRef(false);
 
   const dataHora = new Date(lembrete.dataHora);
   const expirado = lembrete.status === 'pendente' && dataHora < new Date();
   const finalizado = lembrete.status === 'finalizado';
+  const disparado = lembrete.status === 'disparado';
 
   // Rotação aleatória mas consistente baseada no ID
   const rotacao = (lembrete.id.charCodeAt(0) % 7) - 3; // -3 a 3 graus
 
+  const handlePointerDown = () => {
+    if (!selectionMode && onLongPress) {
+      longPressTimer.current = setTimeout(() => {
+        ignoreNextClick.current = true;
+        onLongPress();
+      }, 500); // 500ms para considerar long press
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (ignoreNextClick.current) {
+      ignoreNextClick.current = false;
+      e.stopPropagation();
+      return;
+    }
+
+    if (selectionMode && onSelect) {
+      e.stopPropagation();
+      onSelect();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8, rotate: rotacao - 5 }}
-      animate={{ opacity: 1, scale: 1, rotate: rotacao }}
-      whileHover={{
+      animate={{
+        opacity: 1,
+        scale: selected ? 0.95 : 1,
+        rotate: selected ? 0 : rotacao
+      }}
+      whileHover={!selectionMode ? {
         scale: 1.02,
         rotate: 0,
         zIndex: 10,
-        boxShadow: '0 20px 40px -15px rgba(0,0,0,0.4)'
-      }}
-      transition={{ type: 'spring', stiffness: 300 }}
-      className={`relative ${finalizado ? 'opacity-60' : ''}`}
+      } : {}}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      onClick={handleClick}
+      className={`
+        relative rounded-xl
+        ${disparado ? 'shadow-[0_0_20px_rgba(251,146,60,0.6)]' : ''} 
+        ${finalizado ? 'opacity-60' : ''} 
+        ${selected ? 'ring-2 ring-[rgb(34,211,238)] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.6)] scale-95' : ''}
+      `}
       style={{ transformOrigin: 'top center' }}
     >
+      {/* Indicador de Seleção (Badge discreto) */}
+      {selected && (
+        <div className="absolute -top-2 -right-2 bg-[rgb(34,211,238)] text-white p-1.5 rounded-full shadow-md z-50 animate-in zoom-in duration-200">
+          <CheckCircle size={16} fill="currentColor" className="text-white" />
+        </div>
+      )}
+
       {/* Alfinete 3D */}
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
         <div className="relative">
@@ -123,27 +233,11 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
 
       {/* Card principal (Post-it) */}
       <div
-        className={`
-          ${estilos.bg} ${estilos.border} ${estilos.text}
-          border-2 rounded-lg p-3 pt-5 min-h-[140px]
-          shadow-[4px_4px_10px_rgba(0,0,0,0.15)]
-          relative overflow-hidden flex flex-col justify-between
-          ${expirado ? 'ring-2 ring-red-500 ring-offset-2' : ''}
-        `}
+        className={`${estilos.bg} ${estilos.border} ${estilos.text} border-2 rounded-lg p-3 pt-5 min-h-[140px] shadow-[4px_4px_10px_rgba(0,0,0,0.15)] relative overflow-hidden flex flex-col justify-between ${expirado ? 'ring-2 ring-red-500 ring-offset-2' : ''}`}
         style={{
-          background: `linear-gradient(135deg, ${lembrete.cor === 'amarelo' ? '#fef9c3' :
-            lembrete.cor === 'rosa' ? '#fce7f3' :
-              lembrete.cor === 'azul' ? '#dbeafe' :
-                lembrete.cor === 'verde' ? '#dcfce7' :
-                  lembrete.cor === 'laranja' ? '#fed7aa' :
-                    '#f3e8ff'
-            } 0%, ${lembrete.cor === 'amarelo' ? '#fef08a' :
-              lembrete.cor === 'rosa' ? '#fbcfe8' :
-                lembrete.cor === 'azul' ? '#bfdbfe' :
-                  lembrete.cor === 'verde' ? '#bbf7d0' :
-                    lembrete.cor === 'laranja' ? '#fdba74' :
-                      '#ddd6fe'
-            } 100%)`
+          background: `linear-gradient(135deg, ${estilos.gradientStart} 0%, ${estilos.gradientEnd} 100%)`,
+          fontFamily: "'Caveat', cursive",
+          boxShadow: '2px 4px 8px rgba(0,0,0,0.1)'
         }}
       >
         {/* Faixa de texto animada (ticker) no topo */}
@@ -155,21 +249,26 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
               repeat: Infinity,
               ease: 'linear'
             }}
-            className="whitespace-nowrap text-[10px] font-medium opacity-60 py-0.5"
+            className="whitespace-nowrap text-xs font-sans opacity-70 py-0.5"
           >
-            🔔 {lembrete.titulo} • {dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            {lembrete.titulo} • {dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
           </motion.div>
         </div>
 
         {/* Badge de status */}
         {expirado && (
-          <div className="absolute top-6 right-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse z-10">
+          <div className="absolute top-6 right-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold font-sans rounded-full animate-pulse z-10 transition-shadow shadow-sm">
             EXPIRADO
           </div>
         )}
         {finalizado && (
-          <div className="absolute top-6 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full z-10">
+          <div className="absolute top-6 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold font-sans rounded-full z-10 shadow-sm">
             ✓ CONCLUÍDO
+          </div>
+        )}
+        {disparado && (
+          <div className="absolute top-6 right-2 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold font-sans rounded-full z-10 shadow-sm">
+            DISPARADO
           </div>
         )}
 
@@ -202,8 +301,8 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
           )}
 
           {/* Data e hora */}
-          <div className="flex items-center gap-1 text-xs opacity-70">
-            <Clock size={12} />
+          <div className="flex items-center gap-1.5 text-sm font-sans text-gray-800/90 mt-1">
+            <Clock size={14} />
             <span>
               {dataHora.toLocaleDateString('pt-BR')} às {dataHora.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
@@ -214,85 +313,94 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
 
           {/* Ações relativas (agora abaixo da data) */}
           <div className="flex gap-1 justify-end mt-1">
-            {onView && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onView}
-                className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
-                title="Visualizar"
-              >
-                <Eye size={14} />
-              </motion.button>
-            )}
-
-            {onEdit && !finalizado && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onEdit}
-                className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
-                title="Editar"
-              >
-                <Edit3 size={14} />
-              </motion.button>
-            )}
-
-            {onFinish && !finalizado && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onFinish}
-                className="p-1.5 rounded-full bg-green-500/30 hover:bg-green-500/50 transition-colors"
-                title="Marcar como concluído"
-              >
-                <CheckCircle size={14} />
-              </motion.button>
-            )}
-
-            {onDelete && (
-              confirmDelete ? (
-                <div className="flex gap-1">
+            {!selectionMode && (
+              <>
+                {onView && (
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete();
-                      setConfirmDelete(false);
-                    }}
-                    className="p-1.5 rounded-full bg-red-500 text-white"
-                    title="Confirmar exclusão"
+                    onClick={onView}
+                    className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
+                    title="Visualizar"
                   >
-                    <Trash2 size={14} />
+                    <Eye size={14} />
                   </motion.button>
+                )}
+
+                {onEdit && !finalizado && !readonly && (
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDelete(false);
-                    }}
-                    className="p-1.5 rounded-full bg-black/20"
-                    title="Cancelar"
+                    onClick={onEdit}
+                    className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
+                    title="Editar"
                   >
-                    ✕
+                    <Edit3 size={14} />
                   </motion.button>
-                </div>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete(true);
-                  }}
-                  className="p-1.5 rounded-full bg-red-500/30 hover:bg-red-500/50 transition-colors"
-                  title="Excluir"
-                >
-                  <Trash2 size={14} />
-                </motion.button>
-              )
+                )}
+
+                {onFinish && !finalizado && !readonly && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={disparado ? { opacity: [1, 0.4, 1] } : {}}
+                    transition={disparado ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
+                    onClick={onFinish}
+                    className={`p-1.5 rounded-full transition-colors ${disparado
+                      ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                      : 'bg-green-500/30 hover:bg-green-500/50'
+                      }`}
+                    title="Marcar como concluído"
+                  >
+                    <CheckCircle size={14} />
+                  </motion.button>
+                )}
+
+                {onDelete && (
+                  confirmDelete ? (
+                    <div className="flex gap-1">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete();
+                          setConfirmDelete(false);
+                        }}
+                        className="p-1.5 rounded-full bg-red-500 text-white"
+                        title="Confirmar exclusão"
+                      >
+                        <Trash2 size={14} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDelete(false);
+                        }}
+                        className="p-1.5 rounded-full bg-black/20"
+                        title="Cancelar"
+                      >
+                        ✕
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDelete(true);
+                      }}
+                      className="p-1.5 rounded-full bg-red-500/30 hover:bg-red-500/50 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 size={14} />
+                    </motion.button>
+                  )
+                )}
+              </>
             )}
           </div>
         </div>
@@ -305,7 +413,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
           }}
         />
       </div>
-    </motion.div>
+    </motion.div >
   );
 };
 

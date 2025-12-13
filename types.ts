@@ -26,9 +26,34 @@ export interface RegistroAtendimento {
 
 // Usuário do sistema
 export interface Usuario {
-  username: string;
+  uid: string; // ID do Firebase Auth
+  email: string;
   nomeCompleto: string;
-  senha: string; // Em produção seria hash
+  photoURL?: string;
+  friendRequestsSent: string[]; // UIDs
+  friendRequestsReceived: string[]; // UIDs
+  friends: string[]; // UIDs
+  username?: string; // Legacy support
+  senha?: string; // Legacy support
+}
+
+export interface FriendRequest {
+  id: string;
+  fromId: string;
+  fromName: string;
+  fromEmail: string;
+  toId: string;
+  toEmail: string; // Facilita busca
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+export interface Friend {
+  id: string; // UID
+  email: string;
+  name: string;
+  photoURL?: string;
+  addedAt: string;
 }
 
 // Item de navegação
@@ -122,8 +147,18 @@ export type StatusLembrete = 'pendente' | 'disparado' | 'expirado' | 'finalizado
 // Som de notificação
 export type SomNotificacao = 'sino' | 'campainha' | 'alerta' | 'gentil' | 'urgente';
 
-// Cores dos lembretes (post-it)
-export type CorLembrete = 'amarelo' | 'rosa' | 'azul' | 'verde' | 'laranja' | 'roxo';
+// Cores dos lembretes (Nova Paleta Pastel)
+export type CorLembrete =
+  | 'rose'       // Rosinha suave
+  | 'blush'      // Pêssego rosado
+  | 'peach'      // Pêssego
+  | 'sand'       // Areia/Bege
+  | 'mint'       // Menta suave
+  | 'sage'       // Verde sálvia
+  | 'sky'        // Azul céu
+  | 'periwinkle' // Azul arroxeado
+  | 'lavender'   // Lavanda
+  | 'mist';      // Cinza neblina
 
 // Lembrete
 export interface Lembrete {
@@ -146,7 +181,7 @@ export interface Lembrete {
 }
 
 // Tipo de notificação geral do sistema
-export type TipoNotificacao = 'lembrete_disparado' | 'lembrete_recebido' | 'lembrete_aceito' | 'lembrete_recusado';
+export type TipoNotificacao = 'lembrete_disparado' | 'lembrete_recebido' | 'lembrete_aceito' | 'lembrete_recusado' | 'solicitacao_amizade';
 
 // Notificação
 export interface Notificacao {
@@ -155,6 +190,7 @@ export interface Notificacao {
   titulo: string;
   mensagem: string;
   lembreteId?: string;
+  friendRequestId?: string;
   remetenteId?: string;
   remetenteNome?: string;
   lida: boolean;

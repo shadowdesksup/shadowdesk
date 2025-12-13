@@ -77,8 +77,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   onClose();
                 }}
                 className={`flex-1 px-4 py-2.5 rounded-xl font-bold text-white transition-all shadow-lg ${isDestructive
-                    ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-900/20'
-                    : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-cyan-900/20'
+                  ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-900/20'
+                  : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-cyan-900/20'
                   }`}
               >
                 {confirmText}

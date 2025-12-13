@@ -5,6 +5,7 @@ import {
   atualizarLembrete,
   deletarLembrete,
   escutarLembretes,
+  escutarLembretesPendentes,
   listarLembretesRecebidos,
   enviarLembrete,
   aceitarLembrete as aceitarLembreteService,
@@ -47,11 +48,11 @@ export interface UseRemindersReturn {
   // Filtros úteis
   pendentes: Lembrete[];
   expirados: Lembrete[];
+  finalizados: Lembrete[];
   hoje: Lembrete[];
   proximoLembrete: Lembrete | null;
 
-  // Refresh
-  recarregar: () => void;
+
 }
 
 export const useReminders = (userId: string, userNome: string): UseRemindersReturn => {
@@ -60,17 +61,6 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Carregar lembretes recebidos (pendentes de aceitação)
-  const carregarLembretesRecebidos = useCallback(async () => {
-    try {
-      const recebidos = await listarLembretesRecebidos(userId);
-      // Filtrar apenas os pendentes (aceito === null)
-      setLembretesRecebidos(recebidos.filter(l => l.aceito === null));
-    } catch (err) {
-      console.error('Erro ao carregar lembretes recebidos:', err);
-    }
-  }, [userId]);
-
   // Escutar lembretes em tempo real
   useEffect(() => {
     if (!userId) return;
@@ -78,16 +68,21 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     setLoading(true);
     setError(null);
 
-    const unsubscribe = escutarLembretes(userId, (novosLembretes) => {
+    const unsubscribeLembretes = escutarLembretes(userId, (novosLembretes) => {
       setLembretes(novosLembretes);
       setLoading(false);
     });
 
-    // Carregar lembretes recebidos pendentes
-    carregarLembretesRecebidos();
+    // Escutar convites pendentes
+    const unsubscribePendentes = escutarLembretesPendentes(userId, (novosPendentes) => {
+      setLembretesRecebidos(novosPendentes);
+    });
 
-    return () => unsubscribe();
-  }, [userId, carregarLembretesRecebidos]);
+    return () => {
+      unsubscribeLembretes();
+      unsubscribePendentes();
+    };
+  }, [userId]);
 
   // Criar lembrete
   const criar = useCallback(async (dados: {
@@ -215,10 +210,7 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     return usuarios.filter(u => u.uid !== userId);
   }, [userId]);
 
-  // Recarregar dados
-  const recarregar = useCallback(() => {
-    carregarLembretesRecebidos();
-  }, [carregarLembretesRecebidos]);
+
 
   // Filtros computados
   const agora = new Date();
@@ -236,6 +228,8 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     const dataLembrete = new Date(l.dataHora);
     return dataLembrete >= hojeStart && dataLembrete < hojeEnd;
   });
+
+  const finalizados = lembretes.filter(l => l.status === 'finalizado');
 
   // Próximo lembrete (pendente e futuro)
   const proximoLembrete = pendentes
@@ -257,8 +251,9 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     buscarUsuariosParaCompartilhar,
     pendentes,
     expirados,
+    finalizados,
     hoje,
     proximoLembrete,
-    recarregar
+
   };
 };
