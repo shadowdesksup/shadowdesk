@@ -1,12 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Estatisticas } from '../types';
+import { Estatisticas, Lembrete } from '../types';
 import { TrendingUp, Clock, CheckCircle2, BarChart3, Calendar } from 'lucide-react';
 import { obterDiasRestantesEncerramento } from '../utils/helpers';
+import ReminderTicker from './ReminderTicker';
 
 interface DashboardProps {
   estatisticas: Estatisticas;
   theme?: 'dark' | 'light';
+  proximoLembrete?: Lembrete | null;
+  onLembreteClick?: () => void;
 }
 
 const StatCard: React.FC<{
@@ -64,7 +67,7 @@ const StatCard: React.FC<{
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark' }) => {
+const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', proximoLembrete, onLembreteClick }) => {
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
@@ -72,15 +75,40 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark' }) =
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
-        <h2 className={`text-3xl font-bold tracking-tight mb-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
-          }`}>
-          Dashboard
-        </h2>
-        <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-          }`}>
-          Visão geral dos atendimentos registrados
-        </p>
+        <div>
+          <h2 className={`text-3xl font-bold tracking-tight mb-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+            }`}>
+            Dashboard
+          </h2>
+          <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            }`}>
+            Visão geral dos atendimentos registrados
+          </p>
+        </div>
+
+        {/* Ticker de Lembrete ao lado direito */}
+        {proximoLembrete && (
+          <div className="hidden md:block">
+            <ReminderTicker
+              lembrete={proximoLembrete}
+              theme={theme}
+              onClick={onLembreteClick}
+            />
+          </div>
+        )}
+
+        {/* Ticker visível apenas em mobile (abaixo do título) */}
+        {proximoLembrete && (
+          <div className="md:hidden w-full">
+            <ReminderTicker
+              lembrete={proximoLembrete}
+              theme={theme}
+              onClick={onLembreteClick}
+            />
+          </div>
+        )}
       </motion.div>
 
       {/* Cards de Estatísticas */}

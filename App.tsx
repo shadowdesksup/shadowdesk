@@ -19,6 +19,15 @@ import GerarDescritivos from './components/GerarDescritivos';
 import { SessionExpiredModal } from './components/SessionExpiredModal';
 import { RegistrationSuspendedModal } from './components/RegistrationSuspendedModal';
 
+// Sistema de Lembretes
+import LembretesPage from './components/LembretesPage';
+import ReminderAlarmPopup from './components/ReminderAlarmPopup';
+import DashboardReminders from './components/DashboardReminders';
+import LembreteViewModal from './components/LembreteViewModal';
+import { useReminders } from './hooks/useReminders';
+import { useReminderAlarm } from './hooks/useReminderAlarm';
+import { Lembrete } from './types';
+
 type TelasAuth = 'login' | 'registro' | 'esqueci-senha';
 
 import { useSessionTimer } from './hooks/useSessionTimer';
@@ -53,6 +62,9 @@ function App() {
   const [telaAuth, setTelaAuth] = useState<TelasAuth>('login');
   const [paginaAtual, setPaginaAtual] = useState('dashboard');
   const [registroEditando, setRegistroEditando] = useState<any>(null);
+
+
+  // Estado para exclusão de REGISTROS
   const [modalConfirmacao, setModalConfirmacao] = useState<{
     isOpen: boolean;
     id: string | null;
@@ -61,9 +73,25 @@ function App() {
     id: null
   });
 
+  // Estado para exclusão de LEMBRETES (Dashboard)
+  const [lembreteParaExcluir, setLembreteParaExcluir] = useState<string | null>(null);
+  const [lembreteParaVisualizar, setLembreteParaVisualizar] = useState<Lembrete | null>(null);
+
   const [mostrarModalExpiracao, setMostrarModalExpiracao] = useState(false);
   const [mostrarModalSuspenso, setMostrarModalSuspenso] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Sistema de Lembretes
+  const userNome = dadosUsuario?.nomeCompleto || usuario?.displayName || usuario?.email || 'Usuário';
+  const remindersData = useReminders(usuario?.uid || '', userNome);
+  const { lembretes, proximoLembrete, deletar: deletarLembrete } = remindersData;
+  const [lembreteDisparado, setLembreteDisparado] = useState<Lembrete | null>(null);
+
+  // Hook de alarme de lembretes
+  useReminderAlarm(lembretes, {
+    userId: usuario?.uid || '',
+    onDisparo: (lembrete) => setLembreteDisparado(lembrete)
+  });
 
   // Efeito para redirecionar para dashboard ao logar
   React.useEffect(() => {
@@ -159,28 +187,53 @@ function App() {
         const estatisticas = obterEstatisticas();
         return (
           <div className="h-full flex flex-col gap-8 pr-8 overflow-y-auto">
-            <Dashboard estatisticas={estatisticas} theme={theme} />
-            <ListaRegistros
-              key="lista-registros-dashboard"
-              registros={registros}
-              limite={15}
-              customMaxHeight="1200px"
-              customMinHeight="1000px"
-              onEditar={(registro) => {
-                setRegistroEditando(registro);
-                setPaginaAtual('novo');
-              }}
-              onDeletar={(id) => {
-                setModalConfirmacao({ isOpen: true, id });
-              }}
-              onAtualizarStatus={async (id, novoStatus) => {
-                await atualizar(id, {
-                  status: novoStatus,
-                  dataHora: new Date().toISOString()
-                });
-              }}
+            <Dashboard
+              estatisticas={estatisticas}
               theme={theme}
+              proximoLembrete={proximoLembrete}
+              onLembreteClick={() => setPaginaAtual('lembretes')}
             />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-[600px]">
+              {/* Lembretes Agendados */}
+              <div className="lg:col-span-5 h-full">
+
+
+                <DashboardReminders
+                  lembretes={lembretes}
+                  theme={theme}
+                  onVerTodos={() => setPaginaAtual('lembretes')}
+                  onDelete={(id) => setLembreteParaExcluir(id)}
+                  onView={(lembrete) => setLembreteParaVisualizar(lembrete)}
+                  deletingId={lembreteParaExcluir}
+                />
+              </div>
+
+              {/* Registros Recentes */}
+              <div className="lg:col-span-7 h-full flex flex-col">
+                <ListaRegistros
+                  key="lista-registros-dashboard"
+                  registros={registros}
+                  limite={10}
+                  customMaxHeight="100%"
+                  customMinHeight="100%"
+                  onEditar={(registro) => {
+                    setRegistroEditando(registro);
+                    setPaginaAtual('novo');
+                  }}
+                  onDeletar={(id) => {
+                    setModalConfirmacao({ isOpen: true, id });
+                  }}
+                  onAtualizarStatus={async (id, novoStatus) => {
+                    await atualizar(id, {
+                      status: novoStatus,
+                      dataHora: new Date().toISOString()
+                    });
+                  }}
+                  theme={theme}
+                />
+              </div>
+            </div>
           </div>
         );
 
@@ -283,6 +336,15 @@ function App() {
           />
         );
 
+      case 'lembretes':
+        return (
+          <LembretesPage
+            key="pagina-lembretes-app"
+            remindersData={remindersData}
+            theme={theme}
+          />
+        );
+
       default:
         return null;
     }
@@ -358,6 +420,8 @@ function App() {
               theme={theme}
               onToggleTheme={toggleTheme}
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+              proximoLembrete={proximoLembrete}
+              onLembreteClick={() => setPaginaAtual('lembretes')}
             />
 
             <main className="flex-1 overflow-y-auto wide:overflow-hidden py-8 px-8 wide:pl-8 wide:pr-0">
@@ -388,6 +452,39 @@ function App() {
           confirmText="Excluir"
           isDestructive={true}
         />
+
+        {/* Modal de Confirmação para Lembretes */}
+        <ConfirmationModal
+          isOpen={!!lembreteParaExcluir}
+          onClose={() => setLembreteParaExcluir(null)}
+          onConfirm={async () => {
+            if (lembreteParaExcluir) {
+              await deletarLembrete(lembreteParaExcluir);
+              setLembreteParaExcluir(null);
+            }
+          }}
+          title="Excluir Lembrete"
+          message="Tem certeza que deseja excluir este lembrete? Ele também será removido da sua agenda."
+          confirmText="Excluir"
+          isDestructive={true}
+        />
+
+        {/* Modal de Visualização de Lembrete */}
+        {lembreteParaVisualizar && (
+          <LembreteViewModal
+            lembrete={lembreteParaVisualizar}
+            onClose={() => setLembreteParaVisualizar(null)}
+            theme={theme}
+          />
+        )}
+
+        {/* Popup de Alarme de Lembrete */}
+        {lembreteDisparado && (
+          <ReminderAlarmPopup
+            lembrete={lembreteDisparado}
+            onDismiss={() => setLembreteDisparado(null)}
+          />
+        )}
       </div>
     </>
   );

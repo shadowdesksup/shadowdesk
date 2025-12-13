@@ -23,5 +23,33 @@ service cloud.firestore {
     match /locais/{document=**} {
       allow read, write: if request.auth != null;
     }
+
+    // Regras para Lembretes
+    match /lembretes/{lembreteId} {
+      // Permitir leitura se for o criador ou se foi compartilhado com o usuário
+      allow read: if request.auth != null && (
+        resource.data.criadoPor == request.auth.uid ||
+        resource.data.compartilhadoCom == request.auth.uid
+      );
+      
+      // Criar: qualquer autenticado (logica de validacao de dados deve ser no app ou via request.resource.data)
+      allow create: if request.auth != null;
+      
+      // Atualizar/Deletar: apenas criador ou destinatário (para aceitar/recusar)
+      allow update, delete: if request.auth != null && (
+        resource.data.criadoPor == request.auth.uid ||
+        resource.data.compartilhadoCom == request.auth.uid
+      );
+    }
+
+    // Regras para Notificações
+    match /notificacoes/{notificacaoId} {
+      // Usuário só pode ler/modificar suas próprias notificações
+      allow read, update, delete: if request.auth != null && (
+        resource.data.userId == request.auth.uid
+      );
+      // Qualquer autenticado pode criar notificação (para enviar a outro usuário)
+      allow create: if request.auth != null;
+    }
   }
 }

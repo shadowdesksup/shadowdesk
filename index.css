@@ -1,8 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
+
 /* Fix caret blinking on non-input elements */
 body {
   caret-color: transparent;
 }
 
-input, textarea, [contenteditable="true"] {
+input,
+textarea,
+[contenteditable="true"] {
   caret-color: auto;
 }

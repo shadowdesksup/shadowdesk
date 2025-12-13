@@ -111,3 +111,53 @@ export interface DescricaoEquipamento {
   criadoEm: string; // timestamp de criação
   atualizadoEm?: string; // timestamp de última atualização
 }
+
+// ==========================================
+// SISTEMA DE LEMBRETES
+// ==========================================
+
+// Status do lembrete
+export type StatusLembrete = 'pendente' | 'disparado' | 'expirado' | 'finalizado';
+
+// Som de notificação
+export type SomNotificacao = 'sino' | 'campainha' | 'alerta' | 'gentil' | 'urgente';
+
+// Cores dos lembretes (post-it)
+export type CorLembrete = 'amarelo' | 'rosa' | 'azul' | 'verde' | 'laranja' | 'roxo';
+
+// Lembrete
+export interface Lembrete {
+  id: string;
+  titulo: string;
+  descricao: string;
+  dataHora: string; // ISO 8601 - quando deve disparar
+  cor: CorLembrete;
+  somNotificacao: SomNotificacao;
+  status: StatusLembrete;
+  criadoPor: string; // userId
+  criadoPorNome?: string; // nome do criador
+  compartilhadoCom?: string; // userId (se enviado para outro)
+  compartilhadoComNome?: string; // nome do destinatário
+  remetenteId?: string; // userId de quem enviou (se recebido)
+  remetenteNome?: string;
+  aceito?: boolean | null; // null = pendente, true = aceito, false = recusado
+  criadoEm: string;
+  atualizadoEm?: string;
+}
+
+// Tipo de notificação geral do sistema
+export type TipoNotificacao = 'lembrete_disparado' | 'lembrete_recebido' | 'lembrete_aceito' | 'lembrete_recusado';
+
+// Notificação
+export interface Notificacao {
+  id: string;
+  tipo: TipoNotificacao;
+  titulo: string;
+  mensagem: string;
+  lembreteId?: string;
+  remetenteId?: string;
+  remetenteNome?: string;
+  lida: boolean;
+  criadoEm: string;
+  userId: string;
+}

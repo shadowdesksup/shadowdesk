@@ -1,0 +1,177 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Notificacao, SomNotificacao } from '../types';
+import {
+  escutarNotificacoes,
+  marcarComoLida as marcarComoLidaService,
+  marcarTodasComoLidas as marcarTodasComoLidasService
+} from '../firebase/notificacoes';
+
+interface UseNotificationsReturn {
+  notificacoes: Notificacao[];
+  naoLidas: number;
+  loading: boolean;
+  marcarLida: (notificacaoId: string) => Promise<void>;
+  marcarTodasLidas: () => Promise<void>;
+  tocarSom: (som: SomNotificacao) => void;
+  pararSom: () => void;
+  somTocando: boolean;
+}
+
+// Mapeamento de sons para frequências (Web Audio API fallback)
+const FREQUENCIAS_SOM: Record<SomNotificacao, { freq: number; duration: number; pattern: number[] }> = {
+  sino: { freq: 800, duration: 200, pattern: [1, 0.5, 1, 0.5, 1] },
+  campainha: { freq: 1000, duration: 150, pattern: [1, 0.3, 1, 0.3, 1, 0.3, 1] },
+  alerta: { freq: 600, duration: 300, pattern: [1, 0.2, 1] },
+  gentil: { freq: 440, duration: 400, pattern: [1] },
+  urgente: { freq: 1200, duration: 100, pattern: [1, 0.1, 1, 0.1, 1, 0.1, 1, 0.1, 1, 0.5, 1, 0.1, 1, 0.1, 1, 0.1, 1, 0.1, 1] }
+};
+
+export const useNotifications = (userId: string): UseNotificationsReturn => {
+  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [somTocando, setSomTocando] = useState(false);
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Escutar notificações em tempo real
+  useEffect(() => {
+    if (!userId) return;
+
+    setLoading(true);
+
+    const unsubscribe = escutarNotificacoes(userId, (novasNotificacoes) => {
+      setNotificacoes(novasNotificacoes);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Calcular não lidas
+  const naoLidas = notificacoes.filter(n => !n.lida).length;
+
+  // Marcar notificação como lida
+  const marcarLida = useCallback(async (notificacaoId: string) => {
+    try {
+      await marcarComoLidaService(notificacaoId);
+      setNotificacoes(prev =>
+        prev.map(n => n.id === notificacaoId ? { ...n, lida: true } : n)
+      );
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  }, []);
+
+  // Marcar todas como lidas
+  const marcarTodasLidas = useCallback(async () => {
+    try {
+      await marcarTodasComoLidasService(userId);
+      setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
+    } catch (error) {
+      console.error('Erro ao marcar todas as notificações como lidas:', error);
+    }
+  }, [userId]);
+
+  // Parar som
+  const pararSom = useCallback(() => {
+    if (oscillatorRef.current) {
+      try {
+        oscillatorRef.current.stop();
+        oscillatorRef.current.disconnect();
+      } catch (e) {
+        // Ignorar erros se já parou
+      }
+      oscillatorRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setSomTocando(false);
+  }, []);
+
+  // Tocar som usando Web Audio API
+  const tocarSom = useCallback((som: SomNotificacao) => {
+    // Parar som anterior se estiver tocando
+    pararSom();
+
+    try {
+      // Criar AudioContext se não existir
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+
+      const audioContext = audioContextRef.current;
+      const config = FREQUENCIAS_SOM[som];
+
+      setSomTocando(true);
+
+      let currentTime = audioContext.currentTime;
+      const oscillators: OscillatorNode[] = [];
+
+      // Criar padrão de beeps
+      config.pattern.forEach((duration, index) => {
+        if (index % 2 === 0) {
+          // Beep
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.value = config.freq;
+          oscillator.type = 'sine';
+
+          const beepDuration = (config.duration * duration) / 1000;
+
+          gainNode.gain.setValueAtTime(0.3, currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + beepDuration);
+
+          oscillator.start(currentTime);
+          oscillator.stop(currentTime + beepDuration);
+
+          oscillators.push(oscillator);
+          currentTime += beepDuration;
+        } else {
+          // Silêncio
+          currentTime += (config.duration * duration) / 1000;
+        }
+      });
+
+      // Parar após o padrão terminar
+      const totalDuration = config.pattern.reduce((acc, d) => acc + (config.duration * d), 0);
+      timeoutRef.current = setTimeout(() => {
+        setSomTocando(false);
+      }, totalDuration);
+
+    } catch (error) {
+      console.error('Erro ao tocar som:', error);
+      setSomTocando(false);
+    }
+  }, [pararSom]);
+
+  // Cleanup ao desmontar
+  useEffect(() => {
+    return () => {
+      pararSom();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
+  }, [pararSom]);
+
+  return {
+    notificacoes,
+    naoLidas,
+    loading,
+    marcarLida,
+    marcarTodasLidas,
+    tocarSom,
+    pararSom,
+    somTocando
+  };
+};

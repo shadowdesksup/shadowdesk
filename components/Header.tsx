@@ -3,6 +3,9 @@ import { Ghost, LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useSessionTimer } from '../hooks/useSessionTimer';
+import NotificationBell from './NotificationBell';
+
+import { Lembrete } from '../types';
 
 interface HeaderProps {
   nomeUsuario: string;
@@ -11,9 +14,20 @@ interface HeaderProps {
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
   onToggleSidebar?: () => void;
+  proximoLembrete?: Lembrete | null;
+  onLembreteClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 'dark', onToggleTheme, onToggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({
+  nomeUsuario,
+  userId,
+  onLogout,
+  theme = 'dark',
+  onToggleTheme,
+  onToggleSidebar,
+  proximoLembrete,
+  onLembreteClick
+}) => {
   // Timer local apenas para visualização
   const { timeLeft } = useSessionTimer(true, userId, true);
 
@@ -46,6 +60,8 @@ const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 
         </div>
         <h2 className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
           }`}>ShadowDesk</h2>
+
+
       </div>
 
       <div className="flex items-center gap-4">
@@ -59,6 +75,11 @@ const Header: React.FC<HeaderProps> = ({ nomeUsuario, userId, onLogout, theme = 
           >
             {timeLeft}
           </div>
+        )}
+
+        {/* Notification Bell */}
+        {userId && (
+          <NotificationBell userId={userId} theme={theme} />
         )}
 
         {/* Theme Toggle Button */}
