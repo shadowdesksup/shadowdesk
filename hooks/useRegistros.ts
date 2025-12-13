@@ -118,7 +118,8 @@ export const useRegistros = (userId?: string): UseRegistrosReturn => {
   const obterEstatisticas = (): Estatisticas => {
     const total = registros.length;
     const pendentes = registros.filter(r => r.status === 'Pendente').length;
-    const atendidos = registros.filter(r => r.status === 'Atendido').length;
+    // Registrados also count as Atendidos for stats
+    const atendidos = registros.filter(r => r.status === 'Atendido' || r.status === 'Registrado').length;
 
     const hoje = registros.filter(r => eHoje(r.dataHora));
     const semana = registros.filter(r => eDestaSemana(r.dataHora));
@@ -131,17 +132,17 @@ export const useRegistros = (userId?: string): UseRegistrosReturn => {
       hoje: {
         total: hoje.length,
         pendentes: hoje.filter(r => r.status === 'Pendente').length,
-        atendidos: hoje.filter(r => r.status === 'Atendido').length
+        atendidos: hoje.filter(r => r.status === 'Atendido' || r.status === 'Registrado').length
       },
       semana: {
         total: semana.length,
         pendentes: semana.filter(r => r.status === 'Pendente').length,
-        atendidos: semana.filter(r => r.status === 'Atendido').length
+        atendidos: semana.filter(r => r.status === 'Atendido' || r.status === 'Registrado').length
       },
       mes: {
         total: mes.length,
         pendentes: mes.filter(r => r.status === 'Pendente').length,
-        atendidos: mes.filter(r => r.status === 'Atendido').length
+        atendidos: mes.filter(r => r.status === 'Atendido' || r.status === 'Registrado').length
       }
     };
   };

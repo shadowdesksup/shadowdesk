@@ -491,7 +491,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
               <div className="grid grid-cols-2 gap-4 mb-3">
                 <div>
                   <span className="text-xs font-bold text-slate-500 uppercase block">Data/Hora</span>
-                  <span className="text-sm">{new Date(item.dataHora).toLocaleString('pt-BR')}</span>
+                  <span className="text-sm">{new Date(item.dataAtendimento || item.dataHora).toLocaleString('pt-BR')}</span>
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-500 uppercase block">Local</span>

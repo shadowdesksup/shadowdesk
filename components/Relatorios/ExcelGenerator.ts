@@ -5,7 +5,7 @@ export const exportToExcel = (registros: RegistroAtendimento[], filename: string
   // Format data for Excel
   const data = registros.map(r => {
     const item: any = {
-      'Data/Hora': new Date(r.dataHora).toLocaleString('pt-BR'),
+      'Data/Hora': new Date(r.dataAtendimento || r.dataHora).toLocaleString('pt-BR'),
       'Nome Solicitante': r.nomeSolicitante,
       'Vínculo': r.tipoSolicitante,
     };

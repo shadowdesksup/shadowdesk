@@ -193,7 +193,7 @@ const LaudoDocument: React.FC<LaudoProps> = ({ registros, usuario }) => {
                 <View style={styles.fieldRow}>
                   <Text style={styles.label}>DATA/HORA:</Text>
                   <Text style={styles.value}>
-                    {new Date(registro.dataHora).toLocaleDateString('pt-BR')} às {new Date(registro.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(registro.dataAtendimento || registro.dataHora).toLocaleDateString('pt-BR')} às {new Date(registro.dataAtendimento || registro.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
 

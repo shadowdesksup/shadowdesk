@@ -42,10 +42,12 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
   const [tipoSolicitante, setTipoSolicitante] = useState<TipoSolicitante>(registroInicial?.tipoSolicitante || 'Aluno');
   const [local, setLocal] = useState(registroInicial?.local || '');
   const [descricaoRequisicao, setDescricaoRequisicao] = useState(registroInicial?.descricaoRequisicao || '');
-  const [dataHora, setDataHora] = useState(
-    registroInicial?.dataHora
-      ? isoParaDatetimeLocal(registroInicial.dataHora)
-      : isoParaDatetimeLocal(obterDataHoraAtual())
+  const [dataEvento, setDataEvento] = useState(
+    registroInicial?.dataAtendimento
+      ? isoParaDatetimeLocal(registroInicial.dataAtendimento)
+      : registroInicial?.dataHora
+        ? isoParaDatetimeLocal(registroInicial.dataHora)
+        : isoParaDatetimeLocal(obterDataHoraAtual())
   );
   const [status, setStatus] = useState<StatusAtendimento>(registroInicial?.status || 'Atendido');
   const [email, setEmail] = useState(registroInicial?.email || '');
@@ -57,7 +59,9 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
       setTipoSolicitante(registroInicial.tipoSolicitante);
       setLocal(registroInicial.local);
       setDescricaoRequisicao(registroInicial.descricaoRequisicao);
-      setDataHora(isoParaDatetimeLocal(registroInicial.dataHora));
+      setDataEvento(registroInicial.dataAtendimento
+        ? isoParaDatetimeLocal(registroInicial.dataAtendimento)
+        : isoParaDatetimeLocal(registroInicial.dataHora));
       setStatus(registroInicial.status);
       setEmail(registroInicial.email || '');
       setTelefone(registroInicial.telefone || '');
@@ -66,7 +70,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
       setTipoSolicitante('Aluno');
       setLocal('');
       setDescricaoRequisicao('');
-      setDataHora(isoParaDatetimeLocal(obterDataHoraAtual()));
+      setDataEvento(isoParaDatetimeLocal(obterDataHoraAtual()));
       setStatus('Atendido');
       setEmail('');
       setTelefone('');
@@ -85,7 +89,10 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
         tipoSolicitante,
         local: local.trim(),
         descricaoRequisicao: descricaoRequisicao.trim(),
-        dataHora: new Date(usarHorarioAtual ? obterDataHoraAtual() : dataHora).toISOString(),
+        // dataAtendimento: Manual Date (When it happened)
+        dataAtendimento: new Date(usarHorarioAtual ? obterDataHoraAtual() : dataEvento).toISOString(),
+        // dataHora: Creation Timestamp (Always NOW for "Created X ago")
+        dataHora: new Date().toISOString(),
         status,
         email: email.trim(),
         telefone: telefone.trim(),
@@ -110,7 +117,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
             // Se estiver fixado, mantém a data que estava lá (que agora é passado).
           }
           if (!fixarTexto) {
-            setDataHora(isoParaDatetimeLocal(obterDataHoraAtual()));
+            setDataEvento(isoParaDatetimeLocal(obterDataHoraAtual()));
             setStatus('Atendido');
             setEmail('');
             setTelefone('');
@@ -251,8 +258,8 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
             <div className="relative group">
               <input
                 type="datetime-local"
-                value={dataHora}
-                onChange={(e) => setDataHora(e.target.value)}
+                value={dataEvento}
+                onChange={(e) => setDataEvento(e.target.value)}
                 disabled={usarHorarioAtual}
                 className={`w-full rounded-xl border h-11 pl-10 pr-4 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${theme === 'dark'
                   ? 'border-white/10 bg-slate-900/50 text-slate-200 focus:border-cyan-500/50 focus:bg-slate-900/80'

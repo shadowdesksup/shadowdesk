@@ -553,7 +553,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                 <div className={`flex justify-between items-center pt-3 border-t mt-auto ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
                   <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                     <Clock size={14} className={theme === 'dark' ? 'text-cyan-500/70' : 'text-cyan-600/70'} />
-                    <span>{formatarDataHora(registro.dataHora)}</span>
+                    <span>{formatarDataHora(registro.dataAtendimento || registro.dataHora)}</span>
                     <span className="text-slate-300">•</span>
                     <span>{tempoRelativo(registro.dataHora)}</span>
                   </div>

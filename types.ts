@@ -14,7 +14,8 @@ export interface RegistroAtendimento {
   tipoSolicitante: TipoSolicitante;
   local: string;
   descricaoRequisicao: string;
-  dataHora: string; // ISO 8601 format
+  dataHora: string; // ISO 8601 format - Data de Criação do Card (Automático)
+  dataAtendimento?: string; // ISO 8601 format - Data do Atendimento (Manual)
   status: StatusAtendimento;
   email?: string;
   telefone?: string; // Celular ou Ramal

@@ -3,7 +3,7 @@ import { formatarTelefone } from '../../utils/helpers';
 
 export const generateTXTContent = (registros: RegistroAtendimento[]) => {
   const content = registros.map(r => {
-    const date = new Date(r.dataHora);
+    const date = new Date(r.dataAtendimento || r.dataHora);
     const diaSemana = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
     const diaSemanaCap = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
     const dataFormatada = `${diaSemanaCap}, ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
