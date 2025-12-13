@@ -46,7 +46,7 @@ export const registrarUsuario = async (
     // Salvar dados adicionais no Firestore
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,
-      email: user.email,
+      email: (user.email || email).toLowerCase(),
       nomeCompleto,
       criadoEm: serverTimestamp(),
       ultimoLogin: serverTimestamp()

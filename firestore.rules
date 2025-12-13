@@ -9,9 +9,29 @@ service cloud.firestore {
     }
 
     // Regras para Usuários (Perfil)
+    // Regras para Usuários (Perfil)
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      // Permitir que qualquer usuário autenticado leia os perfis (necessário para busca de amigos)
+      allow read: if request.auth != null;
+      // Apenas o dono pode atualizar/deletar sua conta
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null;
+    }
+
+    // Regras para Solicitações de Amizade
+    match /friend_requests/{requestId} {
+      // Usuários envolvidos podem ler
+      allow read: if request.auth != null && (
+        resource.data.fromId == request.auth.uid || 
+        resource.data.toId == request.auth.uid
+      );
+      // Qualquer um pode criar (validação de dados recomendada no app)
+      allow create: if request.auth != null;
+      // Usuários envolvidos podem atualizar (aceitar/recusar) ou deletar
+      allow update, delete: if request.auth != null && (
+        resource.data.fromId == request.auth.uid || 
+        resource.data.toId == request.auth.uid
+      );
     }
     
     // Regras para Registros (Chamados) - Supondo existência baseada em uso

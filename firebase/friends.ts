@@ -21,7 +21,7 @@ export const buscarUsuarioPorEmail = async (email: string): Promise<Usuario | nu
   try {
     const q = query(
       collection(db, 'users'),
-      where('email', '==', email)
+      where('email', '==', email.toLowerCase().trim())
     );
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
