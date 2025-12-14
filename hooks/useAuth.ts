@@ -24,7 +24,24 @@ export const useAuth = (): UseAuthReturn => {
       if (user) {
         setUsuario(user);
         // Escutar dados adicionais em tempo real (garante que nome apareça assim que criado)
-        unsubscribeSnapshot = escutarDadosUsuario(user.uid, (dados) => {
+        unsubscribeSnapshot = escutarDadosUsuario(user.uid, async (dados) => {
+          if (!dados && user) {
+            // AUTO-HEAL: Se o usuário existe no Auth mas não no Firestore (ex: criado via Console), cria agora.
+            try {
+              const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+              const { db } = await import('../firebase/config');
+
+              await setDoc(doc(db, 'users', user.uid), {
+                uid: user.uid,
+                email: user.email?.toLowerCase(),
+                nomeCompleto: user.displayName || 'Usuário',
+                criadoEm: serverTimestamp(),
+                ultimoLogin: serverTimestamp()
+              }, { merge: true });
+            } catch (e) {
+              console.error("Erro ao auto-criar usuário no Firestore:", e);
+            }
+          }
           setDadosUsuario(dados);
           setCarregando(false);
         });

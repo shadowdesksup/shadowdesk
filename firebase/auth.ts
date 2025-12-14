@@ -69,10 +69,15 @@ export const fazerLogin = async (
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, senha);
 
-    // Atualizar último login
+    // Atualizar último login e garantir que dados básicos existam
     await setDoc(
       doc(db, 'users', userCredential.user.uid),
-      { ultimoLogin: serverTimestamp() },
+      {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email?.toLowerCase(),
+        nomeCompleto: userCredential.user.displayName || 'Usuário',
+        ultimoLogin: serverTimestamp()
+      },
       { merge: true }
     );
 
