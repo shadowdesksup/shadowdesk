@@ -193,18 +193,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
     tocarSom(som);
   };
 
-  // Handler de enviar para usuário
-  const handleEnviarPara = async (usuario: { uid: string; nomeCompleto: string }) => {
-    if (!lembrete || !onEnviar) return;
 
-    try {
-      await onEnviar(lembrete.id, usuario.uid, usuario.nomeCompleto);
-      setMostrarEnviar(false);
-      onClose();
-    } catch (err: any) {
-      setErro(err.message || 'Erro ao enviar lembrete');
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -494,68 +483,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                 </div>
               )}
 
-              {/* Enviar para Alguém */}
-              {lembrete && onEnviar && (
-                <div className={`border-t pt-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setMostrarEnviar(!mostrarEnviar)}
-                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm ${theme === 'dark'
-                      ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                      } transition-colors`}
-                  >
-                    <Send size={14} />
-                    Enviar para amigo
-                  </motion.button>
 
-                  <AnimatePresence>
-                    {mostrarEnviar && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-3 overflow-hidden"
-                      >
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                          <input
-                            type="text"
-                            value={termoBusca}
-                            onChange={(e) => setTermoBusca(e.target.value)}
-                            placeholder="Email do amigo"
-                            className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${theme === 'dark'
-                              ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
-                              : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
-                              } focus:outline-none focus:ring-2 focus:ring-purple-500`}
-                          />
-                        </div>
-                        {/* Compact user list logic would go here if needed, keeping simple for now */}
-                        {!buscando && usuariosEncontrados.length > 0 && (
-                          <div className={`mt-2 rounded-lg border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-                            {usuariosEncontrados.map((usuario) => (
-                              <motion.button
-                                key={usuario.uid}
-                                whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
-                                onClick={() => handleEnviarPara(usuario)}
-                                className={`w-full flex items-center gap-3 p-2 text-left text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
-                              >
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
-                                  {usuario.nomeCompleto.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="truncate">
-                                  <p className="font-medium truncate">{usuario.nomeCompleto}</p>
-                                </div>
-                              </motion.button>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
             </div>
 
             {/* Footer */}
