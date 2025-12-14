@@ -382,6 +382,18 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
       } else {
         await criar(dados);
       }
+
+      // Redirecionar para o dia do lembrete criado
+      if (dados.dataHora) {
+        const novaData = new Date(dados.dataHora);
+        // Garantir que a hora não interfira na seleção do dia (embora o comparador use getDate/Month/Year)
+        setDiaSelecionado(novaData);
+        // Se mudou o mês/ano, atualizar o calendário
+        if (novaData.getMonth() !== mesAtual.getMonth() || novaData.getFullYear() !== mesAtual.getFullYear()) {
+          setMesAtual(new Date(novaData.getFullYear(), novaData.getMonth(), 1));
+        }
+        setTabAtual('meus');
+      }
     }
     setModalCriar(false);
     setLembreteEditando(null);
