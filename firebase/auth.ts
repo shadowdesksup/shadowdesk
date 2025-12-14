@@ -120,6 +120,28 @@ export const atualizarSenhaUsuario = async (user: User, novaSenha: string): Prom
 };
 
 /**
+ * Atualizar nome do usuário (Auth + Firestore)
+ */
+export const atualizarPerfilUsuario = async (user: User, nomeCompleto: string): Promise<void> => {
+  try {
+    // 1. Atualizar no Auth
+    await updateProfile(user, {
+      displayName: nomeCompleto
+    });
+
+    // 2. Atualizar no Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      nomeCompleto,
+      atualizadoEm: serverTimestamp()
+    }, { merge: true });
+
+  } catch (error: any) {
+    console.error('Erro ao atualizar perfil:', error);
+    throw tratarErroAuth(error);
+  }
+};
+
+/**
  * Obter dados do usuário do Firestore
  */
 export const obterDadosUsuario = async (uid: string): Promise<UserData | null> => {

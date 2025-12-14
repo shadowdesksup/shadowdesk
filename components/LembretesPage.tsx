@@ -321,28 +321,64 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     somNotificacao: SomNotificacao;
     destinatarioId?: string;
     destinatarioNome?: string;
+    manterCopia?: boolean;
   }) => {
     if (lembreteEditando) {
       await atualizar(lembreteEditando.id, dados);
     } else {
       // Se tem destinatário, criar e enviar para o amigo
       if (dados.destinatarioId && dados.destinatarioNome) {
-        const novoLembrete = await criar({
-          titulo: dados.titulo,
-          descricao: dados.descricao,
-          dataHora: dados.dataHora,
-          cor: dados.cor,
-          somNotificacao: dados.somNotificacao
-        });
-        // Enviar para o amigo
-        if (novoLembrete && enviar) {
-          await enviar(
-            novoLembrete.id,
-            dados.destinatarioId,
-            dados.destinatarioNome,
-            dados.titulo
-          );
+
+        // Se escolheu manter cópia: cria dois lembretes
+        if (dados.manterCopia) {
+          // 1. Criar o MEU lembrete (pessoal)
+          await criar({
+            titulo: dados.titulo,
+            descricao: dados.descricao,
+            dataHora: dados.dataHora,
+            cor: dados.cor,
+            somNotificacao: dados.somNotificacao
+          });
+
+          // 2. Criar o lembrete para ENVIAR (separado)
+          const lembreteParaEnviar = await criar({
+            titulo: dados.titulo,
+            descricao: dados.descricao,
+            dataHora: dados.dataHora,
+            cor: dados.cor,
+            somNotificacao: dados.somNotificacao
+          });
+
+          // 3. Enviar o segundo lembrete
+          if (lembreteParaEnviar && enviar) {
+            await enviar(
+              lembreteParaEnviar.id,
+              dados.destinatarioId,
+              dados.destinatarioNome,
+              dados.titulo
+            );
+          }
+
+        } else {
+          // Se NÃO manter cópia: cria um e envia (ele some da lista "Meus" pois vira compartilhado)
+          const novoLembrete = await criar({
+            titulo: dados.titulo,
+            descricao: dados.descricao,
+            dataHora: dados.dataHora,
+            cor: dados.cor,
+            somNotificacao: dados.somNotificacao
+          });
+          // Enviar para o amigo
+          if (novoLembrete && enviar) {
+            await enviar(
+              novoLembrete.id,
+              dados.destinatarioId,
+              dados.destinatarioNome,
+              dados.titulo
+            );
+          }
         }
+
       } else {
         await criar(dados);
       }

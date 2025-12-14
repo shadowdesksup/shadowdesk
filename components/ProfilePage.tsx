@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User as UserIcon, Lock, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { User } from 'firebase/auth';
-import { atualizarSenhaUsuario, UserData } from '../firebase/auth';
+import { atualizarSenhaUsuario, atualizarPerfilUsuario, UserData } from '../firebase/auth';
 
 interface ProfilePageProps {
   usuario: User;
@@ -46,6 +46,40 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
     }
   };
 
+  // State for Profile Update
+  const [nome, setNome] = useState(dadosUsuario?.nomeCompleto || usuario.displayName || '');
+  const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+
+  // Update effect when data loads
+  React.useEffect(() => {
+    if (dadosUsuario?.nomeCompleto) {
+      setNome(dadosUsuario.nomeCompleto);
+    } else if (usuario.displayName) {
+      setNome(usuario.displayName);
+    }
+  }, [dadosUsuario, usuario]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro('');
+    setSucesso('');
+
+    if (!nome.trim()) {
+      setErro('O nome não pode estar vazio');
+      return;
+    }
+
+    setCarregandoPerfil(true);
+    try {
+      await atualizarPerfilUsuario(usuario, nome.trim());
+      setSucesso('Perfil atualizado com sucesso!');
+    } catch (error: any) {
+      setErro(error.message || 'Erro ao atualizar perfil.');
+    } finally {
+      setCarregandoPerfil(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       {/* Header */}
@@ -60,54 +94,74 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
       </div>
 
       {/* Info Card */}
-      <div className={`rounded-2xl border p-8 shadow-xl transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/80'
-        : 'border-slate-200 bg-white shadow-slate-200/50'
+      <div className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+        ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
+        : 'border-slate-200 bg-white/50 backdrop-blur-sm'
         }`}>
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1 h-6 bg-cyan-500 rounded-full"></span>
           Informações Pessoais
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
           <div className="flex flex-col gap-2">
             <label className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
               Nome Completo
             </label>
-            <div className={`font-medium text-lg px-4 py-3 rounded-xl border ${theme === 'dark'
-              ? 'text-slate-200 bg-white/5 border-white/5'
-              : 'text-slate-900 bg-slate-50 border-slate-200'
-              }`}>
-              {dadosUsuario?.nomeCompleto || usuario.displayName || 'Não informado'}
-            </div>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Seu nome"
+              className={`w-full px-4 py-3 rounded-xl border font-medium outline-none transition-all ${theme === 'dark'
+                ? 'bg-slate-900/50 border-white/10 text-white focus:border-cyan-500/50 focus:bg-slate-900/80'
+                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-cyan-500 focus:bg-white'
+                }`}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
             <label className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
               Email
             </label>
-            <div className={`font-medium text-lg px-4 py-3 rounded-xl border ${theme === 'dark'
-              ? 'text-slate-200 bg-white/5 border-white/5'
-              : 'text-slate-900 bg-slate-50 border-slate-200'
+            <div className={`font-medium px-4 py-3 rounded-xl border opacity-70 cursor-not-allowed ${theme === 'dark'
+              ? 'text-slate-400 bg-slate-900/30 border-white/10'
+              : 'text-slate-500 bg-slate-100 border-slate-200'
               }`}>
               {usuario.email}
             </div>
           </div>
-        </div>
+
+          <div className="md:col-span-2 flex justify-end">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={carregandoPerfil}
+              className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${theme === 'dark'
+                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20 disabled:opacity-50'
+                : 'bg-cyan-50 text-cyan-600 border border-cyan-200 hover:bg-cyan-100 disabled:opacity-50'
+                }`}
+            >
+              <Save size={16} />
+              {carregandoPerfil ? 'Salvando...' : 'Salvar Alterações'}
+            </motion.button>
+          </div>
+        </form>
       </div>
 
       {/* Security Card */}
-      <div className={`rounded-2xl border p-8 shadow-xl transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/80'
-        : 'border-slate-200 bg-white shadow-slate-200/50'
+      <div className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+        ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
+        : 'border-slate-200 bg-white/50 backdrop-blur-sm'
         }`}>
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
           Segurança
         </h3>
 
-        <form onSubmit={handleUpdatePassword} className="flex flex-col gap-6 max-w-md">
-          <div className="flex flex-col gap-4">
+        <form onSubmit={handleUpdatePassword} className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                 Nova Senha
@@ -119,7 +173,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
                   onChange={(e) => setNovaSenha(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
                   className={`w-full rounded-xl border h-12 pl-11 pr-4 focus:outline-none transition-all ${theme === 'dark'
-                    ? 'border-white/10 bg-slate-900/50 text-slate-200 focus:border-cyan-500/50 focus:bg-slate-900/80 placeholder:text-slate-600'
+                    ? 'border-white/10 bg-slate-900/50 text-white focus:border-cyan-500/50 focus:bg-slate-900/80 placeholder:text-slate-500'
                     : 'border-slate-200 bg-slate-50 text-slate-900 focus:border-cyan-500 focus:bg-white placeholder:text-slate-400'
                     }`}
                 />
@@ -138,7 +192,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
                   onChange={(e) => setConfirmarSenha(e.target.value)}
                   placeholder="Digite a senha novamente"
                   className={`w-full rounded-xl border h-12 pl-11 pr-4 focus:outline-none transition-all ${theme === 'dark'
-                    ? 'border-white/10 bg-slate-900/50 text-slate-200 focus:border-cyan-500/50 focus:bg-slate-900/80 placeholder:text-slate-600'
+                    ? 'border-white/10 bg-slate-900/50 text-white focus:border-cyan-500/50 focus:bg-slate-900/80 placeholder:text-slate-500'
                     : 'border-slate-200 bg-slate-50 text-slate-900 focus:border-cyan-500 focus:bg-white placeholder:text-slate-400'
                     }`}
                 />
@@ -175,7 +229,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={carregando || !novaSenha}
-            className="flex items-center justify-center rounded-xl h-12 bg-gradient-to-r from-cyan-500 to-blue-600 text-white gap-3 text-base font-bold tracking-wide transition-all shadow-lg shadow-cyan-900/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className={`flex items-center justify-center rounded-xl h-12 gap-2 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 ${theme === 'dark'
+              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20'
+              : 'bg-cyan-50 text-cyan-600 border border-cyan-200 hover:bg-cyan-100'
+              }`}
           >
             {carregando ? (
               <motion.div

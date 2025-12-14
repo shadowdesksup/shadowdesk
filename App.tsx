@@ -195,9 +195,9 @@ function App() {
               onLembreteClick={() => setPaginaAtual('lembretes')}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-[600px]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-[600px] items-start">
               {/* Lembretes Agendados */}
-              <div className="lg:col-span-5 h-full">
+              <div className="lg:col-span-5 w-full">
 
 
                 <DashboardReminders

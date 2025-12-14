@@ -34,6 +34,7 @@ interface LembreteModalProps {
     somNotificacao: SomNotificacao;
     destinatarioId?: string;
     destinatarioNome?: string;
+    manterCopia?: boolean;
   }) => Promise<void>;
   onClose: () => void;
   onEnviar?: (lembreteId: string, destinatarioId: string, destinatarioNome: string) => Promise<void>;
@@ -105,7 +106,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
     return `${String(agora.getHours()).padStart(2, '0')}:00`;
   });
 
-  const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'rose');
+  const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'sand');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
 
   // View State for Sound Selection Overlay
@@ -126,6 +127,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   const [amigoSelecionado, setAmigoSelecionado] = useState<{ uid: string; nome: string } | null>(
     destinatarioPreSelecionado || null
   );
+  const [manterCopia, setManterCopia] = useState(true);
 
   // Buscar usuários quando digita
   useEffect(() => {
@@ -174,7 +176,8 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
         somNotificacao,
         ...(enviarParaAmigo && amigoSelecionado ? {
           destinatarioId: amigoSelecionado.uid,
-          destinatarioNome: amigoSelecionado.nome
+          destinatarioNome: amigoSelecionado.nome,
+          manterCopia
         } : {})
       });
       onClose();
@@ -458,6 +461,25 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                             size={16}
                             className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}
                           />
+                        </div>
+
+                        {/* Checkbox Manter Cópia */}
+                        <div className="mt-3 flex items-center gap-2 px-1">
+                          <div
+                            className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${manterCopia
+                              ? 'bg-cyan-500 border-cyan-500'
+                              : (theme === 'dark' ? 'border-slate-600 bg-white/5' : 'border-slate-300 bg-white')
+                              }`}
+                            onClick={() => setManterCopia(!manterCopia)}
+                          >
+                            {manterCopia && <Check size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                          <label
+                            className={`text-sm cursor-pointer ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                            onClick={() => setManterCopia(!manterCopia)}
+                          >
+                            Manter uma cópia para mim
+                          </label>
                         </div>
                       </motion.div>
                     )}

@@ -21,7 +21,7 @@ const ReminderTicker: React.FC<ReminderTickerProps> = ({
   });
   const dataFormatada = dataHora.toLocaleDateString('pt-BR', {
     day: '2-digit',
-    month: 'short'
+    month: 'long'
   });
 
   // Calcular tempo restante

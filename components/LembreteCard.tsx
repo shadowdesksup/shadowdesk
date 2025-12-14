@@ -25,107 +25,7 @@ interface LembreteCardProps {
   selectionMode?: boolean;
 }
 
-// Cores dos post-its com variações
-const COR_ESTILOS: Record<CorLembrete, {
-  bg: string;
-  bgLight: string;
-  border: string;
-  text: string;
-  pin: string;
-  gradientStart: string;
-  gradientEnd: string;
-}> = {
-  rose: {
-    bg: 'bg-rose-100',
-    bgLight: 'bg-rose-50',
-    border: 'border-rose-300',
-    text: 'text-rose-900',
-    pin: 'bg-rose-500',
-    gradientStart: '#ffe4e6', // rose-100
-    gradientEnd: '#fecdd3'    // rose-200
-  },
-  blush: {
-    bg: 'bg-red-100',
-    bgLight: 'bg-red-50',
-    border: 'border-red-300',
-    text: 'text-red-900',
-    pin: 'bg-red-500',
-    gradientStart: '#fee2e2', // red-100
-    gradientEnd: '#fecaca'    // red-200
-  },
-  peach: {
-    bg: 'bg-orange-100',
-    bgLight: 'bg-orange-50',
-    border: 'border-orange-300',
-    text: 'text-orange-900',
-    pin: 'bg-orange-500',
-    gradientStart: '#ffedd5', // orange-100
-    gradientEnd: '#fed7aa'    // orange-200
-  },
-  sand: {
-    bg: 'bg-amber-100',
-    bgLight: 'bg-amber-50',
-    border: 'border-amber-300',
-    text: 'text-amber-900',
-    pin: 'bg-amber-600',
-    gradientStart: '#fef3c7', // amber-100
-    gradientEnd: '#fde68a'    // amber-200
-  },
-  mint: {
-    bg: 'bg-emerald-100',
-    bgLight: 'bg-emerald-50',
-    border: 'border-emerald-300',
-    text: 'text-emerald-900',
-    pin: 'bg-emerald-500',
-    gradientStart: '#d1fae5', // emerald-100
-    gradientEnd: '#a7f3d0'    // emerald-200
-  },
-  sage: {
-    bg: 'bg-green-100',
-    bgLight: 'bg-green-50',
-    border: 'border-green-300',
-    text: 'text-green-900',
-    pin: 'bg-green-600',
-    gradientStart: '#dcfce7', // green-100
-    gradientEnd: '#bbf7d0'    // green-200
-  },
-  sky: {
-    bg: 'bg-sky-100',
-    bgLight: 'bg-sky-50',
-    border: 'border-sky-300',
-    text: 'text-sky-900',
-    pin: 'bg-sky-500',
-    gradientStart: '#e0f2fe', // sky-100
-    gradientEnd: '#bae6fd'    // sky-200
-  },
-  periwinkle: {
-    bg: 'bg-indigo-100',
-    bgLight: 'bg-indigo-50',
-    border: 'border-indigo-300',
-    text: 'text-indigo-900',
-    pin: 'bg-indigo-500',
-    gradientStart: '#e0e7ff', // indigo-100
-    gradientEnd: '#c7d2fe'    // indigo-200
-  },
-  lavender: {
-    bg: 'bg-purple-100',
-    bgLight: 'bg-purple-50',
-    border: 'border-purple-300',
-    text: 'text-purple-900',
-    pin: 'bg-purple-500',
-    gradientStart: '#f3e8ff', // purple-100
-    gradientEnd: '#e9d5ff'    // purple-200
-  },
-  mist: {
-    bg: 'bg-slate-100',
-    bgLight: 'bg-slate-50',
-    border: 'border-slate-300',
-    text: 'text-slate-900',
-    pin: 'bg-slate-500',
-    gradientStart: '#f1f5f9', // slate-100
-    gradientEnd: '#e2e8f0'    // slate-200
-  }
-};
+import { COR_ESTILOS } from '../utils/reminderStyles';
 
 const LembreteCard: React.FC<LembreteCardProps> = ({
   lembrete,
@@ -201,44 +101,10 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
       onClick={handleClick}
       className={`
         relative rounded-xl
-        ${disparado ? 'shadow-[0_0_20px_rgba(251,146,60,0.6)]' : ''} 
-        ${expirado ? 'shadow-[0_0_20px_rgba(239,68,68,0.6)]' : ''} 
         ${finalizado ? 'opacity-60' : ''} 
-        ${selected ? 'ring-2 ring-[rgb(34,211,238)] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.6)] scale-95' : ''}
       `}
       style={{ transformOrigin: 'top center' }}
     >
-      {/* Indicador de Seleção (Badge discreto) */}
-      {selected && (
-        <div className="absolute -top-2 -right-2 bg-[rgb(34,211,238)] text-white p-1.5 rounded-full shadow-md z-50 animate-in zoom-in duration-200">
-          <CheckCircle size={16} fill="currentColor" className="text-white" />
-        </div>
-      )}
-
-      {/* Efeito Radar Pulsante para Expirados */}
-      {expirado && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-visible">
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0.95, opacity: 0.5 }}
-              animate={{
-                scale: [0.95, 1.2],
-                opacity: [0.4, 0]
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                repeatDelay: 1.5,
-                delay: i * 0.5,
-                ease: 'easeOut'
-              }}
-              className="absolute inset-0 rounded-xl border-2 border-red-500"
-            />
-          ))}
-        </div>
-      )}
-
       {/* Alfinete 3D */}
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
         <div className="relative">
@@ -258,15 +124,54 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
 
       {/* Card principal (Post-it) */}
       <div
-        className={`${estilos.bg} ${estilos.border} ${estilos.text} border-2 rounded-lg p-3 pt-5 min-h-[140px] shadow-[4px_4px_10px_rgba(0,0,0,0.15)] relative overflow-hidden flex flex-col justify-between ${expirado ? 'ring-2 ring-red-500 ring-offset-2' : ''}`}
+        className={`
+          ${estilos.bg} ${estilos.border} ${estilos.text} border-2 rounded-lg p-3 pt-5 min-h-[140px] relative flex flex-col justify-between 
+          ${expirado ? 'ring-2 ring-red-500 ring-offset-2' : ''}
+          ${selected ? 'ring-2 ring-[rgb(34,211,238)] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.6)]' : ''}
+        `}
         style={{
           background: `linear-gradient(135deg, ${estilos.gradientStart} 0%, ${estilos.gradientEnd} 100%)`,
           fontFamily: "'Caveat', cursive",
-          boxShadow: '2px 4px 8px rgba(0,0,0,0.1)'
+          boxShadow: disparado
+            ? '0 0 20px rgba(251,146,60,0.6)'
+            : expirado
+              ? '0 0 20px rgba(239,68,68,0.6)'
+              : '2px 4px 8px rgba(0,0,0,0.1)'
         }}
       >
+        {/* Indicador de Seleção (Badge discreto) - Moved Inside */}
+        {selected && (
+          <div className="absolute top-2 right-2 bg-[rgb(34,211,238)] text-white p-1 rounded-full shadow-md z-50 animate-in zoom-in duration-200">
+            <CheckCircle size={14} fill="currentColor" className="text-white" />
+          </div>
+        )}
+
+        {/* Efeito Radar Pulsante para Expirados - Moved Inside */}
+        {expirado && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-visible">
+            {[1, 2, 3].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0.95, opacity: 0.5 }}
+                animate={{
+                  scale: [0.95, 1.2],
+                  opacity: [0.4, 0]
+                }}
+                transition={{
+                  duration: 2.5,
+                  repeat: Infinity,
+                  repeatDelay: 1.5,
+                  delay: i * 0.5,
+                  ease: 'easeOut'
+                }}
+                className="absolute inset-0 rounded-xl border-2 border-red-500"
+              />
+            ))}
+          </div>
+        )}
+
         {/* Faixa de texto animada (ticker) no topo */}
-        <div className="absolute top-0 left-0 right-0 h-4 bg-black/10 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-4 bg-black/10 overflow-hidden rounded-t-md">
           <motion.div
             animate={{ x: ['100%', '-100%'] }}
             transition={{
@@ -281,7 +186,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
         </div>
 
         {/* Badge de status */}
-        {expirado && (
+        {expirado && !selected && (
           <div className="absolute top-6 right-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold font-sans rounded-full animate-pulse z-10 transition-shadow shadow-sm">
             EXPIRADO
           </div>
@@ -298,7 +203,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
         )}
 
         {/* Conteúdo */}
-        <div className="mt-4 mb-2">
+        <div className="mt-4 mb-2 relative z-10">
           <h3
             className="text-2xl font-bold leading-none truncate mb-1"
             title={lembrete.titulo}
@@ -316,7 +221,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
         </div>
 
         {/* Rodapé: Info e Ações */}
-        <div className="flex flex-col gap-2 mt-auto">
+        <div className="flex flex-col gap-2 mt-auto relative z-10">
           {/* De: (se compartilhado) */}
           {lembrete.remetenteNome && (
             <div className="flex items-center gap-1 text-xs opacity-70">
@@ -444,7 +349,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
 
         {/* Efeito de papel dobrado no canto */}
         <div
-          className="absolute bottom-0 right-0 w-6 h-6 z-0 pointer-events-none"
+          className="absolute bottom-0 right-0 w-6 h-6 z-0 pointer-events-none rounded-br-md"
           style={{
             background: `linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.1) 50%)`,
           }}
