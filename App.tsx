@@ -62,6 +62,7 @@ function App() {
   const [telaAuth, setTelaAuth] = useState<TelasAuth>('login');
   const [paginaAtual, setPaginaAtual] = useState('dashboard');
   const [registroEditando, setRegistroEditando] = useState<any>(null);
+  const [lembretesContext, setLembretesContext] = useState<any>(null);
 
 
   // Estado para exclusão de REGISTROS
@@ -342,6 +343,8 @@ function App() {
             key="pagina-lembretes-app"
             remindersData={remindersData}
             theme={theme}
+            initialContext={lembretesContext}
+            onContextUsed={() => setLembretesContext(null)}
           />
         );
 
@@ -421,7 +424,10 @@ function App() {
               onToggleTheme={toggleTheme}
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               proximoLembrete={proximoLembrete}
-              onLembreteClick={() => setPaginaAtual('lembretes')}
+              onLembreteClick={(context) => {
+                setPaginaAtual('lembretes');
+                if (context) setLembretesContext(context);
+              }}
             />
 
             <main className="flex-1 overflow-y-auto wide:overflow-hidden py-8 px-8 wide:pl-8 wide:pr-0">

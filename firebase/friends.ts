@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import { FriendRequest, Usuario, Friend } from '../types';
+import { notificarSolicitacaoAmizade } from './notificacoes';
 
 /**
  * Buscar usuário por email
@@ -59,6 +60,9 @@ export const enviarSolicitacaoAmizade = async (fromUser: Usuario, toUser: Usuari
     await updateDoc(doc(db, 'users', toUser.uid), {
       friendRequestsReceived: arrayUnion(fromUser.uid)
     });
+
+    // 3. Notificar o usuário
+    await notificarSolicitacaoAmizade(toUser.uid, fromUser.uid, fromUser.nomeCompleto);
 
   } catch (error) {
     console.error("Erro ao enviar solicitação:", error);

@@ -32,13 +32,14 @@ export interface UseRemindersReturn {
     dataHora: string;
     cor: CorLembrete;
     somNotificacao: SomNotificacao;
-  }) => Promise<void>;
+    somNotificacao: SomNotificacao;
+  }) => Promise<{ id: string } | null>;
   atualizar: (id: string, dados: Partial<Lembrete>) => Promise<void>;
   deletar: (id: string) => Promise<void>;
   finalizar: (id: string) => Promise<void>;
 
   // Compartilhamento
-  enviar: (lembreteId: string, destinatarioId: string, destinatarioNome: string) => Promise<void>;
+  enviar: (lembreteId: string, destinatarioId: string, destinatarioNome: string, titulo?: string) => Promise<void>;
   aceitar: (lembrete: Lembrete) => Promise<void>;
   recusar: (lembrete: Lembrete) => Promise<void>;
 
@@ -93,7 +94,8 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     somNotificacao: SomNotificacao;
   }) => {
     try {
-      await criarLembrete(userId, userNome, dados);
+      const id = await criarLembrete(userId, userNome, dados);
+      return { id };
     } catch (err: any) {
       console.error("Erro detalhado ao criar lembrete:", err);
       if (err.code === 'permission-denied' || err.message?.includes('Missing or insufficient permissions')) {
@@ -136,10 +138,14 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
   }, []);
 
   // Enviar lembrete para outro usuário
-  const enviar = useCallback(async (lembreteId: string, destinatarioId: string, destinatarioNome: string) => {
+  const enviar = useCallback(async (lembreteId: string, destinatarioId: string, destinatarioNome: string, titulo?: string) => {
     try {
-      const lembrete = lembretes.find(l => l.id === lembreteId);
-      if (!lembrete) throw new Error('Lembrete não encontrado');
+      // Se não passou título, tenta achar na lista (backward compatibility) ou busca no banco
+      let reminderTitle = titulo;
+      if (!reminderTitle) {
+        const lembrete = lembretes.find(l => l.id === lembreteId);
+        reminderTitle = lembrete?.titulo || 'Lembrete';
+      }
 
       await enviarLembrete(lembreteId, destinatarioId, destinatarioNome, userId, userNome);
 
@@ -147,7 +153,7 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
       await notificarLembreteRecebido(
         destinatarioId,
         lembreteId,
-        lembrete.titulo,
+        reminderTitle,
         userId,
         userNome
       );

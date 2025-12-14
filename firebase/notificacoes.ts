@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   onSnapshot,
   Unsubscribe,
-  writeBatch
+  writeBatch,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './config';
 import { Notificacao, TipoNotificacao } from '../types';
@@ -155,7 +156,7 @@ export const notificarLembreteDisparado = async (
 ): Promise<void> => {
   await criarNotificacao({
     tipo: 'lembrete_disparado',
-    titulo: '🔔 Lembrete!',
+    titulo: 'Lembrete',
     mensagem: tituloLembrete,
     lembreteId,
     userId
@@ -174,7 +175,7 @@ export const notificarLembreteRecebido = async (
 ): Promise<void> => {
   await criarNotificacao({
     tipo: 'lembrete_recebido',
-    titulo: '📩 Lembrete recebido',
+    titulo: 'Lembrete recebido',
     mensagem: `${remetenteNome} enviou um lembrete: "${tituloLembrete}"`,
     lembreteId,
     remetenteId,
@@ -194,7 +195,7 @@ export const notificarLembreteAceito = async (
 ): Promise<void> => {
   await criarNotificacao({
     tipo: 'lembrete_aceito',
-    titulo: '✅ Lembrete aceito',
+    titulo: 'Lembrete aceito',
     mensagem: `${aceitoPorNome} aceitou o lembrete: "${tituloLembrete}"`,
     lembreteId,
     userId
@@ -212,9 +213,64 @@ export const notificarLembreteRecusado = async (
 ): Promise<void> => {
   await criarNotificacao({
     tipo: 'lembrete_recusado',
-    titulo: '❌ Lembrete recusado',
+    titulo: 'Lembrete recusado',
     mensagem: `${recusadoPorNome} recusou o lembrete: "${tituloLembrete}"`,
     lembreteId,
     userId
   });
+};
+
+/**
+ * Criar notificação de solicitação de amizade
+ */
+export const notificarSolicitacaoAmizade = async (
+  userId: string,
+  remetenteId: string,
+  remetenteNome: string
+): Promise<void> => {
+  await criarNotificacao({
+    tipo: 'solicitacao_amizade',
+    titulo: 'Solicitação de Amizade',
+    mensagem: `${remetenteNome} enviou uma solicitação de amizade`,
+    remetenteId,
+    remetenteNome,
+    userId
+  });
+};
+
+/**
+ * Excluir uma notificação específica
+ */
+export const excluirNotificacao = async (notificacaoId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, COLLECTION_NAME, notificacaoId);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error('Erro ao excluir notificação:', error);
+    throw error;
+  }
+};
+
+/**
+ * Excluir todas as notificações de um usuário
+ */
+export const excluirTodasNotificacoes = async (userId: string): Promise<void> => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('userId', '==', userId)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+
+    querySnapshot.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Erro ao excluir todas as notificações:', error);
+    throw error;
+  }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -16,9 +16,11 @@ import {
   Trash2,
   Users
 } from 'lucide-react';
-import { Lembrete, CorLembrete, SomNotificacao } from '../types';
+import { Lembrete, CorLembrete, SomNotificacao, Friend } from '../types';
 import { UseRemindersReturn } from '../hooks/useReminders';
 import { useAuth } from '../hooks/useAuth';
+import { useNotifications } from '../hooks/useNotifications';
+import { listarAmigos } from '../firebase/friends';
 import LembreteCard from './LembreteCard';
 import LembreteModal from './LembreteModal';
 import LembreteViewModal from './LembreteViewModal';
@@ -28,6 +30,8 @@ import FriendManager from './FriendManager';
 interface LembretesPageProps {
   remindersData: UseRemindersReturn;
   theme?: 'dark' | 'light';
+  initialContext?: any;
+  onContextUsed?: () => void;
 }
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -49,8 +53,28 @@ const COR_CLASSES: Record<CorLembrete, string> = {
   mist: 'bg-slate-200'
 };
 
-const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'dark' }) => {
-  const { usuario } = useAuth();
+const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'dark', initialContext, onContextUsed }) => {
+  const { usuario, dadosUsuario } = useAuth();
+
+  // Adaptar usuário do Auth/Firestore para o tipo Usuario esperado pelo componente
+  const usuarioAtual = useMemo(() => {
+    if (!usuario) return null;
+    return {
+      uid: usuario.uid,
+      email: usuario.email || '',
+      nomeCompleto: dadosUsuario?.nomeCompleto || usuario.displayName || 'Usuário',
+      friendRequestsSent: [], // Não usado diretamente na prop
+      friendRequestsReceived: [],
+      friends: []
+    } as any; // Cast como any simplificado para evitar erro de tipo estrito agora
+  }, [usuario, dadosUsuario]);
+
+  // Notificações para radar de amigos
+  const { notificacoes } = useNotifications(usuario?.uid || '');
+  const temSolicitacoesPendentes = useMemo(() => {
+    return notificacoes.some(n => n.tipo === 'solicitacao_amizade' && !n.lida);
+  }, [notificacoes]);
+
   const {
     lembretes,
     lembretesRecebidos,
@@ -74,12 +98,79 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
   const [mesAtual, setMesAtual] = useState(new Date());
   const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(new Date());
 
+  // Handle Initial Context (Deep Linking)
+  // Handle Initial Context (Deep Linking)
+  useEffect(() => {
+    if (initialContext) {
+      if (initialContext.tab) {
+        setTabAtual(initialContext.tab);
+      }
+
+      if (initialContext.modal === 'friends') {
+        setModalFriends(true);
+        if (initialContext.friendTab) {
+          setFriendTab(initialContext.friendTab);
+        }
+      }
+
+      // Buscar lembrete se id for fornecido (para visualizar ou selecionar data)
+      if (initialContext.lembreteId || initialContext.highlightId) {
+        const targetId = initialContext.lembreteId || initialContext.highlightId;
+        // Procurar em todas as listas
+        const targetLembrete =
+          lembretes.find(l => l.id === targetId) ||
+          expirados.find(l => l.id === targetId) ||
+          lembretesRecebidos.find(l => l.id === targetId) ||
+          finalizados.find(l => l.id === targetId);
+
+        if (targetLembrete) {
+          // Se for para visualizar, abrir modal
+          if (initialContext.modal === 'view') {
+            setModalVisualizar(targetLembrete);
+          } else {
+            // Navegação (Corpo do click)
+            // Se tiver data, selecionar o dia (especialmente para disparados)
+            if (targetLembrete.dataHora) {
+              const dataLembrete = new Date(targetLembrete.dataHora);
+
+              // Sempre selecionar o dia no calendário e ir para tab Meus
+              setDiaSelecionado(dataLembrete);
+              if (tabAtual !== 'meus') {
+                setTabAtual('meus');
+              }
+              // Se tiver mudado de mês, atualizar mês também
+              if (dataLembrete.getMonth() !== mesAtual.getMonth() || dataLembrete.getFullYear() !== mesAtual.getFullYear()) {
+                setMesAtual(new Date(dataLembrete.getFullYear(), dataLembrete.getMonth(), 1));
+              }
+            }
+          }
+        }
+      }
+
+      if (onContextUsed) {
+        onContextUsed();
+      }
+    }
+  }, [initialContext, lembretes, expirados, lembretesRecebidos, finalizados]);
+
   // Estado de modais
   const [modalCriar, setModalCriar] = useState(false);
   const [modalVisualizar, setModalVisualizar] = useState<Lembrete | null>(null);
   const [lembreteEditando, setLembreteEditando] = useState<Lembrete | null>(null);
   const [modalConfirmacaoDelete, setModalConfirmacaoDelete] = useState(false);
   const [modalFriends, setModalFriends] = useState(false);
+  const [friendTab, setFriendTab] = useState<'friends' | 'add' | 'requests'>('friends');
+
+  // Estado para amigos (para o dropdown no modal)
+  const [amigos, setAmigos] = useState<Friend[]>([]);
+  const [destinatarioPreSelecionado, setDestinatarioPreSelecionado] = useState<{ uid: string; nome: string } | null>(null);
+
+  // Carregar lista de amigos
+  useEffect(() => {
+    if (usuario?.uid) {
+      listarAmigos(usuario.uid).then(setAmigos);
+    }
+  }, [usuario?.uid]);
 
   // Tab atual
   const [tabAtual, setTabAtual] = useState<'meus' | 'expirados' | 'recebidos' | 'concluidos'>('meus');
@@ -232,14 +323,37 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     dataHora: string;
     cor: CorLembrete;
     somNotificacao: SomNotificacao;
+    destinatarioId?: string;
+    destinatarioNome?: string;
   }) => {
     if (lembreteEditando) {
       await atualizar(lembreteEditando.id, dados);
     } else {
-      await criar(dados);
+      // Se tem destinatário, criar e enviar para o amigo
+      if (dados.destinatarioId && dados.destinatarioNome) {
+        const novoLembrete = await criar({
+          titulo: dados.titulo,
+          descricao: dados.descricao,
+          dataHora: dados.dataHora,
+          cor: dados.cor,
+          somNotificacao: dados.somNotificacao
+        });
+        // Enviar para o amigo
+        if (novoLembrete && enviar) {
+          await enviar(
+            novoLembrete.id,
+            dados.destinatarioId,
+            dados.destinatarioNome,
+            dados.titulo
+          );
+        }
+      } else {
+        await criar(dados);
+      }
     }
     setModalCriar(false);
     setLembreteEditando(null);
+    setDestinatarioPreSelecionado(null);
   };
 
   // Handler para aceitar lembrete recebido
@@ -370,12 +484,20 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
         {/* Botão de Amigos do Header */}
         <button
           onClick={() => setModalFriends(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${theme === 'dark'
+          className={`relative flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${theme === 'dark'
             ? 'bg-white/5 hover:bg-white/10 text-slate-300'
             : 'bg-white hover:bg-slate-50 text-slate-600 shadow-sm border border-slate-200'
-            }`}
+            } ${temSolicitacoesPendentes ? 'border-orange-500/50' : ''}`}
         >
-          <Users size={20} />
+          <div className="relative">
+            <Users size={20} className={temSolicitacoesPendentes ? 'text-orange-500' : ''} />
+            {temSolicitacoesPendentes && (
+              <>
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full" />
+              </>
+            )}
+          </div>
           <span className="hidden sm:inline font-medium">Amigos</span>
         </button>
       </motion.div>
@@ -732,9 +854,12 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             onClose={() => {
               setModalCriar(false);
               setLembreteEditando(null);
+              setDestinatarioPreSelecionado(null);
             }}
             onEnviar={enviar}
             buscarUsuarios={buscarUsuariosParaCompartilhar}
+            amigos={amigos}
+            destinatarioPreSelecionado={destinatarioPreSelecionado || undefined}
           />
         )}
       </AnimatePresence>
@@ -752,11 +877,20 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
 
       {/* Modal de Amigos */}
       <AnimatePresence>
-        {modalFriends && usuario && (
+        {modalFriends && usuarioAtual && (
           <FriendManager
-            currentUser={usuario}
+            currentUser={usuarioAtual}
             theme={theme}
-            onClose={() => setModalFriends(false)}
+            onClose={() => {
+              setModalFriends(false);
+              setFriendTab('friends'); // Reset to default
+            }}
+            onEnviarLembrete={(friend) => {
+              setModalFriends(false);
+              setDestinatarioPreSelecionado({ uid: friend.id, nome: friend.name });
+              setModalCriar(true);
+            }}
+            initialTab={friendTab}
           />
         )}
       </AnimatePresence>

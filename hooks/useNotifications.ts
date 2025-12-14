@@ -3,7 +3,9 @@ import { Notificacao, SomNotificacao } from '../types';
 import {
   escutarNotificacoes,
   marcarComoLida as marcarComoLidaService,
-  marcarTodasComoLidas as marcarTodasComoLidasService
+  marcarTodasComoLidas as marcarTodasComoLidasService,
+  excluirNotificacao as excluirNotificacaoService,
+  excluirTodasNotificacoes as excluirTodasNotificacoesService
 } from '../firebase/notificacoes';
 
 interface UseNotificationsReturn {
@@ -12,6 +14,8 @@ interface UseNotificationsReturn {
   loading: boolean;
   marcarLida: (notificacaoId: string) => Promise<void>;
   marcarTodasLidas: () => Promise<void>;
+  excluir: (notificacaoId: string) => Promise<void>;
+  limparTodas: () => Promise<void>;
   tocarSom: (som: SomNotificacao) => void;
   pararSom: () => void;
   somTocando: boolean;
@@ -30,60 +34,22 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [somTocando, setSomTocando] = useState(false);
-
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Escutar notificações em tempo real
-  useEffect(() => {
-    if (!userId) return;
+  // Ref para controlar a reprodução de som apenas para NOVAS notificações
+  const lastNotificationIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
 
-    setLoading(true);
-
-    const unsubscribe = escutarNotificacoes(userId, (novasNotificacoes) => {
-      setNotificacoes(novasNotificacoes);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [userId]);
-
-  // Calcular não lidas
-  const naoLidas = notificacoes.filter(n => !n.lida).length;
-
-  // Marcar notificação como lida
-  const marcarLida = useCallback(async (notificacaoId: string) => {
-    try {
-      await marcarComoLidaService(notificacaoId);
-      setNotificacoes(prev =>
-        prev.map(n => n.id === notificacaoId ? { ...n, lida: true } : n)
-      );
-    } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
-    }
-  }, []);
-
-  // Marcar todas como lidas
-  const marcarTodasLidas = useCallback(async () => {
-    try {
-      await marcarTodasComoLidasService(userId);
-      setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
-    } catch (error) {
-      console.error('Erro ao marcar todas as notificações como lidas:', error);
-    }
-  }, [userId]);
-
-  // Parar som
-  const pararSom = useCallback(() => {
+  // Tocar som usando Web Audio API
+  const tocarSom = useCallback((som: SomNotificacao) => {
+    // Parar som anterior se estiver tocando
     if (oscillatorRef.current) {
       try {
         oscillatorRef.current.stop();
         oscillatorRef.current.disconnect();
-      } catch (e) {
-        // Ignorar erros se já parou
-      }
+      } catch (e) { /* ignore */ }
       oscillatorRef.current = null;
     }
     if (timeoutRef.current) {
@@ -91,12 +57,6 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
       timeoutRef.current = null;
     }
     setSomTocando(false);
-  }, []);
-
-  // Tocar som usando Web Audio API
-  const tocarSom = useCallback((som: SomNotificacao) => {
-    // Parar som anterior se estiver tocando
-    pararSom();
 
     try {
       // Criar AudioContext se não existir
@@ -110,7 +70,6 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
       setSomTocando(true);
 
       let currentTime = audioContext.currentTime;
-      const oscillators: OscillatorNode[] = [];
 
       // Criar padrão de beeps
       config.pattern.forEach((duration, index) => {
@@ -133,7 +92,10 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
           oscillator.start(currentTime);
           oscillator.stop(currentTime + beepDuration);
 
-          oscillators.push(oscillator);
+          if (index === 0) { // Keep ref to first oscillator mainly if needed, logic simplified here
+            oscillatorRef.current = oscillator;
+          }
+
           currentTime += beepDuration;
         } else {
           // Silêncio
@@ -151,7 +113,99 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
       console.error('Erro ao tocar som:', error);
       setSomTocando(false);
     }
-  }, [pararSom]);
+  }, []);
+
+  const pararSom = useCallback(() => {
+    if (oscillatorRef.current) {
+      try {
+        oscillatorRef.current.stop();
+        oscillatorRef.current.disconnect();
+      } catch (e) { /* ignore */ }
+      oscillatorRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setSomTocando(false);
+  }, []);
+
+  // Escutar notificações em tempo real
+  useEffect(() => {
+    if (!userId) return;
+
+    setLoading(true);
+
+    const unsubscribe = escutarNotificacoes(userId, (novasNotificacoes) => {
+      // Verificar se há novas notificações relevantes para tocar som
+      if (!isFirstLoadRef.current) {
+        const novosIds = novasNotificacoes.map(n => n.id);
+        const notificacaoNova = novasNotificacoes.find(n =>
+          !lastNotificationIdsRef.current.has(n.id) &&
+          !n.lida &&
+          (n.tipo === 'solicitacao_amizade' || n.tipo === 'lembrete_recebido')
+        );
+
+        if (notificacaoNova) {
+          tocarSom('sino');
+        }
+      }
+
+      setNotificacoes(novasNotificacoes);
+
+      // Atualizar Map de IDs
+      const idsSet = new Set(novasNotificacoes.map(n => n.id));
+      lastNotificationIdsRef.current = idsSet;
+
+      if (isFirstLoadRef.current) {
+        isFirstLoadRef.current = false;
+      }
+
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId, tocarSom]);
+
+  // Calcular não lidas
+  const naoLidas = notificacoes.filter(n => !n.lida).length;
+
+  // Marcar notificação como lida
+  const marcarLida = useCallback(async (notificacaoId: string) => {
+    try {
+      await marcarComoLidaService(notificacaoId);
+      // O listener do Firestore vai atualizar o estado
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  }, []);
+
+  // Marcar todas como lidas
+  const marcarTodasLidas = useCallback(async () => {
+    try {
+      await marcarTodasComoLidasService(userId);
+    } catch (error) {
+      console.error('Erro ao marcar todas as notificações como lidas:', error);
+    }
+  }, [userId]);
+
+  // Excluir notificação
+  const excluir = useCallback(async (notificacaoId: string) => {
+    try {
+      await excluirNotificacaoService(notificacaoId);
+    } catch (error) {
+      console.error('Erro ao excluir notificação:', error);
+    }
+  }, []);
+
+  // Limpar todas
+  const limparTodas = useCallback(async () => {
+    try {
+      await excluirTodasNotificacoesService(userId);
+    } catch (error) {
+      console.error('Erro ao limpar todas as notificações:', error);
+    }
+  }, [userId]);
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -170,6 +224,8 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
     loading,
     marcarLida,
     marcarTodasLidas,
+    excluir,
+    limparTodas,
     tocarSom,
     pararSom,
     somTocando

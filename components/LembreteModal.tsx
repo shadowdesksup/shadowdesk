@@ -19,7 +19,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
-import { Lembrete, CorLembrete, SomNotificacao } from '../types';
+import { Lembrete, CorLembrete, SomNotificacao, Friend } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
 
 interface LembreteModalProps {
@@ -32,10 +32,14 @@ interface LembreteModalProps {
     dataHora: string;
     cor: CorLembrete;
     somNotificacao: SomNotificacao;
+    destinatarioId?: string;
+    destinatarioNome?: string;
   }) => Promise<void>;
   onClose: () => void;
   onEnviar?: (lembreteId: string, destinatarioId: string, destinatarioNome: string) => Promise<void>;
   buscarUsuarios?: (termo: string) => Promise<Array<{ uid: string; email: string; nomeCompleto: string }>>;
+  amigos?: Friend[];
+  destinatarioPreSelecionado?: { uid: string; nome: string };
 }
 
 const CORES: { valor: CorLembrete; label: string; classe: string; border: string }[] = [
@@ -66,7 +70,9 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   onSave,
   onClose,
   onEnviar,
-  buscarUsuarios
+  buscarUsuarios,
+  amigos = [],
+  destinatarioPreSelecionado
 }) => {
   const { tocarSom } = useNotifications('');
 
@@ -74,13 +80,20 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   const [titulo, setTitulo] = useState(lembrete?.titulo || '');
   const [descricao, setDescricao] = useState(lembrete?.descricao || '');
   const [data, setData] = useState(() => {
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     if (lembrete) {
       return new Date(lembrete.dataHora).toISOString().split('T')[0];
     }
     if (dataPadrao) {
-      return dataPadrao.toISOString().split('T')[0];
+      return formatDate(dataPadrao);
     }
-    return new Date().toISOString().split('T')[0];
+    return formatDate(new Date());
   });
   const [hora, setHora] = useState(() => {
     if (lembrete) {
@@ -107,6 +120,12 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   // Estados de loading/erro
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  // Estados para enviar para amigo
+  const [enviarParaAmigo, setEnviarParaAmigo] = useState(!!destinatarioPreSelecionado);
+  const [amigoSelecionado, setAmigoSelecionado] = useState<{ uid: string; nome: string } | null>(
+    destinatarioPreSelecionado || null
+  );
 
   // Buscar usuários quando digita
   useEffect(() => {
@@ -152,7 +171,11 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
         descricao: descricao.trim(),
         dataHora: dataHora.toISOString(),
         cor,
-        somNotificacao
+        somNotificacao,
+        ...(enviarParaAmigo && amigoSelecionado ? {
+          destinatarioId: amigoSelecionado.uid,
+          destinatarioNome: amigoSelecionado.nome
+        } : {})
       });
       onClose();
     } catch (err: any) {
@@ -358,6 +381,62 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Enviar para Amigo */}
+              {amigos.length > 0 && !lembrete && (
+                <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={enviarParaAmigo}
+                      onChange={(e) => {
+                        setEnviarParaAmigo(e.target.checked);
+                        if (!e.target.checked) setAmigoSelecionado(null);
+                      }}
+                      className="w-4 h-4 rounded border-2 border-purple-500 bg-transparent checked:bg-purple-500 focus:ring-purple-500 cursor-pointer"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Send size={14} className="text-purple-400" />
+                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                        Enviar para um amigo
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Dropdown de Amigos */}
+                  {enviarParaAmigo && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3"
+                    >
+                      <select
+                        value={amigoSelecionado?.uid || ''}
+                        onChange={(e) => {
+                          const amigo = amigos.find(a => a.id === e.target.value);
+                          if (amigo) {
+                            setAmigoSelecionado({ uid: amigo.id, nome: amigo.name });
+                          } else {
+                            setAmigoSelecionado(null);
+                          }
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg border text-sm ${theme === 'dark'
+                          ? 'bg-white/5 border-white/10 text-white'
+                          : 'bg-white border-slate-200 text-slate-800'
+                          } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                      >
+                        <option value="">Selecione um amigo...</option>
+                        {amigos.map(amigo => (
+                          <option key={amigo.id} value={amigo.id}>
+                            {amigo.name} ({amigo.email})
+                          </option>
+                        ))}
+                      </select>
+                    </motion.div>
+                  )}
+                </div>
+              )}
 
               {/* Erro */}
               {erro && (

@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, X, CheckCheck, Trash2, Clock } from 'lucide-react';
+import { Bell, Check, X, CheckCheck, Trash2, Clock, ClipboardList, UserPlus, Eye } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
 import { Notificacao } from '../types';
 
 interface NotificationBellProps {
   userId: string;
   theme?: 'dark' | 'light';
-  onNotificacaoClick?: (notificacao: Notificacao) => void;
+  onNotificacaoClick?: (notificacao: Notificacao, action: 'navigate' | 'view') => void;
 }
 
 const NotificationBell: React.FC<NotificationBellProps> = ({
@@ -15,7 +15,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   theme = 'dark',
   onNotificacaoClick
 }) => {
-  const { notificacoes, naoLidas, marcarLida, marcarTodasLidas } = useNotifications(userId);
+  const {
+    notificacoes,
+    naoLidas,
+    limparTodas,
+    excluir
+  } = useNotifications(userId);
+
   const [aberto, setAberto] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,15 +41,14 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   const getIcone = (tipo: string) => {
     switch (tipo) {
       case 'lembrete_disparado':
-        return '🔔';
       case 'lembrete_recebido':
-        return '📩';
       case 'lembrete_aceito':
-        return '✅';
       case 'lembrete_recusado':
-        return '❌';
+        return <Eye size={18} />;
+      case 'solicitacao_amizade':
+        return <UserPlus size={18} className="text-cyan-400" />;
       default:
-        return '📌';
+        return <Bell size={18} className="text-slate-400" />;
     }
   };
 
@@ -63,13 +68,16 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     return `${dias}d`;
   };
 
-  const handleNotificacaoClick = async (notificacao: Notificacao) => {
-    if (!notificacao.lida) {
-      await marcarLida(notificacao.id);
-    }
+  const handleNotificacaoClick = async (notificacao: Notificacao, action: 'navigate' | 'view') => {
+    // Excluir ao clicar (conforme solicitado originalmente)
+    await excluir(notificacao.id);
+
+    // Callback para navegação
     if (onNotificacaoClick) {
-      onNotificacaoClick(notificacao);
+      onNotificacaoClick(notificacao, action);
     }
+
+    setAberto(false); // Fechar dropdown
   };
 
   return (
@@ -80,8 +88,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
         whileTap={{ scale: 0.95 }}
         onClick={() => setAberto(!aberto)}
         className={`relative p-2 rounded-xl border transition-all ${theme === 'dark'
-            ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm'
+          ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm'
           }`}
       >
         {/* Sino com animação quando há não lidas */}
@@ -124,8 +132,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={`absolute right-0 mt-2 w-80 rounded-xl border overflow-hidden z-50 ${theme === 'dark'
-                ? 'bg-slate-900 border-white/10 shadow-2xl'
-                : 'bg-white border-slate-200 shadow-xl'
+              ? 'bg-slate-900 border-white/10 shadow-2xl'
+              : 'bg-white border-slate-200 shadow-xl'
               }`}
           >
             {/* Header */}
@@ -135,18 +143,19 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
                 }`}>
                 Notificações
               </h3>
-              {naoLidas > 0 && (
+              {notificacoes.length > 0 && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => marcarTodasLidas()}
+                  onClick={() => limparTodas()}
                   className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg ${theme === 'dark'
-                      ? 'text-cyan-400 hover:bg-cyan-500/20'
-                      : 'text-cyan-600 hover:bg-cyan-50'
+                    ? 'text-red-400 hover:bg-red-500/20'
+                    : 'text-red-600 hover:bg-red-50'
                     }`}
+                  title="Limpar todas as notificações"
                 >
-                  <CheckCheck size={14} />
-                  Marcar todas
+                  <Trash2 size={14} />
+                  Limpar todas
                 </motion.button>
               )}
             </div>
@@ -164,16 +173,30 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
                   <motion.button
                     key={notificacao.id}
                     whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}
-                    onClick={() => handleNotificacaoClick(notificacao)}
+                    onClick={() => handleNotificacaoClick(notificacao, 'navigate')}
                     className={`w-full p-4 text-left flex gap-3 border-b ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'
                       } ${!notificacao.lida ?
                         theme === 'dark' ? 'bg-cyan-500/10' : 'bg-cyan-50'
                         : ''
                       }`}
                   >
-                    {/* Ícone */}
-                    <div className="text-2xl flex-shrink-0">
-                      {getIcone(notificacao.tipo)}
+                    {/* Ícone (Clicável para visualizar) */}
+                    <div className="flex-shrink-0 mt-1">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNotificacaoClick(notificacao, 'view');
+                        }}
+                        className={`p-1 rounded-full border transition-colors ${theme === 'dark'
+                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:text-white'
+                          : 'bg-cyan-50 border-cyan-200 text-cyan-600 hover:bg-cyan-100 hover:text-cyan-800'
+                          }`}
+                        title="Visualizar Detalhes"
+                      >
+                        {getIcone(notificacao.tipo)}
+                      </motion.button>
                     </div>
 
                     {/* Conteúdo */}
@@ -203,19 +226,21 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             </div>
 
             {/* Footer */}
-            {notificacoes.length > 10 && (
-              <div className={`p-3 text-center border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
-                }`}>
-                <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
+            {
+              notificacoes.length > 10 && (
+                <div className={`p-3 text-center border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
                   }`}>
-                  Mostrando 10 de {notificacoes.length} notificações
-                </p>
-              </div>
-            )}
-          </motion.div>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
+                    }`}>
+                    Mostrando 10 de {notificacoes.length} notificações
+                  </p>
+                </div>
+              )
+            }
+          </motion.div >
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence >
+    </div >
   );
 };
 

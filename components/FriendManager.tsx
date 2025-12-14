@@ -7,7 +7,8 @@ import {
   Check,
   X,
   Clock,
-  Shield
+  Shield,
+  Bell
 } from 'lucide-react';
 import {
   buscarUsuarioPorEmail,
@@ -23,10 +24,12 @@ interface FriendManagerProps {
   currentUser: Usuario;
   theme?: 'dark' | 'light';
   onClose: () => void;
+  onEnviarLembrete?: (friend: Friend) => void;
+  initialTab?: 'friends' | 'add' | 'requests';
 }
 
-const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dark', onClose }) => {
-  const [activeTab, setActiveTab] = useState<'friends' | 'add' | 'requests'>('friends');
+const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dark', onClose, onEnviarLembrete, initialTab = 'friends' }) => {
+  const [activeTab, setActiveTab] = useState<'friends' | 'add' | 'requests'>(initialTab);
 
   // Estados para busca/adicionar
   const [emailBusca, setEmailBusca] = useState('');
@@ -99,7 +102,7 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
     } catch (error) {
       console.error(error);
       setStatusEnvio('error');
-      setMsgErro("Erro ao enviar solicitação.");
+      setMsgErro(`Erro: ${error instanceof Error ? error.message : 'Desconhecido'}`);
     }
   };
 
@@ -153,8 +156,8 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
               <button
                 onClick={() => setActiveTab('friends')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'friends'
-                    ? (theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600')
-                    : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
+                  ? (theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600')
+                  : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
                   }`}
               >
                 <Users size={20} />
@@ -168,8 +171,8 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
               <button
                 onClick={() => setActiveTab('add')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'add'
-                    ? (theme === 'dark' ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
-                    : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
+                  ? (theme === 'dark' ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
+                  : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
                   }`}
               >
                 <UserPlus size={20} />
@@ -179,8 +182,8 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
               <button
                 onClick={() => setActiveTab('requests')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'requests'
-                    ? (theme === 'dark' ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600')
-                    : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
+                  ? (theme === 'dark' ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600')
+                  : (theme === 'dark' ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50')
                   }`}
               >
                 <Clock size={20} />
@@ -213,8 +216,8 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
                         onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
                         placeholder="Digite o email do usuário..."
                         className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'dark'
-                            ? 'bg-white/5 border-white/10 text-white placeholder-slate-500 focus:border-purple-500'
-                            : 'bg-white border-slate-200 text-slate-800 focus:border-purple-500'
+                          ? 'bg-white/5 border-white/10 text-white placeholder-slate-500 focus:border-purple-500'
+                          : 'bg-white border-slate-200 text-slate-800 focus:border-purple-500'
                           } focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all`}
                       />
                     </div>
@@ -259,8 +262,8 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
                           onClick={handleEnviarSolicitacao}
                           disabled={statusEnvio === 'sending' || statusEnvio === 'success'}
                           className={`ml-auto px-4 py-2 rounded-lg font-medium transition-colors ${statusEnvio === 'success'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-purple-500 text-white hover:bg-purple-600'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-purple-500 text-white hover:bg-purple-600'
                             }`}
                         >
                           {statusEnvio === 'sending' ? 'Enviando...' :
@@ -351,13 +354,16 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
                     {friends.map(friend => (
                       <motion.div
                         key={friend.id}
-                        className={`p-4 rounded-xl border flex items-center gap-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'
+                        whileHover={{ scale: 1.02 }}
+                        className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer group transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-slate-200 hover:shadow-md'
                           }`}
+                        onClick={() => onEnviarLembrete && onEnviarLembrete(friend)}
+                        title="Clique para enviar um lembrete"
                       >
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                           {friend.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                             {friend.name}
                           </h4>
@@ -365,6 +371,12 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
                             {friend.email}
                           </p>
                         </div>
+                        {onEnviarLembrete && (
+                          <div className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${theme === 'dark' ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-50 text-purple-600'
+                            }`}>
+                            <Bell size={16} />
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </div>

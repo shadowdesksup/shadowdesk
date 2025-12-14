@@ -195,8 +195,8 @@ export const escutarLembretes = (
       } as Lembrete;
 
       // Filtragem de segurança e lógica de aceitação
-      // Meus lembretes sempre entram
-      if (lembrete.criadoPor === userId) {
+      // Meus lembretes entram APENAS se não foram enviados para outra pessoa
+      if (lembrete.criadoPor === userId && !lembrete.compartilhadoCom) {
         lembretes.push(lembrete);
       }
       // Lembretes recebidos entram APENAS se foram aceitos

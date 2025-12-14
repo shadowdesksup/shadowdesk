@@ -15,7 +15,7 @@ interface HeaderProps {
   onToggleTheme?: () => void;
   onToggleSidebar?: () => void;
   proximoLembrete?: Lembrete | null;
-  onLembreteClick?: () => void;
+  onLembreteClick?: (context?: any) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -79,7 +79,45 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Notification Bell */}
         {userId && (
-          <NotificationBell userId={userId} theme={theme} />
+          <NotificationBell
+            userId={userId}
+            theme={theme}
+            onNotificacaoClick={(notificacao, action) => {
+              if (onLembreteClick) {
+                // Determinar contexto baseado no tipo e ação
+                let context: any = null;
+
+                // Se ação for visualizar (botão olho), abrir modal
+                if (action === 'view') {
+                  context = {
+                    modal: 'view',
+                    lembreteId: notificacao.lembreteId,
+                    tab: 'meus' // Assumir tab meus para carregar
+                  };
+                } else {
+                  // Navegação padrão (clique no corpo)
+                  if (['lembrete_disparado', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(notificacao.tipo)) {
+                    if (notificacao.tipo === 'lembrete_recebido') {
+                      context = { tab: 'recebidos' };
+                    } else if (notificacao.tipo === 'lembrete_aceito' || notificacao.tipo === 'lembrete_recusado') {
+                      context = { tab: 'meus' };
+                    } else if (notificacao.tipo === 'lembrete_disparado') {
+                      // Correção solicitada: Ir para dia selecionado (implícito em 'meus' com data selecionada se tivermos data, mas aqui vamos focar no ID)
+                      // O componente LembretesPage vai usar highlightId para achar a data
+                      context = {
+                        tab: 'meus',
+                        highlightId: notificacao.lembreteId
+                      };
+                    }
+                  } else if (notificacao.tipo === 'solicitacao_amizade') {
+                    context = { modal: 'friends', friendTab: 'requests' };
+                  }
+                }
+
+                onLembreteClick(context);
+              }
+            }}
+          />
         )}
 
         {/* Theme Toggle Button */}

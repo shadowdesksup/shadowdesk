@@ -202,6 +202,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
       className={`
         relative rounded-xl
         ${disparado ? 'shadow-[0_0_20px_rgba(251,146,60,0.6)]' : ''} 
+        ${expirado ? 'shadow-[0_0_20px_rgba(239,68,68,0.6)]' : ''} 
         ${finalizado ? 'opacity-60' : ''} 
         ${selected ? 'ring-2 ring-[rgb(34,211,238)] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.6)] scale-95' : ''}
       `}
@@ -211,6 +212,30 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
       {selected && (
         <div className="absolute -top-2 -right-2 bg-[rgb(34,211,238)] text-white p-1.5 rounded-full shadow-md z-50 animate-in zoom-in duration-200">
           <CheckCircle size={16} fill="currentColor" className="text-white" />
+        </div>
+      )}
+
+      {/* Efeito Radar Pulsante para Expirados */}
+      {expirado && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-visible">
+          {[1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ scale: 0.95, opacity: 0.5 }}
+              animate={{
+                scale: [0.95, 1.2],
+                opacity: [0.4, 0]
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                repeatDelay: 1.5,
+                delay: i * 0.5,
+                ease: 'easeOut'
+              }}
+              className="absolute inset-0 rounded-xl border-2 border-red-500"
+            />
+          ))}
         </div>
       )}
 
@@ -262,12 +287,12 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
           </div>
         )}
         {finalizado && (
-          <div className="absolute top-6 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold font-sans rounded-full z-10 shadow-sm">
+          <div className="absolute top-6 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold font-sans rounded-full animate-pulse z-10 transition-shadow shadow-sm">
             ✓ CONCLUÍDO
           </div>
         )}
         {disparado && (
-          <div className="absolute top-6 right-2 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold font-sans rounded-full z-10 shadow-sm">
+          <div className="absolute top-6 right-2 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold font-sans rounded-full animate-pulse z-10 transition-shadow shadow-sm">
             DISPARADO
           </div>
         )}
@@ -340,20 +365,32 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
                 )}
 
                 {onFinish && !finalizado && !readonly && (
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={disparado ? { opacity: [1, 0.4, 1] } : {}}
-                    transition={disparado ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
-                    onClick={onFinish}
-                    className={`p-1.5 rounded-full transition-colors ${disparado
-                      ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]'
-                      : 'bg-green-500/30 hover:bg-green-500/50'
-                      }`}
-                    title="Marcar como concluído"
-                  >
-                    <CheckCircle size={14} />
-                  </motion.button>
+                  <div className="relative">
+                    {/* Radar Pulse Rings for the button */}
+                    {(disparado || expirado) && [1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0.8, opacity: 0.6 }}
+                        animate={{ scale: [0.8, 2], opacity: [0.5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5, delay: i * 0.3, ease: 'easeOut' }}
+                        className="absolute inset-0 rounded-full border-2 border-green-500"
+                      />
+                    ))}
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      animate={(disparado || expirado) ? { opacity: [1, 0.4, 1] } : {}}
+                      transition={(disparado || expirado) ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
+                      onClick={onFinish}
+                      className={`relative p-1.5 rounded-full transition-colors ${(disparado || expirado)
+                        ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                        : 'bg-green-500/30 hover:bg-green-500/50'
+                        }`}
+                      title="Marcar como concluído"
+                    >
+                      <CheckCircle size={14} />
+                    </motion.button>
+                  </div>
                 )}
 
                 {onDelete && (

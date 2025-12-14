@@ -36,7 +36,7 @@ export const useReminderAlarm = (
 
       // Verificar se chegou a hora (com tolerância de 1 minuto pra trás)
       const diferencaMs = agora.getTime() - dataHoraLembrete.getTime();
-      const dentroDoIntervalo = diferencaMs >= 0 && diferencaMs < 60000; // 1 minuto de tolerância
+      const dentroDoIntervalo = diferencaMs >= 0 && diferencaMs < 30000; // 30 segundos de tolerância
 
       if (dentroDoIntervalo) {
         // Marcar como disparado para não repetir
