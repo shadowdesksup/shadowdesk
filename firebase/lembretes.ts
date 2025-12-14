@@ -328,6 +328,7 @@ export const marcarComoFinalizado = async (lembreteId: string): Promise<void> =>
     const docRef = doc(db, COLLECTION_NAME, lembreteId);
     await updateDoc(docRef, {
       status: 'finalizado' as StatusLembrete,
+      finalizadoEm: serverTimestamp(),
       atualizadoEm: serverTimestamp()
     });
   } catch (error) {
@@ -365,5 +366,53 @@ export const buscarUsuarios = async (termoBusca: string): Promise<Array<{ uid: s
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
     return [];
+  }
+};
+
+/**
+ * Limpar lembretes finalizados há mais de 5 dias
+ */
+export const limparLembretesAntigos = async (userId: string): Promise<void> => {
+  try {
+    const cincoDiasAtras = new Date();
+    cincoDiasAtras.setDate(cincoDiasAtras.getDate() - 5);
+
+    // Buscar lembretes finalizados deste usuário
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('criadoPor', '==', userId),
+      where('status', '==', 'finalizado')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const batch = [];
+
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      // Determinar data de finalização
+      let dataFinalizacao: Date | null = null;
+
+      if (data.finalizadoEm instanceof Object && 'toDate' in data.finalizadoEm) {
+        dataFinalizacao = data.finalizadoEm.toDate();
+      } else if (typeof data.finalizadoEm === 'string') {
+        dataFinalizacao = new Date(data.finalizadoEm);
+      } else if (data.atualizadoEm instanceof Object && 'toDate' in data.atualizadoEm) {
+        // Fallback para atualizadoEm se não tiver finalizadoEm
+        dataFinalizacao = data.atualizadoEm.toDate();
+      } else if (data.dataHora) {
+        // Fallback final: data do lembrete
+        dataFinalizacao = new Date(data.dataHora);
+      }
+
+      if (dataFinalizacao && dataFinalizacao < cincoDiasAtras) {
+        deleteDoc(docSnap.ref); // Deletar individualmente ou batch se muitos
+        // Para simplificar aqui, vou deletar direto.
+        // Se fossem muitos, batch seria ideal.
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao limpar lembretes antigos:', error);
   }
 };

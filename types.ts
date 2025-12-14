@@ -178,6 +178,7 @@ export interface Lembrete {
   aceito?: boolean | null; // null = pendente, true = aceito, false = recusado
   criadoEm: string;
   atualizadoEm?: string;
+  finalizadoEm?: string; // Data de conclusão
 }
 
 // Tipo de notificação geral do sistema

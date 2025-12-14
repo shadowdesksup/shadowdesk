@@ -11,6 +11,7 @@ import {
   aceitarLembrete as aceitarLembreteService,
   recusarLembrete as recusarLembreteService,
   marcarComoFinalizado,
+  limparLembretesAntigos,
   buscarUsuarios
 } from '../firebase/lembretes';
 import {
@@ -31,7 +32,6 @@ export interface UseRemindersReturn {
     descricao: string;
     dataHora: string;
     cor: CorLembrete;
-    somNotificacao: SomNotificacao;
     somNotificacao: SomNotificacao;
   }) => Promise<{ id: string } | null>;
   atualizar: (id: string, dados: Partial<Lembrete>) => Promise<void>;
@@ -78,6 +78,9 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     const unsubscribePendentes = escutarLembretesPendentes(userId, (novosPendentes) => {
       setLembretesRecebidos(novosPendentes);
     });
+
+    // Limpar lembretes antigos ao iniciar
+    limparLembretesAntigos(userId);
 
     return () => {
       unsubscribeLembretes();
