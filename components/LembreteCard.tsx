@@ -152,9 +152,9 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
             {[1, 2, 3].map((i) => (
               <motion.div
                 key={i}
-                initial={{ scale: 0.95, opacity: 0.5 }}
+                initial={{ scale: 1, opacity: 0.5 }}
                 animate={{
-                  scale: [0.95, 1.2],
+                  scale: [1, 1.2],
                   opacity: [0.4, 0]
                 }}
                 transition={{
@@ -164,7 +164,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
                   delay: i * 0.5,
                   ease: 'easeOut'
                 }}
-                className="absolute inset-0 rounded-xl border-2 border-red-500"
+                className="absolute inset-0 rounded-lg border-2 border-red-500"
               />
             ))}
           </div>
