@@ -447,6 +447,16 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     setSelectedIds(new Set());
   };
 
+  const concluirEmMassa = async () => {
+    try {
+      const idsParaConcluir = Array.from(selectedIds);
+      await Promise.all(idsParaConcluir.map(id => finalizar(id)));
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error("Erro ao concluir em massa:", error);
+    }
+  };
+
   const solicitarExclusaoEmMassa = () => {
     setModalConfirmacaoDelete(true);
   };
@@ -485,6 +495,16 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 <X size={18} />
               </button>
             </div>
+            {tabAtual !== 'concluidos' && (
+              <button
+                onClick={concluirEmMassa}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500/80 hover:bg-green-500 rounded-lg font-medium transition-colors shadow-sm"
+                title="Concluir selecionados"
+              >
+                <CheckCircle size={18} />
+                <span className="hidden sm:inline">Concluir</span>
+              </button>
+            )}
             <button
               onClick={solicitarExclusaoEmMassa}
               className="flex items-center gap-2 px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-lg font-medium transition-colors shadow-sm"
