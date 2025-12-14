@@ -384,57 +384,84 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
 
               {/* Enviar para Amigo */}
               {amigos.length > 0 && !lembrete && (
-                <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={enviarParaAmigo}
-                      onChange={(e) => {
-                        setEnviarParaAmigo(e.target.checked);
-                        if (!e.target.checked) setAmigoSelecionado(null);
-                      }}
-                      className="w-4 h-4 rounded border-2 border-purple-500 bg-transparent checked:bg-purple-500 focus:ring-purple-500 cursor-pointer"
-                    />
+                <div className={`mt-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                  <div className="flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-2">
-                      <Send size={14} className="text-purple-400" />
-                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                        Enviar para um amigo
-                      </span>
+                      <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+                        <Send size={16} />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                          Enviar para um amigo
+                        </p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          O lembrete aparecerá para ele(a)
+                        </p>
+                      </div>
                     </div>
-                  </label>
+
+                    <div
+                      className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer pointer-events-auto ${enviarParaAmigo
+                        ? 'bg-purple-500'
+                        : (theme === 'dark' ? 'bg-white/10' : 'bg-slate-200')
+                        }`}
+                      onClick={() => {
+                        const novoValor = !enviarParaAmigo;
+                        setEnviarParaAmigo(novoValor);
+                        if (!novoValor) setAmigoSelecionado(null);
+                      }}
+                    >
+                      <motion.div
+                        className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                        animate={{ x: enviarParaAmigo ? 24 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </div>
+                  </div>
 
                   {/* Dropdown de Amigos */}
-                  {enviarParaAmigo && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3"
-                    >
-                      <select
-                        value={amigoSelecionado?.uid || ''}
-                        onChange={(e) => {
-                          const amigo = amigos.find(a => a.id === e.target.value);
-                          if (amigo) {
-                            setAmigoSelecionado({ uid: amigo.id, nome: amigo.name });
-                          } else {
-                            setAmigoSelecionado(null);
-                          }
-                        }}
-                        className={`w-full px-3 py-2 rounded-lg border text-sm ${theme === 'dark'
-                          ? 'bg-white/5 border-white/10 text-white'
-                          : 'bg-white border-slate-200 text-slate-800'
-                          } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                  <AnimatePresence>
+                    {enviarParaAmigo && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        className="overflow-hidden"
                       >
-                        <option value="">Selecione um amigo...</option>
-                        {amigos.map(amigo => (
-                          <option key={amigo.id} value={amigo.id}>
-                            {amigo.name} ({amigo.email})
-                          </option>
-                        ))}
-                      </select>
-                    </motion.div>
-                  )}
+                        <div className="relative">
+                          <User className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} size={16} />
+
+                          <select
+                            value={amigoSelecionado?.uid || ''}
+                            onChange={(e) => {
+                              const amigo = amigos.find(a => a.id === e.target.value);
+                              if (amigo) {
+                                setAmigoSelecionado({ uid: amigo.id, nome: amigo.name });
+                              } else {
+                                setAmigoSelecionado(null);
+                              }
+                            }}
+                            className={`w-full appearance-none pl-10 pr-10 py-3 rounded-xl border text-sm font-medium transition-all ${theme === 'dark'
+                              ? 'bg-white/5 border-white/10 text-white focus:bg-purple-500/10 focus:border-purple-500/50'
+                              : 'bg-slate-50 border-slate-200 text-slate-800 focus:bg-white focus:border-purple-500'
+                              } focus:outline-none focus:ring-0 cursor-pointer`}
+                          >
+                            <option value="" className={theme === 'dark' ? 'bg-slate-800 text-slate-400' : 'text-slate-400'}>Selecione um amigo...</option>
+                            {amigos.map(amigo => (
+                              <option key={amigo.id} value={amigo.id} className={theme === 'dark' ? 'bg-slate-800 text-white' : 'text-slate-800'}>
+                                {amigo.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <ChevronRight
+                            size={16}
+                            className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 

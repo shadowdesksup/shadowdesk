@@ -9,11 +9,13 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
-  getDoc
+  getDoc,
+  onSnapshot,
+  Unsubscribe
 } from 'firebase/firestore';
 import { db } from './config';
 import { FriendRequest, Usuario, Friend } from '../types';
-import { notificarSolicitacaoAmizade } from './notificacoes';
+import { notificarSolicitacaoAmizade, limparNotificacaoSolicitacao } from './notificacoes';
 
 /**
  * Buscar usuário por email
@@ -89,6 +91,28 @@ export const listarSolicitacoesRecebidas = async (userId: string): Promise<Frien
 };
 
 /**
+ * Escutar solicitações pendentes (recebidas) em tempo real
+ */
+export const escutarSolicitacoesPendentes = (
+  userId: string,
+  callback: (requests: FriendRequest[]) => void
+): Unsubscribe => {
+  const q = query(
+    collection(db, 'friend_requests'),
+    where('toId', '==', userId),
+    where('status', '==', 'pending')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const requests = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FriendRequest));
+    callback(requests);
+  }, (error) => {
+    console.error("Erro ao escutar solicitações:", error);
+    callback([]);
+  });
+};
+
+/**
  * Aceitar solicitação
  */
 export const aceitarSolicitacao = async (requestId: string, fromId: string, toId: string): Promise<void> => {
@@ -108,6 +132,9 @@ export const aceitarSolicitacao = async (requestId: string, fromId: string, toId
       friends: arrayUnion(fromId),
       friendRequestsReceived: arrayRemove(fromId)
     });
+
+    // 3. Limpar notificação
+    await limparNotificacaoSolicitacao(toId, fromId);
 
   } catch (error) {
     console.error("Erro ao aceitar solicitação:", error);
@@ -131,6 +158,9 @@ export const recusarSolicitacao = async (requestId: string, fromId: string, toId
     await updateDoc(doc(db, 'users', toId), {
       friendRequestsReceived: arrayRemove(fromId)
     });
+
+    // 3. Limpar notificação
+    await limparNotificacaoSolicitacao(toId, fromId);
 
   } catch (error) {
     console.error("Erro ao recusar solicitação:", error);

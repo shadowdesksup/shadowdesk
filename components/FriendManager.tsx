@@ -16,7 +16,8 @@ import {
   listarSolicitacoesRecebidas,
   aceitarSolicitacao,
   recusarSolicitacao,
-  listarAmigos
+  listarAmigos,
+  escutarSolicitacoesPendentes
 } from '../firebase/friends';
 import { Usuario, FriendRequest, Friend } from '../types';
 
@@ -45,15 +46,18 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
 
   // Carregar dados iniciais
   useEffect(() => {
-    carregarRequests();
-    carregarAmigos();
+    // Escutar solicitações em tempo real
+    if (currentUser.uid) {
+      const unsubscribe = escutarSolicitacoesPendentes(currentUser.uid, (reqs) => {
+        setRequests(reqs);
+      });
+      return () => unsubscribe();
+    }
   }, [currentUser.uid]);
 
-  const carregarRequests = async () => {
-    if (!currentUser.uid) return;
-    const reqs = await listarSolicitacoesRecebidas(currentUser.uid);
-    setRequests(reqs);
-  };
+  useEffect(() => {
+    carregarAmigos();
+  }, [currentUser.uid]);
 
   const carregarAmigos = async () => {
     if (!currentUser.uid) return;
@@ -109,19 +113,21 @@ const FriendManager: React.FC<FriendManagerProps> = ({ currentUser, theme = 'dar
   const handleAceitar = async (req: FriendRequest) => {
     try {
       await aceitarSolicitacao(req.id, req.fromId, req.toId);
-      setRequests(prev => prev.filter(r => r.id !== req.id));
-      carregarAmigos(); // Atualiza lista
+      // setRequests removido pois o listener atualizará automaticamente
+      carregarAmigos(); // Atualiza lista de amigos
     } catch (error) {
       console.error("Erro ao aceitar:", error);
+      alert("Erro ao aceitar solicitação. Tente novamente.");
     }
   };
 
   const handleRecusar = async (req: FriendRequest) => {
     try {
       await recusarSolicitacao(req.id, req.fromId, req.toId);
-      setRequests(prev => prev.filter(r => r.id !== req.id));
+      // setRequests removido pois o listener atualizará automaticamente
     } catch (error) {
       console.error("Erro ao recusar:", error);
+      alert("Erro ao recusar solicitação. Tente novamente.");
     }
   };
 

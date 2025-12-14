@@ -69,11 +69,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     } as any; // Cast como any simplificado para evitar erro de tipo estrito agora
   }, [usuario, dadosUsuario]);
 
-  // Notificações para radar de amigos
-  const { notificacoes } = useNotifications(usuario?.uid || '');
-  const temSolicitacoesPendentes = useMemo(() => {
-    return notificacoes.some(n => n.tipo === 'solicitacao_amizade' && !n.lida);
-  }, [notificacoes]);
+
 
   const {
     lembretes,
@@ -484,20 +480,12 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
         {/* Botão de Amigos do Header */}
         <button
           onClick={() => setModalFriends(true)}
-          className={`relative flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${theme === 'dark'
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${theme === 'dark'
             ? 'bg-white/5 hover:bg-white/10 text-slate-300'
             : 'bg-white hover:bg-slate-50 text-slate-600 shadow-sm border border-slate-200'
-            } ${temSolicitacoesPendentes ? 'border-orange-500/50' : ''}`}
+            }`}
         >
-          <div className="relative">
-            <Users size={20} className={temSolicitacoesPendentes ? 'text-orange-500' : ''} />
-            {temSolicitacoesPendentes && (
-              <>
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full animate-ping" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full" />
-              </>
-            )}
-          </div>
+          <Users size={20} />
           <span className="hidden sm:inline font-medium">Amigos</span>
         </button>
       </motion.div>
@@ -569,7 +557,10 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                     key={data.toISOString()}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setDiaSelecionado(data)}
+                    onClick={() => {
+                      setDiaSelecionado(data);
+                      setTabAtual('meus');
+                    }}
                     className={`aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all ${ehSelecionado(data)
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
                       : ehHoje(data)
@@ -786,25 +777,25 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                           {new Date(lembrete.dataHora).toLocaleString('pt-BR')}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           // Se clicar em aceitar, ele vai para a lista principal
                           onClick={() => handleAceitar(lembrete)}
-                          className="p-3 bg-green-500 text-white rounded-lg shadow-lg hover:bg-green-600 transition-colors"
+                          className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500/30 backdrop-blur-md border border-green-500/30 text-white shadow-lg shadow-green-500/20 hover:bg-green-500 transition-all"
                           title="Aceitar Convite"
                         >
-                          <Check size={20} />
+                          <Check size={22} strokeWidth={2.5} />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleRecusar(lembrete)}
-                          className="p-3 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
+                          className="w-12 h-12 flex items-center justify-center rounded-full bg-red-500/30 backdrop-blur-md border border-red-500/30 text-white shadow-lg shadow-red-500/20 hover:bg-red-500 transition-all"
                           title="Recusar Convite"
                         >
-                          <X size={20} />
+                          <X size={22} strokeWidth={2.5} />
                         </motion.button>
                       </div>
                     </div>

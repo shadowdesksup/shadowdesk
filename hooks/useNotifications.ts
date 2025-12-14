@@ -143,7 +143,7 @@ export const useNotifications = (userId: string): UseNotificationsReturn => {
         const notificacaoNova = novasNotificacoes.find(n =>
           !lastNotificationIdsRef.current.has(n.id) &&
           !n.lida &&
-          (n.tipo === 'solicitacao_amizade' || n.tipo === 'lembrete_recebido')
+          (n.tipo === 'solicitacao_amizade' || n.tipo === 'lembrete_recebido' || n.tipo === 'lembrete_aceito' || n.tipo === 'lembrete_recusado')
         );
 
         if (notificacaoNova) {

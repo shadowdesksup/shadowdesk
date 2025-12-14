@@ -23,7 +23,21 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   } = useNotifications(userId);
 
   const [aberto, setAberto] = useState(false);
+  const [interacted, setInteracted] = useState(false); // Novo state de interação
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const prevRelevantCountRef = useRef(0);
+
+  // Resetar interação quando houver novas notificações relevantes
+  useEffect(() => {
+    const relevantCount = notificacoes.filter(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(n.tipo)).length;
+
+    // Se o número de notificações relevantes aumentou, reativar o balão
+    if (relevantCount > prevRelevantCountRef.current) {
+      setInteracted(false);
+    }
+
+    prevRelevantCountRef.current = relevantCount;
+  }, [notificacoes]);
 
   // Fechar ao clicar fora
   useEffect(() => {
@@ -86,7 +100,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setAberto(!aberto)}
+        onClick={() => {
+          setAberto(!aberto);
+          setInteracted(true);
+        }}
         className={`relative p-2 rounded-xl border transition-all ${theme === 'dark'
           ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
           : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm'
@@ -122,6 +139,40 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
           </motion.div>
         )}
       </motion.button>
+
+      {/* Bubble de Aviso (Solicitações/Lembretes) */}
+      <AnimatePresence>
+        {!aberto && !interacted && notificacoes.some(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(n.tipo)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 5, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className={`absolute top-full right-0 mt-3 w-60 p-3.5 rounded-2xl shadow-xl z-40 pointer-events-none backdrop-blur-sm ${theme === 'dark' ? 'bg-slate-800/95 border border-white/5' : 'bg-white/95 border border-slate-100'
+              }`}
+          >
+            {/* Seta do balão */}
+            <div className={`absolute -top-1.5 right-3.5 w-3 h-3 rotate-45 border-l border-t rounded-tl-sm ${theme === 'dark'
+              ? 'bg-slate-800 border-white/5'
+              : 'bg-white border-slate-100'
+              }`} />
+
+            <div className="relative z-10 flex items-center gap-3.5">
+              <div className="p-2 rounded-full bg-[rgb(254,88,88)]/10 text-[rgb(254,88,88)] shrink-0">
+                <Bell size={18} className="animate-bounce" style={{ animationDuration: '2s' }} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold mb-0.5 tracking-tight" style={{ color: 'rgb(254, 88, 88)' }}>
+                  Atenção
+                </h4>
+                <p className={`text-xs leading-none font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Novas solicitações ou atualizações.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dropdown */}
       <AnimatePresence>

@@ -239,6 +239,36 @@ export const notificarSolicitacaoAmizade = async (
 };
 
 /**
+ * Remover notificação de solicitação de amizade (usado quando aceita/recusa)
+ */
+export const limparNotificacaoSolicitacao = async (
+  userId: string,
+  remetenteId: string
+): Promise<void> => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('userId', '==', userId),
+      where('remetenteId', '==', remetenteId),
+      where('tipo', '==', 'solicitacao_amizade')
+    );
+
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    if (!snapshot.empty) {
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error('Erro ao limpar notificação de solicitação:', error);
+  }
+};
+
+/**
  * Excluir uma notificação específica
  */
 export const excluirNotificacao = async (notificacaoId: string): Promise<void> => {
