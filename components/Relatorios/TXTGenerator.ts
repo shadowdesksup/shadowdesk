@@ -24,6 +24,12 @@ export const generateTXTContent = (registros: RegistroAtendimento[]) => {
       };
 
       const tabsNeeded = tabMap[label] || 1;
+
+      // Custom formatting for STATUS as requested: 2 spaces + 1 tab
+      if (label === 'STATUS') {
+        return `${prefix}  \t:   ${value}`;
+      }
+
       const tabs = '\t'.repeat(tabsNeeded);
 
       return `${prefix}${tabs}:   ${value}`;
