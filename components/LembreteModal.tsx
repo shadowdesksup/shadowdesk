@@ -35,6 +35,7 @@ interface LembreteModalProps {
     destinatarioId?: string;
     destinatarioNome?: string;
     manterCopia?: boolean;
+    telefone?: string;
   }) => Promise<void>;
   onClose: () => void;
   onEnviar?: (lembreteId: string, destinatarioId: string, destinatarioNome: string) => Promise<void>;
@@ -108,6 +109,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
 
   const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'sand');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
+  const [telefone, setTelefone] = useState(lembrete?.telefone || localStorage.getItem('last_whatsapp_number') || '');
 
   // View State for Sound Selection Overlay
   const [view, setView] = useState<'form' | 'sound_selection'>('form');
@@ -178,8 +180,12 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
           destinatarioId: amigoSelecionado.uid,
           destinatarioNome: amigoSelecionado.nome,
           manterCopia
-        } : {})
+        } : {}),
+        telefone: telefone.trim()
       });
+      if (telefone.trim()) {
+        localStorage.setItem('last_whatsapp_number', telefone.trim());
+      }
       onClose();
     } catch (err: any) {
       setErro(err.message || 'Erro ao salvar lembrete');
@@ -266,6 +272,26 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                     : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
                     } focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all`}
                 />
+              </div>
+
+              {/* WhatsApp Number */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  WhatsApp Notificação <span className="text-[10px] font-normal lowercase opacity-70">(opcional)</span>
+                </label>
+                <input
+                  type="tel"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                  placeholder="Ex: 5514999999999"
+                  className={`w-full px-3 py-2 rounded-lg border text-sm ${theme === 'dark'
+                    ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
+                    : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                    } focus:outline-none focus:ring-2 focus:ring-green-500 transition-all`}
+                />
+                <p className="text-[10px] mt-1 text-slate-500">
+                  O bot enviará a mensagem para este número (apenas números, com DDD).
+                </p>
               </div>
 
               {/* Data e Hora */}

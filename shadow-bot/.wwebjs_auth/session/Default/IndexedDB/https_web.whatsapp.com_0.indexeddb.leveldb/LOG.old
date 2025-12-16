@@ -1,0 +1,26 @@
+2025/12/15-22:56:18.193 1538 Reusing MANIFEST C:\Users\Administrator\Documents\shadowdesk\shadow-bot\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/15-22:56:18.194 1538 Recovering log #152
+2025/12/15-22:56:18.557 1538 Reusing old log C:\Users\Administrator\Documents\shadowdesk\shadow-bot\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000152.log 
+2025/12/15-22:56:18.557 1538 Delete type=2 #151
+2025/12/15-22:56:18.557 1538 Delete type=2 #153
+2025/12/15-22:56:20.618 5d4 Level-0 table #157: started
+2025/12/15-22:56:20.663 5d4 Level-0 table #157: 702024 bytes OK
+2025/12/15-22:56:20.665 5d4 Delete type=0 #152
+2025/12/15-22:56:20.666 5d4 Manual compaction at level-0 from '\x00@\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00A\x00\x00\x00' @ 0 : 0; will stop at '\x00A\x00\x00\x05' @ 122068 : 1
+2025/12/15-22:56:20.666 5d4 Compacting 1@0 + 1@1 files
+2025/12/15-22:56:20.922 5d4 Generated table #158@0: 57330 keys, 1121394 bytes
+2025/12/15-22:56:20.923 5d4 Compacted 1@0 + 1@1 files => 1121394 bytes
+2025/12/15-22:56:20.927 5d4 compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/15-22:56:20.929 5d4 Delete type=2 #157
+2025/12/15-22:56:20.935 5d4 Manual compaction at level-0 from '\x00A\x00\x00\x05' @ 122068 : 1 .. '\x00A\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/12/15-22:56:20.936 5d4 Level-0 table #160: started
+2025/12/15-22:56:20.939 5d4 Level-0 table #160: 5791 bytes OK
+2025/12/15-22:56:20.941 5d4 Delete type=2 #154
+2025/12/15-22:56:20.941 5d4 Delete type=0 #156
+2025/12/15-22:56:20.943 5d4 Manual compaction at level-0 from '\x00A\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00B\x00\x00\x00' @ 0 : 0; will stop at '\x00A\x00\x00\x05' @ 122207 : 0
+2025/12/15-22:56:20.943 5d4 Compacting 1@0 + 1@1 files
+2025/12/15-22:56:21.309 5d4 Generated table #161@0: 57374 keys, 1124049 bytes
+2025/12/15-22:56:21.309 5d4 Compacted 1@0 + 1@1 files => 1124049 bytes
+2025/12/15-22:56:21.310 5d4 compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/15-22:56:21.311 5d4 Delete type=2 #160
+2025/12/15-22:56:21.313 5d4 Manual compaction at level-0 from '\x00A\x00\x00\x05' @ 122207 : 0 .. '\x00B\x00\x00\x00' @ 0 : 0; will stop at (end)

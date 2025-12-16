@@ -186,6 +186,7 @@ export interface Lembrete {
   criadoEm: string;
   atualizadoEm?: string;
   finalizadoEm?: string; // Data de conclusão
+  telefone?: string; // WhatsApp de destino
 }
 
 // Tipo de notificação geral do sistema
