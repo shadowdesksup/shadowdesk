@@ -169,6 +169,13 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
   const [patrimonio, setPatrimonio] = useState('27041');
   const [ns, setNs] = useState('BRH1240K47');
 
+  // Dados do Projeto
+  const [temProjeto, setTemProjeto] = useState(false);
+  const [agencia, setAgencia] = useState<'CNPq' | 'Fapesp' | 'Outro'>('CNPq');
+  const [outraAgencia, setOutraAgencia] = useState('');
+  const [processo, setProcesso] = useState('');
+  const [termo, setTermo] = useState('');
+
   // Descrições
   const [descricaoAvaliacao, setDescricaoAvaliacao] = useState('A avaliação inicial das condições físicas do equipamento, considerando o estado de conservação da carcaça, moldura, botões, tela/display, driver CD/DVD, speaker interno, microfone, webcam; bem como suas conexões de: rede, usb, P2, vídeo out VGA/HDMI e leitor de cartão. Avaliação do hardware interno, memória RAM, processador, HD/SSD, etc...');
 
@@ -249,6 +256,11 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
         modelo,
         patrimonio,
         ns,
+        temProjeto,
+        agencia,
+        outraAgencia,
+        processo,
+        termo,
         descricaoAvaliacao,
         componentes: componentes.map(({ id, ...rest }) => rest),
         acessorios: acessorios.map(({ id, ...rest }) => rest),
@@ -314,6 +326,11 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       setModelo(modelo.modelo);
       setPatrimonio(modelo.patrimonio);
       setNs(modelo.ns);
+      setTemProjeto(modelo.temProjeto || false);
+      setAgencia(modelo.agencia as any || 'CNPq');
+      setOutraAgencia(modelo.outraAgencia || '');
+      setProcesso(modelo.processo || '');
+      setTermo(modelo.termo || '');
       setDescricaoAvaliacao(modelo.descricaoAvaliacao);
       setConclusao(modelo.conclusao);
 
@@ -424,7 +441,12 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
     conclusao,
     imagensEquipamento: imagensEquipamento.map(img => img.file),
     criadoPor: usuarioId,
-    criadoEm: new Date().toISOString()
+    criadoEm: new Date().toISOString(),
+    temProjeto,
+    agencia,
+    outraAgencia,
+    processo,
+    termo
   };
 
   // Styles
@@ -638,7 +660,82 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
               <input value={ns} onChange={e => setNs(e.target.value)} className={inputClass} />
             </div>
           </div>
+
+
+          <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
+
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Projeto
+            </h3>
+            <div
+              onClick={() => setTemProjeto(!temProjeto)}
+              className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${temProjeto ? 'bg-cyan-500' : isDark ? 'bg-slate-700' : 'bg-slate-300'}`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${temProjeto ? 'translate-x-6' : 'translate-x-0'}`} />
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {temProjeto && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className={labelClass}>Agência</label>
+                    <select
+                      value={agencia}
+                      onChange={(e) => setAgencia(e.target.value as any)}
+                      className={inputClass}
+                    >
+                      <option value="CNPq">CNPq</option>
+                      <option value="Fapesp">FAPESP</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                  </div>
+                  {agencia === 'Outro' && (
+                    <div>
+                      <label className={labelClass}>Especificar Agência</label>
+                      <input
+                        value={outraAgencia}
+                        onChange={e => setOutraAgencia(e.target.value)}
+                        className={inputClass}
+                        placeholder="Ex: FUNDAÇÃO X"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pb-1">
+                  <div>
+                    <label className={labelClass}>Processo</label>
+                    <input
+                      value={processo}
+                      onChange={e => setProcesso(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ex: 312345/2021-0"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Termo</label>
+                    <input
+                      value={termo}
+                      onChange={e => setTermo(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ex: 123/2022"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+
 
         {/* Avaliação Técnica */}
         {/* Avaliação Técnica */}
@@ -795,15 +892,17 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       </div>
 
       {/* RIGHT COLUMN: PREVIEW - Hidden on mobile (<768px), visible and stacked on tablet (768-1089px), side-by-side on wide (≥1090px) */}
-      {showPreview && (
-        <div className="hidden md:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full">
-          <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true}>
-            <DescritivoDocument descritivo={dadosAtuais} />
-          </PDFViewer>
-        </div>
-      )}
+      {
+        showPreview && (
+          <div className="hidden md:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full">
+            <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true}>
+              <DescritivoDocument descritivo={dadosAtuais} />
+            </PDFViewer>
+          </div>
+        )
+      }
 
-    </motion.div>
+    </motion.div >
   );
 };
 

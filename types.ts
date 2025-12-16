@@ -108,6 +108,13 @@ export interface DescricaoEquipamento {
   patrimonio: string;
   ns: string; // Número de Série
 
+  // Dados do Projeto
+  temProjeto?: boolean;
+  agencia?: 'CNPq' | 'Fapesp' | 'Outro';
+  outraAgencia?: string;
+  processo?: string;
+  termo?: string;
+
   // Descrição da Avaliação Técnica Geral
   descricaoAvaliacao: string;
 

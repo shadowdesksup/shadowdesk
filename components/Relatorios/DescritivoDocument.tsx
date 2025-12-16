@@ -117,6 +117,21 @@ const DescritivoDocument: React.FC<DescritivoProps> = ({ descritivo }) => {
     } catch { return isoDate; }
   };
 
+  const getArtigo = (nome: string) => {
+    if (!nome) return 'do(a)';
+    const nomeLower = nome.toLowerCase().trim();
+
+    // Lista de exceções ou palavras femininas que não terminam em 'a'
+    const femininas = ['webcam', 'station', 'imagem', 'luz'];
+
+    // Verifica se termina em 'a' (maioria femininas) ou está na lista de exceções
+    if (nomeLower.endsWith('a') || femininas.some(f => nomeLower.includes(f))) {
+      return 'da';
+    }
+
+    return 'do';
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page} wrap>
@@ -147,16 +162,26 @@ const DescritivoDocument: React.FC<DescritivoProps> = ({ descritivo }) => {
           </View>
           <View style={styles.techInfoRow}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.techText}><Text style={styles.techLabel}>Patrimônio:</Text> {descritivo.patrimonio}</Text>
+            <Text style={styles.techText}><Text style={styles.techLabel}>Patrimônio:</Text> {descritivo.patrimonio || 'N/A'}</Text>
           </View>
           <View style={styles.techInfoRow}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.techText}><Text style={styles.techLabel}>NS:</Text> {descritivo.ns}</Text>
           </View>
+          {descritivo.temProjeto && (
+            <View style={styles.techInfoRow}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.techText}>
+                <Text style={styles.techLabel}>
+                  {descritivo.agencia === 'Outro' ? (descritivo.outraAgencia || 'Outro') : descritivo.agencia}:
+                </Text> {descritivo.processo}{descritivo.termo && <>            <Text style={styles.techLabel}>Termo:</Text> {descritivo.termo}</>}
+              </Text>
+            </View>
+          )}
         </View>
 
         <Text style={styles.paragraph}>
-          Este laudo atesta as condições e o estado de conservação do <Text style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{descritivo.equipamento} {descritivo.marca} {descritivo.modelo}</Text>, de patrimônio <Text style={{ fontWeight: 'bold', fontStyle: 'italic' }}>Nº {descritivo.patrimonio}</Text>, e confirma que o equipamento passou por inspeção e vistoria técnica.
+          Este laudo atesta as condições e o estado de conservação {getArtigo(descritivo.equipamento)} <Text style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{descritivo.equipamento} {descritivo.marca} {descritivo.modelo}</Text>, {descritivo.patrimonio ? <React.Fragment>de patrimônio <Text style={{ fontWeight: 'bold', fontStyle: 'italic' }}>Nº {descritivo.patrimonio}</Text></React.Fragment> : "sem identificação de patrimônio"}, e confirma que o equipamento passou por inspeção e vistoria técnica.
         </Text>
 
         <Text style={styles.paragraph}>
