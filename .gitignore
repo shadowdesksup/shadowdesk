@@ -25,4 +25,10 @@ dist-ssr
 
 serviceAccountKey.json
 *.zip
+*.tar.gz
+zip_deploy.py
+deploy_worker.ps1
+wpp-worker/dist/
+wpp-worker/node_modules/
+wpp-worker/.wwebjs_auth/
 
