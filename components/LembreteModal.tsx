@@ -103,13 +103,28 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
     const agora = new Date();
-    agora.setHours(agora.getHours() + 1);
-    return `${String(agora.getHours()).padStart(2, '0')}:00`;
+    agora.setMinutes(agora.getMinutes() + 4);
+    return `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
   });
 
   const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'sand');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
-  const [telefone, setTelefone] = useState(lembrete?.telefone || localStorage.getItem('last_whatsapp_number') || '');
+  // WhatsApp state - remembers toggle preference (Lazy initialization for performance)
+  const [telefone, setTelefone] = useState(() => {
+    if (lembrete?.telefone) return lembrete.telefone;
+    const manter = localStorage.getItem('whatsapp_manter_numero') !== 'false';
+    const saved = localStorage.getItem('last_whatsapp_number') || '';
+    return manter ? saved : '';
+  });
+
+  const [whatsappEnabled, setWhatsappEnabled] = useState(() => {
+    if (lembrete?.telefone) return true;
+    return localStorage.getItem('whatsapp_toggle_enabled') === 'true';
+  });
+
+  const [manterNumeroSalvo, setManterNumeroSalvo] = useState(() => {
+    return localStorage.getItem('whatsapp_manter_numero') !== 'false';
+  });
 
   // View State for Sound Selection Overlay
   const [view, setView] = useState<'form' | 'sound_selection'>('form');
@@ -153,6 +168,17 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
     return () => clearTimeout(timeout);
   }, [termoBusca, buscarUsuarios]);
 
+  // Auto-save phone number when typing
+  useEffect(() => {
+    if (manterNumeroSalvo) {
+      if (telefone) {
+        localStorage.setItem('last_whatsapp_number', telefone);
+      } else {
+        localStorage.removeItem('last_whatsapp_number');
+      }
+    }
+  }, [telefone, manterNumeroSalvo]);
+
   // Handler de salvar
   const handleSalvar = async () => {
     if (!titulo.trim()) {
@@ -181,10 +207,13 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
           destinatarioNome: amigoSelecionado.nome,
           manterCopia
         } : {}),
-        telefone: telefone.trim()
+        telefone: whatsappEnabled ? telefone.trim() : ''
       });
-      if (telefone.trim()) {
+      // Only save to localStorage if toggle is on AND 'manter número salvo' is checked
+      if (whatsappEnabled && telefone.trim() && manterNumeroSalvo) {
         localStorage.setItem('last_whatsapp_number', telefone.trim());
+      } else {
+        localStorage.removeItem('last_whatsapp_number');
       }
       onClose();
     } catch (err: any) {
@@ -207,7 +236,8 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm will-change-transform"
+        style={{ transform: 'translateZ(0)' }}
         onClick={onClose}
       >
         <motion.div
@@ -250,6 +280,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                   placeholder="Ex: Reunião importante"
+                  autoFocus
                   className={`w-full px-3 py-2 rounded-lg border text-sm ${theme === 'dark'
                     ? 'bg-white/5 border-white/10 text-white placeholder-slate-500'
                     : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
@@ -380,7 +411,121 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                 </div>
               </div>
 
-              {/* Enviar para Amigo */}
+              {/* WhatsApp Notification - Shows first, only when user will receive the reminder */}
+              {(!enviarParaAmigo || manterCopia) && (
+                <div className={`mt-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-[#25D366]/20">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                          Notificação WhatsApp
+                        </p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          Receba lembrete no WhatsApp
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${whatsappEnabled
+                        ? 'bg-[#25D366]'
+                        : (theme === 'dark' ? 'bg-white/10' : 'bg-slate-200')
+                        }`}
+                      onClick={() => {
+                        const newValue = !whatsappEnabled;
+                        setWhatsappEnabled(newValue);
+                        localStorage.setItem('whatsapp_toggle_enabled', String(newValue));
+                        if (newValue && !telefone.trim() && manterNumeroSalvo) {
+                          // Load saved number when enabling ONLY if 'Remember' is checked
+                          const saved = localStorage.getItem('last_whatsapp_number') || '';
+                          setTelefone(saved);
+                        }
+                      }}
+                    >
+                      <motion.div
+                        className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                        animate={{ x: whatsappEnabled ? 24 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone Input - Shows when toggle is on */}
+                  <AnimatePresence>
+                    {whatsappEnabled && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#25D366]">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                            </svg>
+                          </div>
+                          <input
+                            type="tel"
+                            value={telefone}
+                            onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
+                            placeholder="14999077324"
+                            className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-medium transition-all ${theme === 'dark'
+                              ? 'bg-white/5 border-white/10 text-white placeholder-slate-500 focus:bg-[#25D366]/10 focus:border-[#25D366]/50'
+                              : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#25D366]'
+                              } focus:outline-none focus:ring-0`}
+                          />
+                        </div>
+                        <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          Digite apenas números (DDD + número). Ex: 14999077324
+                        </p>
+
+                        {/* Checkbox para manter número salvo */}
+                        <div className="mt-3 flex items-center gap-2 px-1">
+                          <div
+                            className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${manterNumeroSalvo
+                              ? 'bg-[#25D366] border-[#25D366]'
+                              : (theme === 'dark' ? 'border-slate-600 bg-white/5' : 'border-slate-300 bg-white')
+                              }`}
+                            onClick={() => {
+                              const newValue = !manterNumeroSalvo;
+                              setManterNumeroSalvo(newValue);
+                              localStorage.setItem('whatsapp_manter_numero', String(newValue));
+                              if (!newValue) {
+                                setTelefone(''); // Clear field if unchecked
+                                localStorage.removeItem('last_whatsapp_number'); // Clear storage immediately
+                              }
+                            }}
+                          >
+                            {manterNumeroSalvo && <Check size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                          <label
+                            className={`text-sm cursor-pointer ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                            onClick={() => {
+                              const newValue = !manterNumeroSalvo;
+                              setManterNumeroSalvo(newValue);
+                              localStorage.setItem('whatsapp_manter_numero', String(newValue));
+                              if (!newValue) {
+                                setTelefone(''); // Clear field if unchecked
+                                localStorage.removeItem('last_whatsapp_number'); // Clear storage immediately
+                              }
+                            }}
+                          >
+                            Lembrar este número
+                          </label>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* Enviar para Amigo - Now appears below WhatsApp */}
               {amigos.length > 0 && !lembrete && (
                 <div className={`mt-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
                   <div className="flex items-center justify-between pointer-events-none">
@@ -476,84 +621,6 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                             Manter uma cópia para mim
                           </label>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
-
-              {/* WhatsApp Notification - Only shows when user will receive the reminder (manterCopia or not sending to friend) */}
-              {(!enviarParaAmigo || manterCopia) && (
-                <div className={`mt-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-[#25D366]/20">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                          Notificação WhatsApp
-                        </p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          Receba lembrete no WhatsApp
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${telefone.trim()
-                        ? 'bg-[#25D366]'
-                        : (theme === 'dark' ? 'bg-white/10' : 'bg-slate-200')
-                        }`}
-                      onClick={() => {
-                        if (telefone.trim()) {
-                          setTelefone('');
-                        } else {
-                          const saved = localStorage.getItem('last_whatsapp_number') || '';
-                          setTelefone(saved || ' '); // Space to trigger input focus
-                        }
-                      }}
-                    >
-                      <motion.div
-                        className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                        animate={{ x: telefone.trim() ? 24 : 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Phone Input - Shows when toggle is on */}
-                  <AnimatePresence>
-                    {telefone && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                        animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="relative">
-                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#25D366]">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                            </svg>
-                          </div>
-                          <input
-                            type="tel"
-                            value={telefone.trim()}
-                            onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
-                            placeholder="11999999999"
-                            className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-medium transition-all ${theme === 'dark'
-                              ? 'bg-white/5 border-white/10 text-white placeholder-slate-500 focus:bg-[#25D366]/10 focus:border-[#25D366]/50'
-                              : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#25D366]'
-                              } focus:outline-none focus:ring-0`}
-                            autoFocus
-                          />
-                        </div>
-                        <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                          💡 Digite apenas números (DDD + número). Ex: 14998908221
-                        </p>
                       </motion.div>
                     )}
                   </AnimatePresence>
