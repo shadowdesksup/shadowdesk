@@ -53,6 +53,20 @@ const COR_CLASSES: Record<CorLembrete, string> = {
   mist: 'bg-slate-200'
 };
 
+// Helper hook for precise time
+function useCurrentTime() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return time.toLocaleTimeString('pt-BR');
+}
+
 const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'dark', initialContext, onContextUsed }) => {
   const { usuario, dadosUsuario } = useAuth();
 
@@ -322,6 +336,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     destinatarioId?: string;
     destinatarioNome?: string;
     manterCopia?: boolean;
+    telefone?: string;
   }) => {
     if (lembreteEditando) {
       await atualizar(lembreteEditando.id, dados);
@@ -677,6 +692,14 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 <p className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                   {lembretesDodia.length} lembrete{lembretesDodia.length !== 1 ? 's' : ''}
                 </p>
+
+                {/* Relógio Preciso solicitado */}
+                <div className={`mt-2 pt-2 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'} flex items-center gap-2`}>
+                  <Clock size={14} className="text-cyan-500" />
+                  <span className="font-mono text-sm font-medium tracking-wider text-cyan-500">
+                    {useCurrentTime()}
+                  </span>
+                </div>
               </div>
             )}
 

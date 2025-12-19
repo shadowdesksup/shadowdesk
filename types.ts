@@ -187,6 +187,7 @@ export interface Lembrete {
   atualizadoEm?: string;
   finalizadoEm?: string; // Data de conclusão
   telefone?: string; // WhatsApp de destino
+  dataHoraEnvio?: any; // Timestamp Firestore (usado pelo Worker)
 }
 
 // Tipo de notificação geral do sistema

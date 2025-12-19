@@ -33,6 +33,8 @@ export const criarLembrete = async (
       criadoPor: userId,
       criadoPorNome: userNome,
       status: 'pendente' as StatusLembrete,
+      enviado: false, // Necessário para o Worker encontrar
+      dataHoraEnvio: new Date(dados.dataHora), // Para o Worker
       criadoEm: serverTimestamp(),
       atualizadoEm: serverTimestamp()
     });
@@ -53,10 +55,23 @@ export const atualizarLembrete = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTION_NAME, lembreteId);
-    await updateDoc(docRef, {
+
+    // Se atualizou a dataHora, atualizar também o dataHoraEnvio
+    const updateData: any = {
       ...dados,
       atualizadoEm: serverTimestamp()
-    });
+    };
+
+    if (dados.dataHora) {
+      updateData.dataHoraEnvio = new Date(dados.dataHora);
+      // Se atualizar data futura, resetar status se estava disparado/erro? 
+      // O usuário pode querer resetar. Por padrão, vamos garantir que o worker pegue.
+      if (!dados.status) {
+        updateData.status = 'pendente';
+      }
+    }
+
+    await updateDoc(docRef, updateData);
   } catch (error) {
     console.error('Erro ao atualizar lembrete:', error);
     throw error;
