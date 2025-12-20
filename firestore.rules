@@ -70,5 +70,11 @@ service cloud.firestore {
       // Qualquer autenticado pode criar notificação (para enviar a outro usuário)
       allow create: if request.auth != null;
     }
+
+    // Regras para Alertas Meteorológicos
+    match /weatherAlerts/{userId} {
+      // Usuário só pode ler/escrever seu próprio documento de alertas
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

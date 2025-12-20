@@ -407,7 +407,7 @@ function App() {
         );
 
       case 'clima':
-        return <ClimaPage theme={theme} />;
+        return <ClimaPage theme={theme} userId={usuario?.uid} />;
 
       default:
         return null;

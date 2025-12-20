@@ -1,11 +1,12 @@
 import * as cron from 'node-cron';
 import { getUnsentReminders, markReminderAsSent } from './firebase';
 import { sendMessage } from './whatsapp';
+import { checkAndSendWeatherAlerts } from './weatherAlerts';
 
 export const startScheduler = () => {
   console.log('Starting scheduler...');
 
-  // Run every minute
+  // Run every minute for reminders
   cron.schedule('* * * * *', async () => {
     console.log('Running cron job: checking for reminders...');
 
@@ -44,4 +45,16 @@ export const startScheduler = () => {
       }
     }
   });
+
+  // Run every 10 minutes for weather alerts
+  cron.schedule('*/10 * * * *', async () => {
+    console.log('Running cron job: checking weather alerts...');
+    await checkAndSendWeatherAlerts();
+  });
+
+  // Also run weather check once at startup
+  setTimeout(async () => {
+    console.log('Initial weather alert check...');
+    await checkAndSendWeatherAlerts();
+  }, 5000);
 };

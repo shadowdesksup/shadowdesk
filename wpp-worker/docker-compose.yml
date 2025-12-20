@@ -1,30 +1,15 @@
 version: '3.8'
 
 services:
-  # Servidor da API do WhatsApp
-  wpp-server:
-    image: wppconnect-team/wppconnect-server:latest
-    container_name: wpp-server
-    ports:
-      - "21465:21465"
-    environment:
-      - SECRET_KEY=minha_senha_secreta
-      - PORT=21465
-    volumes:
-      - ./sessions:/usr/src/app/tokens
-    restart: always
-
-  # Worker que lê o Firebase e dispara mensagens
   shadow-worker:
     build: .
     container_name: shadow-worker
-    depends_on:
-      - wpp-server
-    environment:
-      - WPP_URL=http://wpp-server:21465
-      - WPP_SESSION=shadowdesk_bot
-      - WPP_SECRET_KEY=minha_senha_secreta
     volumes:
-      # IMPORTANTE: Você deve colocar seu arquivo de chave do Firebase na mesma pasta
-      - ./chave-firebase.json:/app/chave-firebase.json
+      # Persistir sessão do WhatsApp entre restarts
+      - wwebjs_auth:/app/.wwebjs_auth
     restart: always
+    # Recursos para Chromium
+    shm_size: '256mb'
+
+volumes:
+  wwebjs_auth:

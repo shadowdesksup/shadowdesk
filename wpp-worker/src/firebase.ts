@@ -34,6 +34,8 @@ export const initFirebase = (): void => {
   }
 };
 
+export const getDb = (): admin.firestore.Firestore => db;
+
 export const getUnsentReminders = async (): Promise<Lembrete[]> => {
   try {
     const now = admin.firestore.Timestamp.now();
