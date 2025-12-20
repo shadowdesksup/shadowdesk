@@ -10,6 +10,7 @@ interface DashboardProps {
   theme?: 'dark' | 'light';
   proximoLembrete?: Lembrete | null;
   onLembreteClick?: () => void;
+  onEncerramentoClick?: (data: Date) => void;
 }
 
 const StatCard: React.FC<{
@@ -67,7 +68,15 @@ const StatCard: React.FC<{
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', proximoLembrete, onLembreteClick }) => {
+const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', proximoLembrete, onLembreteClick, onEncerramentoClick }) => {
+  const { diasRestantes, dataEncerramento, progressoMes } = obterDiasRestantesEncerramento();
+
+  // Lógica de destaque do card de encerramento
+  const mostrarBordaAnimada = diasRestantes <= 7;
+  const isUrgente = diasRestantes <= 3;
+  const corBorda = isUrgente ? "#ef4444" : "#f97316"; // Red or Orange
+  const duracaoAnimacao = isUrgente ? 1.5 : 3;
+
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
@@ -146,12 +155,47 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
           theme={theme}
         />
 
-        <div className={`relative rounded-xl border p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
-          ? 'border-white/10 bg-slate-900/50 hover:border-white/20'
-          : 'border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-rose-500/20'
-          }`}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          whileHover={{ scale: 1.05, y: -5 }}
+          style={{
+            boxShadow: theme === 'light' ? undefined : undefined
+          }}
+          onClick={() => onEncerramentoClick?.(dataEncerramento)}
+          className={`relative rounded-xl border p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
+            ? 'border-white/10 bg-slate-900/50 hover:border-white/20'
+            : 'border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-rose-500/20'
+            }`}>
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-rose-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+
+          {/* Animated Border Line - Conditional */}
+          {mostrarBordaAnimada && (
+            <svg className="absolute inset-0 w-full h-full pointer-events-none rounded-xl overflow-visible">
+              <motion.rect
+                x="2"
+                y="2"
+                width="calc(100% - 4px)"
+                height="calc(100% - 4px)"
+                rx="10"
+                fill="none"
+                stroke={corBorda}
+                strokeWidth="3"
+                strokeLinecap="round"
+                pathLength="1"
+                strokeDasharray="0.35 0.65"
+                initial={{ strokeDashoffset: 0 }}
+                animate={{ strokeDashoffset: -1 }}
+                transition={{
+                  duration: duracaoAnimacao,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+            </svg>
+          )}
 
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex-1">
@@ -162,14 +206,14 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
               <div className="flex items-baseline gap-2">
                 <p className={`text-4xl font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
                   }`}>
-                  {obterDiasRestantesEncerramento().diasRestantes}
+                  {diasRestantes}
                 </p>
                 <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600 font-medium'
                   }`}>Dias Restantes</span>
               </div>
               <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-600 font-medium'
                 }`}>
-                Até {obterDiasRestantesEncerramento().dataEncerramento.toLocaleDateString('pt-BR')}
+                Até {dataEncerramento.toLocaleDateString('pt-BR')}
               </p>
             </div>
             <div className="relative w-12 h-12 flex items-center justify-center">
@@ -199,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Resumo Detalhado */}
@@ -301,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
           </div>
         </div>
       </motion.div>
-    </div>
+    </div >
   );
 };
 

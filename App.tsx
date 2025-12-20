@@ -13,6 +13,7 @@ import { useRegistros } from './hooks/useRegistros';
 import { useDescritivos } from './hooks/useDescritivos';
 import { useTheme } from './hooks/useTheme';
 import { recuperarSenha } from './firebase/auth';
+import { obterDiasRestantesEncerramento } from './utils/helpers';
 import ProfilePage from './components/ProfilePage';
 import RelatoriosPage from './components/Relatorios/RelatoriosPage';
 import GerarDescritivos from './components/GerarDescritivos';
@@ -93,6 +94,61 @@ function App() {
     userId: usuario?.uid || '',
     onDisparo: (lembrete) => setLembreteDisparado(lembrete)
   });
+
+  // Efeito para criar ou atualizar o lembrete de Encerramento automaticamente
+  React.useEffect(() => {
+    if (remindersData.loading) return;
+
+    const verificarEAtualizarEncerramento = async () => {
+      const { dataEncerramento } = obterDiasRestantesEncerramento();
+      const dataComHora = new Date(dataEncerramento);
+      dataComHora.setHours(9, 0, 0, 0);
+      const isoDate = dataComHora.toISOString();
+
+      const lembreteExistente = lembretes.find(l =>
+        l.titulo === 'Encerramento de Chamados' &&
+        new Date(l.dataHora).getDate() === dataComHora.getDate() &&
+        new Date(l.dataHora).getMonth() === dataComHora.getMonth() &&
+        new Date(l.dataHora).getFullYear() === dataComHora.getFullYear()
+      );
+
+      if (!lembreteExistente) {
+        // Criar silenciosamente se não existir
+        await remindersData.criar({
+          titulo: 'Encerramento de Chamados',
+          descricao: 'Solicite a abertura dos seus chamados atendidos e feche os chamados do ServiceDesk Unesp ainda hoje!',
+          dataHora: isoDate,
+          cor: 'rose',
+          somNotificacao: 'urgente',
+        });
+      }
+    };
+
+    verificarEAtualizarEncerramento();
+  }, [remindersData.loading, lembretes]); // Depende de lembretes para evitar loop se não mudar
+
+  // Handler para clique no card de Encerramento (Dashboard) - APENAS NAVEGAÇÃO
+  const handleEncerramentoClick = async (dataEncerramento: Date) => {
+    // Definir horário para 09:00 para busca
+    const dataComHora = new Date(dataEncerramento);
+    dataComHora.setHours(9, 0, 0, 0);
+    const isoDate = dataComHora.toISOString();
+
+    // Tentar encontrar o lembrete existente
+    const lembreteExistente = lembretes.find(l =>
+      l.titulo === 'Encerramento de Chamados' &&
+      new Date(l.dataHora).getDate() === dataComHora.getDate() &&
+      new Date(l.dataHora).getMonth() === dataComHora.getMonth() &&
+      new Date(l.dataHora).getFullYear() === dataComHora.getFullYear()
+    );
+
+    setPaginaAtual('lembretes');
+    setLembretesContext({
+      highlightId: lembreteExistente?.id, // Pode ser undefined se ainda estiver criando, mas a data garante a nav
+      lembreteId: lembreteExistente?.id,
+      targetDate: isoDate
+    });
+  };
 
   // Efeito para redirecionar para dashboard ao logar
   React.useEffect(() => {
@@ -193,6 +249,7 @@ function App() {
               theme={theme}
               proximoLembrete={proximoLembrete}
               onLembreteClick={() => setPaginaAtual('lembretes')}
+              onEncerramentoClick={handleEncerramentoClick}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-[600px] items-start">
@@ -201,7 +258,7 @@ function App() {
 
 
                 <DashboardReminders
-                  lembretes={lembretes}
+                  lembretes={lembretes.filter(l => l.titulo !== 'Encerramento de Chamados')}
                   theme={theme}
                   onVerTodos={() => setPaginaAtual('lembretes')}
                   onDelete={(id) => setLembreteParaExcluir(id)}

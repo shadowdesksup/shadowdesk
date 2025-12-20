@@ -50,6 +50,11 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
   const finalizado = lembrete.status === 'finalizado';
   const disparado = lembrete.status === 'disparado';
 
+  // Verificar Regras de Encerramento de Cartão Sistema
+  const isEncerramento = lembrete.titulo === 'Encerramento de Chamados';
+  const podeConcluir = !isEncerramento || disparado || expirado;
+  const podeExcluir = !isEncerramento;
+
   // Rotação aleatória mas consistente baseada no ID
   const rotacao = (lembrete.id.charCodeAt(0) % 7) - 3; // -3 a 3 graus
 
@@ -257,7 +262,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
                   </motion.button>
                 )}
 
-                {onEdit && !finalizado && !readonly && (
+                {onEdit && !finalizado && !readonly && podeExcluir && (
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -269,7 +274,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
                   </motion.button>
                 )}
 
-                {onFinish && !finalizado && !readonly && (
+                {onFinish && !finalizado && !readonly && podeConcluir && (
                   <div className="relative">
                     {/* Radar Pulse Rings for the button */}
                     {(disparado || expirado) && [1, 2].map((i) => (
@@ -298,7 +303,7 @@ const LembreteCard: React.FC<LembreteCardProps> = ({
                   </div>
                 )}
 
-                {onDelete && (
+                {onDelete && podeExcluir && (
                   confirmDelete ? (
                     <div className="flex gap-1">
                       <motion.button

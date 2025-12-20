@@ -21,6 +21,7 @@ import { UseRemindersReturn } from '../hooks/useReminders';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { listarAmigos } from '../firebase/friends';
+import { obterDiasRestantesEncerramento } from '../utils/helpers';
 import LembreteCard from './LembreteCard';
 import LembreteModal from './LembreteModal';
 import LembreteViewModal from './LembreteViewModal';
@@ -123,7 +124,19 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
         }
       }
 
-      // Buscar lembrete se id for fornecido (para visualizar ou selecionar data)
+      // Se tiver targetDate explícito, usar ele para navegação
+      if (initialContext.targetDate) {
+        const dataTarget = new Date(initialContext.targetDate);
+        setDiaSelecionado(dataTarget);
+        if (tabAtual !== 'meus') {
+          setTabAtual('meus');
+        }
+        if (dataTarget.getMonth() !== mesAtual.getMonth() || dataTarget.getFullYear() !== mesAtual.getFullYear()) {
+          setMesAtual(new Date(dataTarget.getFullYear(), dataTarget.getMonth(), 1));
+        }
+      }
+
+      // Buscar lembrete se id for fornecido (para visualizar ou selecionar data caso não tenha targetDate)
       if (initialContext.lembreteId || initialContext.highlightId) {
         const targetId = initialContext.lembreteId || initialContext.highlightId;
         // Procurar em todas as listas
@@ -137,7 +150,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
           // Se for para visualizar, abrir modal
           if (initialContext.modal === 'view') {
             setModalVisualizar(targetLembrete);
-          } else {
+          } else if (!initialContext.targetDate) { // Só navega pelo lembrete se não tiver targetDate explícito
             // Navegação (Corpo do click)
             // Se tiver data, selecionar o dia (especialmente para disparados)
             if (targetLembrete.dataHora) {
@@ -324,6 +337,14 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
     return data.getDate() === diaSelecionado.getDate() &&
       data.getMonth() === diaSelecionado.getMonth() &&
       data.getFullYear() === diaSelecionado.getFullYear();
+  };
+
+  // Verificar se é dia de Encerramento (para style especial)
+  const { dataEncerramento } = obterDiasRestantesEncerramento();
+  const ehEncerramento = (data: Date) => {
+    return data.getDate() === dataEncerramento.getDate() &&
+      data.getMonth() === dataEncerramento.getMonth() &&
+      data.getFullYear() === dataEncerramento.getFullYear();
   };
 
   // Handler para criar/editar
@@ -650,9 +671,11 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                         ? theme === 'dark'
                           ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                           : 'bg-cyan-50 text-cyan-700 border border-cyan-200'
-                        : theme === 'dark'
-                          ? 'hover:bg-white/10 text-white'
-                          : 'hover:bg-slate-100 text-slate-700'
+                        : ehEncerramento(data) // Translucent Red for Encerramento Day
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : theme === 'dark'
+                            ? 'hover:bg-white/10 text-white'
+                            : 'hover:bg-slate-100 text-slate-700'
                       }`}
                   >
                     <span className="text-sm font-medium">{data.getDate()}</span>
