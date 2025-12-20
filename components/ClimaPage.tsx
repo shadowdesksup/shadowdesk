@@ -147,24 +147,13 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark' }) => {
   };
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-2">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 -mt-6"
       >
-        <div>
-          <h1 className={`text-3xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-            <Cloud className="text-cyan-400" size={32} />
-            Clima
-          </h1>
-          <p className={`mt-2 flex items-center gap-2 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
-            <MapPin size={16} className="text-cyan-500" />
-            {locationName}
-          </p>
-        </div>
-
         <div className="flex items-center gap-3">
           {/* Botão Refresh */}
           <motion.button
@@ -183,6 +172,17 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark' }) => {
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             <span className="hidden sm:inline">{loading ? 'Atualizando...' : 'Atualizar'}</span>
           </motion.button>
+        </div>
+
+        <div className="mr-6">
+          <h1 className={`text-3xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+            <Cloud className="text-cyan-400" size={32} />
+            Clima
+          </h1>
+          <p className={`mt-0 flex items-center gap-1 text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+            <MapPin size={16} className="text-cyan-500" />
+            {locationName}
+          </p>
         </div>
       </motion.div>
 
