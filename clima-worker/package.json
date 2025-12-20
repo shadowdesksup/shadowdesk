@@ -1,0 +1,11 @@
+{
+  "name": "clima-worker",
+  "version": "1.0.0",
+  "description": "Worker para monitoramento e alertas de clima",
+  "main": "worker.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.0.0" 
+  }
+}

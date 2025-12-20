@@ -19,6 +19,7 @@ import RelatoriosPage from './components/Relatorios/RelatoriosPage';
 import GerarDescritivos from './components/GerarDescritivos';
 import { SessionExpiredModal } from './components/SessionExpiredModal';
 import { RegistrationSuspendedModal } from './components/RegistrationSuspendedModal';
+import ClimaPage from './components/ClimaPage';
 
 // Sistema de Lembretes
 import LembretesPage from './components/LembretesPage';
@@ -404,6 +405,9 @@ function App() {
             onContextUsed={() => setLembretesContext(null)}
           />
         );
+
+      case 'clima':
+        return <ClimaPage theme={theme} />;
 
       default:
         return null;
