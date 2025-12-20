@@ -251,7 +251,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
             }`}
         >
           {/* Main Content (Form) */}
-          <div className={`flex flex-col h-full transition-transform duration-300 ${view === 'form' ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className={`flex flex-col flex-1 min-h-0 transition-transform duration-300 ${view === 'form' ? 'translate-x-0' : '-translate-x-full'}`}>
             {/* Header */}
             <div className={`flex items-center justify-between p-4 border-b shrink-0 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
               <h2 className={`text-lg font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
@@ -269,7 +269,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
             </div>
 
             {/* Conteúdo Scrollable */}
-            <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {/* Título */}
               <div>
                 <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>

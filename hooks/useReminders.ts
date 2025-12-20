@@ -242,9 +242,21 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
 
   const finalizados = lembretes.filter(l => l.status === 'finalizado');
 
-  // Próximo lembrete (pendente e futuro)
+  // Próximo lembrete (pendente e futuro) - Filtro especial para Encerramento
   const proximoLembrete = pendentes
-    .filter(l => new Date(l.dataHora) > agora)
+    .filter(l => {
+      const dataLembrete = new Date(l.dataHora);
+      if (dataLembrete <= agora) return false;
+
+      // Filtro especial: Encerramento só aparece se <= 7 dias
+      if (l.titulo === 'Encerramento de Chamados') {
+        const diffMs = dataLembrete.getTime() - agora.getTime();
+        const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        return diffDias <= 7;
+      }
+
+      return true;
+    })
     .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())[0] || null;
 
   return {
