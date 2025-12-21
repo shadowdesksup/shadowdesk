@@ -71,10 +71,14 @@ const DashboardReminders: React.FC<DashboardRemindersProps> = ({ lembretes, them
   };
 
   return (
-    <div className={`h-fit flex flex-col rounded-2xl border p-6 overflow-hidden ${theme === 'dark'
-      ? 'bg-slate-900/50 border-white/10'
-      : 'bg-white border-slate-200 shadow-sm'
-      }`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={`h-fit flex flex-col rounded-2xl border p-6 overflow-hidden ${theme === 'dark'
+        ? 'bg-slate-900/50 border-white/10'
+        : 'bg-white border-slate-200 shadow-sm'
+        }`}>
       <div className="flex items-center justify-between mb-6">
         <h3 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
           }`}>
@@ -277,7 +281,7 @@ const DashboardReminders: React.FC<DashboardRemindersProps> = ({ lembretes, them
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -566,10 +566,8 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
       </AnimatePresence>
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 delay-75 flex justify-between items-start"
+      <div
+        className="mb-6 flex justify-between items-start"
       >
         <div>
           <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
@@ -592,13 +590,14 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
           <Users size={20} />
           <span className="hidden sm:inline font-medium">Amigos</span>
         </button>
-      </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0">
         {/* Calendário */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
           className={`lg:col-span-1 rounded-2xl border p-8 flex flex-col h-fit gap-6 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-lg'
@@ -742,8 +741,9 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
 
         {/* Lista de lembretes */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
           className={`lg:col-span-2 min-h-0 rounded-2xl border h-full flex flex-col ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-lg'

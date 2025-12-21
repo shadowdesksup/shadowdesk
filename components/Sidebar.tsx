@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, PlusCircle, List, FileText, Settings, Ghost, User, FileEdit, Bell, Cloud } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, List, FileText, Settings, User, FileEdit, Bell, Cloud } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SidebarProps {
@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
       >
         <div className="flex gap-4 items-center mb-4 p-4 text-left">
           <div className="relative size-10 rounded-full overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-white/10 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-            <Ghost className="text-cyan-400" size={24} />
+            <img src="/shadow-logo-final.png" alt="ShadowDesk Logo" className="w-6 h-6 object-contain" />
           </div>
           <div className="flex flex-col">
             <h1 className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
           </div>
           <p className="text-[10px] text-emerald-400 mt-1 text-right">Operacional</p>
         </div>
-      </motion.aside>
+      </motion.aside >
     </>
   );
 };

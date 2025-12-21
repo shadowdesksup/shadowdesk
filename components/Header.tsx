@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ghost, LogOut, Sun, Moon, Menu } from 'lucide-react';
+import { LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useSessionTimer } from '../hooks/useSessionTimer';
@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         )}
         <div className="p-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-white/10 shadow-lg hidden md:block">
-          <Ghost className="text-cyan-400" size={24} />
+          <img src="/shadow-logo-final.png" alt="ShadowDesk Logo" className="w-6 h-6 object-contain" />
         </div>
         <h2 className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
           }`}>ShadowDesk</h2>

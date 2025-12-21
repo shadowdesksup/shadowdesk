@@ -212,8 +212,8 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
 
         {/* Mapa Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className={`flex-1 rounded-2xl border overflow-hidden relative ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'

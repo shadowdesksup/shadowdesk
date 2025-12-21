@@ -81,7 +81,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col gap-8 max-w-4xl mx-auto"
+    >
       {/* Header */}
       <div>
         <h2 className={`text-3xl font-bold tracking-tight mb-2 flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -249,7 +254,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
           </motion.button>
         </form>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

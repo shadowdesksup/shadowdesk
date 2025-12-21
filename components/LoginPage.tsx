@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ghost, User, Lock, AlertCircle } from 'lucide-react';
+import { User, Lock, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LoginPageProps {
@@ -53,7 +53,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onCriarConta, onEsqueciS
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="mb-4 p-4 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-2xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.3)]"
             >
-              <Ghost size={48} className="text-cyan-400" />
+              <img src="/shadow-logo-final.png" alt="ShadowDesk Logo" className="w-12 h-12 object-contain" />
             </motion.div>
 
             <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">ShadowDesk</h1>
