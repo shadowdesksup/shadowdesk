@@ -327,7 +327,11 @@ async function getTicketDetails(ticketNumber) {
       result.patrimonio = getByLabel('Patrimônio');
       result.sala = getByLabel('Sala');
       result.ramal = getByLabel('Ramal');
-      result.celular = getByLabel('Celular');
+
+      const rawCelular = getByLabel('Celular');
+      // Clean phone: Remove all non-digits
+      result.celular = rawCelular ? rawCelular.replace(/\D/g, '') : '';
+
       result.email = getByLabel('E-mail');
 
       // Captured "Data e Horário" specifically (from screenshot, this is the field)

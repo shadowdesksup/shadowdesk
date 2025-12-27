@@ -521,7 +521,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto overflow-hidden relative pr-8">
       <style>{scrollbarHideStyles}</style>
 
       {/* Bulk Action Bar - Floating Pill */}
@@ -731,7 +731,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setModalCriar(true)}
-              className="absolute bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full font-bold text-white shadow-lg shadow-cyan-500/20 flex items-center justify-center z-10"
+              className="absolute bottom-6 right-14 w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full font-bold text-white shadow-lg shadow-cyan-500/20 flex items-center justify-center z-10"
               title="Criar Novo Lembrete"
             >
               <Plus size={28} />

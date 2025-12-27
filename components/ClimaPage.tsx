@@ -155,7 +155,7 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full gap-2">
+      <div className="flex flex-col h-full gap-2 pr-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

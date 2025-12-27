@@ -91,7 +91,7 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
   }, [registrosFiltrados, apenasServiceDesk]);
 
   return (
-    <div className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 relative">
+    <div className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 pr-8 relative">
       {/* Left Column: Header + Filters */}
       <div className={`flex-1 flex flex-col gap-4 pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
         {/* Header */}

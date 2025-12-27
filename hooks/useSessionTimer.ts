@@ -18,17 +18,9 @@ export const useSessionTimer = (isAuthenticated: boolean, userId?: string, updat
   // Inicializar ou recuperar o início da sessão
   useEffect(() => {
     if (isAuthenticated && storageKey) {
-      const storedStart = localStorage.getItem(storageKey);
-      if (!storedStart) {
-        localStorage.setItem(storageKey, Date.now().toString());
-        setIsExpired(false);
-      } else {
-        // Verificar se já expirou ao carregar
-        const elapsed = Date.now() - parseInt(storedStart, 10);
-        if (elapsed >= SESSION_DURATION) {
-          setIsExpired(true);
-        }
-      }
+      // RESET on Refresh: Always start a new session when the component mounts/auths
+      localStorage.setItem(storageKey, Date.now().toString());
+      setIsExpired(false);
     } else {
       if (!isAuthenticated && userId) {
         // Se desconectou, a sessão daquele user deve ser limpa

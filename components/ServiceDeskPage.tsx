@@ -249,7 +249,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-auto relative">
+    <div className="flex-1 flex flex-col h-full overflow-auto relative pr-8">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }

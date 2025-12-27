@@ -44,6 +44,17 @@ export const useNotifications = (userId: string, userName?: string) => {
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // State for locally ignored SD notifications (to allow clearing bell without marking as viewed)
+  const [ignoredSdIds, setIgnoredSdIds] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('ignored_sd_notifications');
+    return new Set(saved ? JSON.parse(saved) : []);
+  });
+
+  // Save ignored list to local storage
+  useEffect(() => {
+    localStorage.setItem('ignored_sd_notifications', JSON.stringify(Array.from(ignoredSdIds)));
+  }, [ignoredSdIds]);
+
   // Ref para controlar a reprodução de som apenas para NOVAS notificações
   const lastNotificationIdsRef = useRef<Set<string>>(new Set());
   const isFirstLoadRef = useRef(true);
@@ -199,12 +210,14 @@ export const useNotifications = (userId: string, userName?: string) => {
       const tickets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
       // Filter those NOT viewed by current user
-      // Filter those NOT viewed by current user (Check by Name OR ID to be safe)
+      // AND explicitly filter out those locally ignored (cleared from bell)
       const unviewedTickets = tickets.filter(t => {
         const viewedBy = t.viewedBy || [];
-        // If we identify by name, check name. If explicitly by ID, check ID.
-        // We are transitioning to Name, so check both to be safe.
-        return !viewedBy.includes(userName) && !viewedBy.includes(userId);
+        const isIgnoredLocally = ignoredSdIds.has(t.id);
+
+        return !viewedBy.includes(userName) &&
+          !viewedBy.includes(userId) &&
+          !isIgnoredLocally;
       });
 
       // Convert to Notificacao format
@@ -258,7 +271,7 @@ export const useNotifications = (userId: string, userName?: string) => {
       unsubscribeSystem();
       unsubscribeSD();
     };
-  }, [userId, tocarSom]);
+  }, [userId, tocarSom, ignoredSdIds]); // Depend on ignoredSdIds to re-filter if it updates
 
   // Removed old useEffect that relied on notificacoes.length to flip isFirstLoadRef
   // because it caused the bug where starting with 0 items suppressed the first subsequent item.
@@ -271,16 +284,19 @@ export const useNotifications = (userId: string, userName?: string) => {
   const marcarLida = useCallback(async (notificacaoId: string) => {
     // Check if it is a ServiceDesk ticket
     if (notificacaoId.startsWith('ticket_')) {
-      // Update viewedBy in Firestore
-      // We just need to add userId to viewedBy array
-      try {
-        await updateDoc(doc(db, 'serviceDesk_tickets', notificacaoId), {
-          viewedBy: arrayUnion(userName || userId)
-        });
-        // The snapshot listener will automatically remove it from sdNotifications list
-      } catch (error) {
-        console.error('Erro ao marcar ticket como lido:', error);
-      }
+      // User explicitly clicked "Mark as Read" (X button) or "View" on the bell item.
+      // In this case, we DO want to ignore it LOCALLY, but user might INTEND for it to be removed from list.
+      // Wait, original logic was: mark as Viewed in DB.
+      // User Request: "Limpar tudo" should NOT mark as viewed.
+      // What about individual "X"? Usually "X" removes from notification list.
+      // I will change individual "X" to ALSO just ignore locally.
+
+      setIgnoredSdIds(prev => {
+        const next = new Set(prev);
+        next.add(notificacaoId);
+        return next;
+      });
+
     } else {
       // Normal notification
       try {
@@ -289,19 +305,20 @@ export const useNotifications = (userId: string, userName?: string) => {
         console.error('Erro ao marcar notificação como lida:', error);
       }
     }
-  }, [userId]);
+  }, []);
 
   // Marcar todas como lidas
   const marcarTodasLidas = useCallback(async () => {
     try {
       await marcarTodasComoLidasService(userId);
-      // For SD tickets, we would need to batch update all. 
-      // For now, let's just do system ones or iterate?
-      // Iterating SD tickets:
-      const ops = sdNotifications.map(n => updateDoc(doc(db, 'serviceDesk_tickets', n.id), {
-        viewedBy: arrayUnion(userName || userId)
-      }));
-      await Promise.all(ops);
+
+      // For SD tickets: do NOT update DB. Just ignore locally.
+      const sdIds = sdNotifications.map(n => n.id);
+      setIgnoredSdIds(prev => {
+        const next = new Set(prev);
+        sdIds.forEach(id => next.add(id));
+        return next;
+      });
 
     } catch (error) {
       console.error('Erro ao marcar todas as notificações como lidas:', error);
@@ -311,8 +328,12 @@ export const useNotifications = (userId: string, userName?: string) => {
   // Excluir notificação
   const excluir = useCallback(async (notificacaoId: string) => {
     if (notificacaoId.startsWith('ticket_')) {
-      // Treat "Delete" as "Mark as Read" (remove from list)
-      await marcarLida(notificacaoId);
+      // Treat "Delete" as "Ignore Locally"
+      setIgnoredSdIds(prev => {
+        const next = new Set(prev);
+        next.add(notificacaoId);
+        return next;
+      });
     } else {
       try {
         await excluirNotificacaoService(notificacaoId);
@@ -320,13 +341,13 @@ export const useNotifications = (userId: string, userName?: string) => {
         console.error('Erro ao excluir notificação:', error);
       }
     }
-  }, [marcarLida]);
+  }, []);
 
   // Limpar todas
   const limparTodas = useCallback(async () => {
     try {
       await excluirTodasNotificacoesService(userId);
-      // Also mark all SD as read
+      // Also mark all SD as read (Locally only)
       await marcarTodasLidas();
     } catch (error) {
       console.error('Erro ao limpar todas as notificações:', error);
