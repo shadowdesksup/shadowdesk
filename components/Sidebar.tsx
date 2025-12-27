@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
           : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-slate-300 shadow-inner'
           }`}>
           <p className={`text-xs font-mono ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}>ShadowDesk v2.0.1</p>
+            }`}>ShadowDesk v3.0.1</p>
           <div className="w-full bg-slate-800/50 h-1 mt-2 rounded-full overflow-hidden">
             <div className="bg-emerald-500 h-full w-full rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
           </div>

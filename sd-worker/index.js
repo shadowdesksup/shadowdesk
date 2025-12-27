@@ -461,10 +461,13 @@ async function queueNotification(ticket) {
     // <newline>
     // 📅 *Formatted Date*
 
-    const solicitante = ticket.solicitante || 'Desconhecido';
-    const descricao = ticket.descricao_completa || ticket.descricao || 'Sem descrição';
-    const local = ticket.local_instalacao || ticket.local;
-    const sala = ticket.sala;
+    const solicitante = (ticket.solicitante || 'Desconhecido').trim();
+    // Trim description to ensure _italics_ wrapper works (no trailing spaces allowed inside)
+    const rawDesc = ticket.descricao_completa || ticket.descricao || 'Sem descrição';
+    const descricao = rawDesc.trim();
+
+    const local = (ticket.local_instalacao || ticket.local || '').trim();
+    const sala = (ticket.sala || '').trim();
     const melhorData = ticket.melhor_data || ticket.data_atendimento; // Explicit fallback
 
     // Format "abertura" date - prefer details page extraction, fallback to table scrape
