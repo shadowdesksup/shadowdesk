@@ -96,5 +96,10 @@ service cloud.firestore {
       // Qualquer usuário autenticado pode adicionar/ler ignorados
       allow read, write: if request.auth != null;
     }
+
+    // Regras para Preferências do ServiceDesk
+    match /serviceDesk_preferences/{docId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

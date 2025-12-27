@@ -276,11 +276,6 @@ async function getTicketDetails(ticketNumber) {
 
       // Robust strategy: Find label, then find associated content element
       const getByLabel = (labelText) => {
-        // Strategy 0: Check for td with data-label (Common in responsive tables/read-only views)
-        const tds = Array.from(document.querySelectorAll('td[data-label]'));
-        const exactTd = tds.find(td => td.getAttribute('data-label').toLowerCase().includes(labelText.toLowerCase()));
-        if (exactTd) return exactTd.innerText.trim();
-
         const labels = Array.from(document.querySelectorAll('label'));
         // Find label containing text (ignoring case/whitespace)
         const label = labels.find(l => l.innerText.trim().toLowerCase().includes(labelText.toLowerCase()));
@@ -296,6 +291,9 @@ async function getTicketDetails(ticketNumber) {
         }
 
         // Strategy 2: Look for readonly/display field (e.g. readonly_field_XXXX for Descricao)
+        // Often used in ServiceDesk when ticket is closed/readonly
+        // Labels often have siblings or parent's siblings
+
         // Check next sibling (direct)
         let next = label.nextElementSibling;
         if (next) {
@@ -304,13 +302,16 @@ async function getTicketDetails(ticketNumber) {
         }
 
         // Check parent's next sibling (Bootstrap column structure)
+        // <div class="col"><label>...</label></div><div class="col"><input...></div>
         if (label.parentElement && label.parentElement.nextElementSibling) {
           const container = label.parentElement.nextElementSibling;
-          const el = container.querySelector('input:not([type="hidden"]), textarea, p[id^="readonly_"], div.form-control, span');
+          // Look for specific tags prioritizing inputs, then paragraphs (description)
+          const el = container.querySelector('input:not([type="hidden"]), textarea, p[id^="readonly_"], div.form-control');
           if (el) return getContent(el);
         }
 
         // Strategy 3: Search nearby form-controls or readonly fields
+        // Used for descriptions often wrapped in divs
         const container = label.closest('.form-group') || label.parentElement?.parentElement;
         if (container) {
           const el = container.querySelector('p[id^="readonly_"], textarea, input:not([type="hidden"])');
@@ -322,33 +323,16 @@ async function getTicketDetails(ticketNumber) {
 
       // Extract fields using the robust label finder
       result.tipo_servico = getByLabel('Tipo de Serviço');
-      result.local_instalacao = getByLabel('Local de Instalação') || getByLabel('Local');
-      result.descricao_completa = getByLabel('Descrição do Serviço') || getByLabel('Descrição');
+      result.local_instalacao = getByLabel('Local de Instalação');
+      result.descricao_completa = getByLabel('Descrição do Serviço');
       result.patrimonio = getByLabel('Patrimônio');
       result.sala = getByLabel('Sala');
       result.ramal = getByLabel('Ramal');
       result.celular = getByLabel('Celular');
       result.email = getByLabel('E-mail');
-
-      // Captured "Data e Horário" specifically (from screenshot, this is the field)
       result.data_atendimento = getByLabel('Data e Horário');
-
-      // Consolidate "Melhor Data" / "Agendamento" / "Data e Horário" into one reliable field
-      // The screenshot shows "Data e Horário" is the label for the scheduling info at the bottom
-      result.melhor_data = result.data_atendimento ||
-        getByLabel('Melhor data') ||
-        getByLabel('horário para atendimento') ||
-        getByLabel('Agendamento');
-
-      // Extract "ABERTURA" date from the header (Ticket #XXXXX ... ABERTURA DD/MM/YYYY)
-      // It's usually in a list or span at the top
-      try {
-        const headerText = document.body.innerText;
-        const aberturaMatch = headerText.match(/ABERTURA\s+([0-9]{2}\/[0-9]{2}\/[0-9]{4}\s+[0-9]{2}:[0-9]{2})/i);
-        if (aberturaMatch) {
-          result.abertura_detalhes = aberturaMatch[1];
-        }
-      } catch (e) { }
+      // New field requested
+      result.melhor_data = getByLabel('Melhor data') || getByLabel('horário para atendimento');
 
       // Clean empty fields
       Object.keys(result).forEach(k => !result[k] && delete result[k]);
@@ -410,33 +394,6 @@ async function saveToFirestore(tickets) {
   return saved;
 }
 
-// Helper: Format Date string "DD/MM/YYYY HH:mm" to "Weekday, D de Mon. de YYYY, às HH:mm"
-function formatTicketDate(dateStr) {
-  try {
-    if (!dateStr) return '';
-    // Parse "27/12/2025 17:31"
-    const [datePart, timePart] = dateStr.trim().split(' ');
-    if (!datePart || !timePart) return dateStr;
-
-    const [day, month, year] = datePart.split('/');
-
-    // Create date object (Month is 0-indexed)
-    const date = new Date(year, month - 1, day);
-
-    // Manual formatting for robustness inside Docker (locales might be missing)
-    const weekdays = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
-    const months = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
-
-    const weekday = weekdays[date.getDay()];
-    const monthName = months[date.getMonth()];
-
-    // "sábado, 27 de dez. de 2025, às 17:31"
-    return `${weekday}, ${day} de ${monthName} de ${year}, às ${timePart}`;
-  } catch (error) {
-    return dateStr; // Fallback to original if parsing fails
-  }
-}
-
 // Helper to Queue Notification
 async function queueNotification(ticket) {
   try {
@@ -444,52 +401,28 @@ async function queueNotification(ticket) {
     const snapshot = await db.collection('serviceDesk_preferences').where('enabled', '==', true).get();
     if (snapshot.empty) return;
 
-    // 2. Format Message (User Requested Format w/ Conditional Fields)
-    // Novo Chamado em ServiceDesk 📝
-    // <newline>
-    // *Solicitante:* _Fulano_
-    // <newline>
-    // *Descrição:* _Desc_
-    // <newline>
-    // (If exist) *Local:* _Local_ *Sala:*_Sala_
-    // <newline>
-    // (If exist) *Agendado para:* _Date_
-    // <newline>
-    // 📅 *Formatted Date*
+    // 2. Format Message
+    // Título: Novo Chamado em ServiceDesk 📋 *[Título]*
+    // Solicitante: _Fulano_
+    // Descrição: _Desc_
+    // (Optional) Melhor Data
+    // 📅 Data Abertura
 
+    const titulo = ticket.tipo_servico || ticket.servico || 'Sem Título';
     const solicitante = ticket.solicitante || 'Desconhecido';
     const descricao = ticket.descricao_completa || ticket.descricao || 'Sem descrição';
-    const local = ticket.local_instalacao || ticket.local;
-    const sala = ticket.sala;
-    const melhorData = ticket.melhor_data || ticket.data_atendimento; // Explicit fallback
+    const abertura = ticket.abertura || new Date().toLocaleString('pt-BR'); // Fallback
 
-    // Format "abertura" date - prefer details page extraction, fallback to table scrape
-    const rawDate = ticket.abertura_detalhes || ticket.abertura;
-    const formattedDate = formatTicketDate(rawDate);
+    let message = `Novo Chamado em ServiceDesk 📋 *${titulo}*\n`;
+    message += `Solicitante: _${solicitante}_\n`;
+    message += `Descrição: _${descricao}_\n`;
 
-    let message = `Novo Chamado em *ServiceDesk* 📝\n\n`;
-    message += `*Solicitante:* _${solicitante}_\n\n`;
-    message += `*Descrição:* _${descricao}_\n\n`;
-
-    // Conditional Local/Sala
-    if (local || sala) {
-      const localStr = local ? `*Local:* _${local}_` : '';
-      const salaStr = sala ? `*Sala:*_${sala}_` : '';
-      const space = (local && sala && localStr && salaStr) ? ' ' : '';
-      message += `${localStr}${space}${salaStr}\n\n`;
+    if (ticket.melhor_data) {
+      message += `Melhor data/horário: ${ticket.melhor_data}\n`;
     }
 
-    // Conditional Agendado Para
-    if (melhorData && melhorData !== 'Não informado') {
-      message += `*Agendado para:* _${melhorData}_\n\n`;
-    }
-
-    // Footer Date
-    if (formattedDate && formattedDate.includes(' de ')) {
-      message += `📅 *${formattedDate}*`;
-    } else {
-      message += `📅 ${formattedDate || rawDate || ''}`;
-    }
+    // Add Opening Date with Calendar Emoji
+    message += `📅 ${abertura}`;
 
     // 3. Queue for each user
     const batch = db.batch();

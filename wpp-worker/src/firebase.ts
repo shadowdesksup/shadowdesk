@@ -13,6 +13,15 @@ export interface Lembrete {
   enviadoEm?: admin.firestore.FieldValue;
 }
 
+export interface NotificationQueueItem {
+  id: string;
+  to: string; // phone number
+  message: string;
+  status: 'pending' | 'sent' | 'error';
+  type?: string;
+  ticketId?: string;
+}
+
 let db: admin.firestore.Firestore;
 
 export const initFirebase = (): void => {
@@ -71,5 +80,49 @@ export const markReminderAsSent = async (id: string): Promise<void> => {
     console.log(`Reminder ${id} marked as sent.`);
   } catch (error) {
     console.error(`Error marking reminder ${id} as sent:`, error);
+  }
+};
+
+export const getPendingNotifications = async (): Promise<NotificationQueueItem[]> => {
+  try {
+    const snapshot = await db.collection('notification_queue')
+      .where('status', '==', 'pending')
+      .limit(20) // Process in chunks
+      .get();
+
+    if (snapshot.empty) return [];
+
+    const items: NotificationQueueItem[] = [];
+    snapshot.forEach(doc => {
+      items.push({ id: doc.id, ...doc.data() } as NotificationQueueItem);
+    });
+    return items;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
+export const markNotificationAsSent = async (id: string): Promise<void> => {
+  try {
+    await db.collection('notification_queue').doc(id).update({
+      status: 'sent',
+      sentAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    console.log(`Notification ${id} sent.`);
+  } catch (error) {
+    console.error(`Error marking notification ${id} as sent:`, error);
+  }
+};
+
+export const markNotificationAsError = async (id: string, errorMsg: string): Promise<void> => {
+  try {
+    await db.collection('notification_queue').doc(id).update({
+      status: 'error',
+      error: errorMsg,
+      failedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    console.error(`Error marking notification ${id} as error:`, error);
   }
 };

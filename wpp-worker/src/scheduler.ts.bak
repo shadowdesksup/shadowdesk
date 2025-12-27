@@ -1,41 +1,13 @@
 import * as cron from 'node-cron';
-import { getUnsentReminders, markReminderAsSent, getPendingNotifications, markNotificationAsSent, markNotificationAsError } from './firebase';
+import { getUnsentReminders, markReminderAsSent } from './firebase';
 import { sendMessage } from './whatsapp';
 import { checkAndSendWeatherAlerts } from './weatherAlerts';
 
 export const startScheduler = () => {
   console.log('Starting scheduler...');
 
-  // ServiceDesk Notifications Queue - Run every 10 seconds
-  cron.schedule('*/10 * * * * *', async () => {
-    // console.log('Checking notifications queue...');
-    const queue = await getPendingNotifications();
-
-    if (queue.length > 0) {
-      console.log(`Found ${queue.length} pending notifications.`);
-      for (const item of queue) {
-        console.log(`Processing notification for ${item.to}`);
-        try {
-          const sent = await sendMessage(item.to, item.message);
-          if (sent) {
-            await markNotificationAsSent(item.id);
-          } else {
-            console.error(`Failed to send notification ${item.id}`);
-            // Don't mark as error immediately, maybe retry? 
-            // For now, let it stay pending or mark error to avoid loop?
-            // Mark error to avoid spamming logs if whatsapp is down
-            await markNotificationAsError(item.id, 'Send failed (client disconnected?)');
-          }
-        } catch (error: any) {
-          console.error(`Error processing notification ${item.id}:`, error);
-          await markNotificationAsError(item.id, error.message || 'Unknown error');
-        }
-      }
-    }
-  });
-
-  // Run every 30 seconds for reminders
-  cron.schedule('*/30 * * * * *', async () => {
+  // Run every minute for reminders
+  cron.schedule('* * * * *', async () => {
     console.log('Running cron job: checking for reminders...');
 
     const reminders = await getUnsentReminders();
