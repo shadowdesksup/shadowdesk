@@ -20,6 +20,7 @@ import GerarDescritivos from './components/GerarDescritivos';
 import { SessionExpiredModal } from './components/SessionExpiredModal';
 import { RegistrationSuspendedModal } from './components/RegistrationSuspendedModal';
 import ClimaPage from './components/ClimaPage';
+import ServiceDeskPage from './components/ServiceDeskPage';
 
 // Sistema de Lembretes
 import LembretesPage from './components/LembretesPage';
@@ -409,6 +410,15 @@ function App() {
       case 'clima':
         return <ClimaPage theme={theme} userId={usuario?.uid} />;
 
+      case 'servicedesk':
+        return (
+          <ServiceDeskPage
+            theme={theme}
+            initialContext={lembretesContext}
+            onContextUsed={() => setLembretesContext(null)}
+          />
+        );
+
       default:
         return null;
     }
@@ -486,8 +496,19 @@ function App() {
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               proximoLembrete={proximoLembrete}
               onLembreteClick={(context) => {
-                setPaginaAtual('lembretes');
-                if (context) setLembretesContext(context);
+                if (context && context.page === 'servicedesk') {
+                  setPaginaAtual('servicedesk');
+                  // We need to pass this context to ServiceDeskPage somehow.
+                  // For now, let's store it in a new state or reuse setLembretesContext if we generalize it?
+                  // Or better, add a new state for generic context or abuse 'lembretesContext' if it's 'any' type.
+                  // Checking types.ts/App.tsx: 
+                  // const [lembretesContext, setLembretesContext] = useState<any>(null);
+                  // Yes, it is 'any'. So we can use it!
+                  setLembretesContext(context);
+                } else {
+                  setPaginaAtual('lembretes');
+                  if (context) setLembretesContext(context);
+                }
               }}
             />
 

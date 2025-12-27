@@ -1,0 +1,19 @@
+version: '3'
+services:
+  sd-worker:
+    build: .
+    restart: always
+    container_name: sd-worker
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/serviceAccountKey.json
+      - USER_EMAIL=${USER_EMAIL}
+      - USER_PASSWORD=${USER_PASSWORD}
+    volumes:
+      - ./serviceAccountKey.json:/app/serviceAccountKey.json
+    # Memory limits to prevent crashing the VPS
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    # Shared memory size increase for Chrome
+    shm_size: '1gb'

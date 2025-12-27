@@ -76,5 +76,25 @@ service cloud.firestore {
       // Usuário só pode ler/escrever seu próprio documento de alertas
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Regras para ServiceDesk Tickets (sincronizados pelo worker)
+    match /serviceDesk_tickets/{ticketId} {
+      // Qualquer usuário autenticado pode ler, deletar e atualizar (para marcação de 'visto')
+      allow read, delete, update: if request.auth != null;
+      // Criação apenas via Admin SDK
+      allow create: if false;
+    }
+
+    // Regras para ServiceDesk Snapshots (debug/raw data)
+    match /serviceDesk_snapshots/{snapshotId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Regras para ServiceDesk Tickets Ignorados (Blacklist)
+    match /serviceDesk_ignored_tickets/{ticketId} {
+      // Qualquer usuário autenticado pode adicionar/ler ignorados
+      allow read, write: if request.auth != null;
+    }
   }
 }

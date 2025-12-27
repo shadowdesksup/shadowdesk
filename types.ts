@@ -191,7 +191,7 @@ export interface Lembrete {
 }
 
 // Tipo de notificação geral do sistema
-export type TipoNotificacao = 'lembrete_disparado' | 'lembrete_recebido' | 'lembrete_aceito' | 'lembrete_recusado' | 'solicitacao_amizade';
+export type TipoNotificacao = 'lembrete_disparado' | 'lembrete_recebido' | 'lembrete_aceito' | 'lembrete_recusado' | 'solicitacao_amizade' | 'service_desk_new';
 
 // Notificação
 export interface Notificacao {

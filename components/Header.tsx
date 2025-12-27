@@ -78,47 +78,52 @@ const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Notification Bell */}
-        {userId && (
-          <NotificationBell
-            userId={userId}
-            theme={theme}
-            onNotificacaoClick={(notificacao, action) => {
-              if (onLembreteClick) {
-                // Determinar contexto baseado no tipo e ação
-                let context: any = null;
+        <NotificationBell
+          userId={userId}
+          userName={nomeUsuario}
+          theme={theme}
+          onNotificacaoClick={(notificacao, action) => {
+            if (onLembreteClick) {
+              let context: any = null;
 
-                // Se ação for visualizar (botão olho), abrir modal
-                if (action === 'view') {
+              if (notificacao.lembreteId) {
+                // Lembretes e Chamados tem ID
+                if (notificacao.tipo === 'service_desk_new') {
+                  // ServiceDesk uses specific page context
+                  context = {
+                    page: 'servicedesk',
+                    ticketId: notificacao.lembreteId
+                  };
+                } else if (action === 'view') {
+                  // Botão visualização rápida (olho) para lembretes
                   context = {
                     modal: 'view',
                     lembreteId: notificacao.lembreteId,
-                    tab: 'meus' // Assumir tab meus para carregar
+                    tab: 'meus'
                   };
                 } else {
-                  // Navegação padrão (clique no corpo)
-                  if (['lembrete_disparado', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(notificacao.tipo)) {
-                    if (notificacao.tipo === 'lembrete_recebido') {
-                      context = { tab: 'recebidos' };
-                    } else if (notificacao.tipo === 'lembrete_aceito' || notificacao.tipo === 'lembrete_recusado') {
-                      context = { tab: 'meus' };
-                    } else if (notificacao.tipo === 'lembrete_disparado') {
-                      // Correção solicitada: Ir para dia selecionado (implícito em 'meus' com data selecionada se tivermos data, mas aqui vamos focar no ID)
-                      // O componente LembretesPage vai usar highlightId para achar a data
-                      context = {
-                        tab: 'meus',
-                        highlightId: notificacao.lembreteId
-                      };
-                    }
-                  } else if (notificacao.tipo === 'solicitacao_amizade') {
-                    context = { modal: 'friends', friendTab: 'requests' };
+                  // Navegação padrão para lembretes
+                  if (notificacao.tipo === 'lembrete_disparado') {
+                    context = { tab: 'meus', highlightId: notificacao.lembreteId };
+                  } else if (notificacao.tipo === 'lembrete_recebido') {
+                    context = { tab: 'recebidos', highlightId: notificacao.lembreteId };
+                  } else if (notificacao.tipo === 'lembrete_aceito' || notificacao.tipo === 'lembrete_recusado') {
+                    context = { tab: 'enviados', highlightId: notificacao.lembreteId };
                   }
                 }
-
-                onLembreteClick(context);
               }
-            }}
-          />
-        )}
+
+              // Fallbacks sem ID (ou soliciação de amizade)
+              if (!context) {
+                if (notificacao.tipo === 'solicitacao_amizade') {
+                  context = { modal: 'friends', friendTab: 'requests' };
+                }
+              }
+
+              onLembreteClick(context);
+            }
+          }}
+        />
 
         {/* Theme Toggle Button */}
         {onToggleTheme && (

@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, X, CheckCheck, Trash2, Clock, ClipboardList, UserPlus, Eye } from 'lucide-react';
+import { Bell, Check, X, CheckCheck, Trash2, Clock, ClipboardList, UserPlus, Eye, Ticket } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
 import { Notificacao } from '../types';
 
 interface NotificationBellProps {
   userId: string;
+  userName?: string; // Add userName prop
   theme?: 'dark' | 'light';
   onNotificacaoClick?: (notificacao: Notificacao, action: 'navigate' | 'view') => void;
 }
 
 const NotificationBell: React.FC<NotificationBellProps> = ({
   userId,
+  userName,
   theme = 'dark',
   onNotificacaoClick
 }) => {
@@ -19,8 +21,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     notificacoes,
     naoLidas,
     limparTodas,
-    excluir
-  } = useNotifications(userId);
+    excluir,
+    tocarSom
+  } = useNotifications(userId, userName);
 
   const [aberto, setAberto] = useState(false);
   const [interacted, setInteracted] = useState(false); // Novo state de interação
@@ -29,7 +32,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
   // Resetar interação quando houver novas notificações relevantes
   useEffect(() => {
-    const relevantCount = notificacoes.filter(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(n.tipo)).length;
+    const relevantNotifs = notificacoes.filter(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado', 'service_desk_new'].includes(n.tipo));
+    const relevantCount = relevantNotifs.length;
 
     // Se o número de notificações relevantes aumentou, reativar o balão
     if (relevantCount > prevRelevantCountRef.current) {
@@ -61,6 +65,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
         return <Eye size={18} />;
       case 'solicitacao_amizade':
         return <UserPlus size={18} className="text-cyan-400" />;
+      case 'service_desk_new':
+        return <Ticket size={18} className="text-orange-400" />;
       default:
         return <Bell size={18} className="text-slate-400" />;
     }
@@ -142,7 +148,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
       {/* Bubble de Aviso (Solicitações/Lembretes) */}
       <AnimatePresence>
-        {!aberto && !interacted && notificacoes.some(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado'].includes(n.tipo)) && (
+        {!aberto && !interacted && notificacoes.some(n => !n.lida && ['solicitacao_amizade', 'lembrete_recebido', 'lembrete_aceito', 'lembrete_recusado', 'service_desk_new'].includes(n.tipo)) && (
           <motion.div
             initial={{ opacity: 0, y: 5, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
