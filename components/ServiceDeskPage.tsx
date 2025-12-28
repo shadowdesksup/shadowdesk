@@ -414,8 +414,8 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`inline-block w-3 h-3 rounded-full ${getPriorityColor(ticket.prioridade)} ${isNewAndUnviewed ? 'animate-pulse-green shadow-[0_0_8px_rgba(34,197,94,0.6)]' : ''}`}
-                              title={ticket.prioridade || 'Normal'}
+                              className={`inline-block w-3 h-3 rounded-full ${isNewAndUnviewed ? 'bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]' : getPriorityColor(ticket.prioridade)}`}
+                              title={isNewAndUnviewed ? 'Nova / Não visualizada' : (ticket.prioridade || 'Normal')}
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -470,51 +470,59 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                                 <h3 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-500'}`}>
                                   Informações do Chamado
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                   {(ticket.tipo_servico || ticket.servico) && (
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-4">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Tipo de Serviço:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.tipo_servico || ticket.servico}</span>
                                     </div>
                                   )}
                                   {ticket.local_instalacao && (
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-4">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Local de Instalação:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.local_instalacao}</span>
                                     </div>
                                   )}
                                   {ticket.patrimonio && (
-                                    <div>
+                                    <div className="md:col-span-1">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Patrimônio:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.patrimonio}</span>
                                     </div>
                                   )}
                                   {ticket.sala && (
-                                    <div>
+                                    <div className="md:col-span-1">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Sala:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.sala}</span>
                                     </div>
                                   )}
                                   {ticket.ramal && (
-                                    <div>
+                                    <div className="md:col-span-1">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Ramal:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.ramal}</span>
                                     </div>
                                   )}
                                   {ticket.celular && (
-                                    <div>
+                                    <div className="md:col-span-1">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Celular:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.celular}</span>
                                     </div>
                                   )}
                                   {ticket.email && (
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-4">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>E-mail:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.email}</span>
                                     </div>
                                   )}
+                                  {(ticket.melhor_data || ticket.data_atendimento) && (ticket.melhor_data !== 'Não informado') && (
+                                    <div className="md:col-span-4">
+                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Agendado para:</span>
+                                      <span className={`font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                                        {ticket.melhor_data || ticket.data_atendimento}
+                                      </span>
+                                    </div>
+                                  )}
                                   {(ticket.descricao_completa || ticket.descricao) && (
-                                    <div className={`md:col-span-2 p-3 rounded-lg border ${theme === 'dark' ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}>
+                                    <div className={`md:col-span-4 p-3 rounded-lg border ${theme === 'dark' ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}>
                                       <span className={`block mb-2 font-semibold ${theme === 'dark' ? 'text-gray-500' : 'text-blue-600'}`}>Descrição do Serviço:</span>
                                       <p className={`whitespace-pre-wrap ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>{ticket.descricao_completa || ticket.descricao}</p>
                                     </div>

@@ -209,6 +209,24 @@ export const useNotifications = (userId: string, userName?: string) => {
     const unsubscribeSD = onSnapshot(sdQuery, (snapshot) => {
       const tickets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
+      // Cleanup: Remove from ignoredSdIds any IDs that no longer exist in Firestore
+      // This ensures that if a ticket is deleted and comes back, it will notify again
+      const currentTicketIds = new Set(tickets.map(t => t.id));
+      const staleIgnoredIds = [...ignoredSdIds].filter(id => !currentTicketIds.has(id));
+      if (staleIgnoredIds.length > 0) {
+        setIgnoredSdIds(prev => {
+          const next = new Set(prev);
+          staleIgnoredIds.forEach(id => next.delete(id));
+          return next;
+        });
+      }
+
+      // Also cleanup lastNotificationIdsRef to allow sound to play when ticket is re-added
+      const staleSeenIds = [...lastNotificationIdsRef.current].filter(id => !currentTicketIds.has(id));
+      if (staleSeenIds.length > 0) {
+        staleSeenIds.forEach(id => lastNotificationIdsRef.current.delete(id));
+      }
+
       // Filter those NOT viewed by current user
       // AND explicitly filter out those locally ignored (cleared from bell)
       const unviewedTickets = tickets.filter(t => {
@@ -229,7 +247,32 @@ export const useNotifications = (userId: string, userName?: string) => {
         titulo: `Novo Chamado #${t.numero}`,
         mensagem: `${t.solicitante} - ${t.local} (${t.servico})`,
         lida: false,
-        criadoEm: t.timestamp || t.abertura || new Date().toISOString(),
+        criadoEm: (() => {
+          // Handle Firestore Timestamp object
+          if (t.timestamp && typeof t.timestamp.toDate === 'function') {
+            return t.timestamp.toDate().toISOString();
+          }
+          // Handle serialized Firestore Timestamp {seconds, nanoseconds}
+          if (t.timestamp && t.timestamp.seconds) {
+            return new Date(t.timestamp.seconds * 1000).toISOString();
+          }
+          // Handle Brazilian date format DD/MM/YYYY HH:mm
+          if (t.abertura) {
+            const parts = t.abertura.split(/[\/\s:]/);
+            if (parts.length >= 5) {
+              const date = new Date(
+                parseInt(parts[2]), // year
+                parseInt(parts[1]) - 1, // month (0-indexed)
+                parseInt(parts[0]), // day
+                parseInt(parts[3]), // hours
+                parseInt(parts[4]) // minutes
+              );
+              if (!isNaN(date.getTime())) return date.toISOString();
+            }
+          }
+          // Fallback to now
+          return new Date().toISOString();
+        })(),
         lembreteId: t.id // Store ticket ID here
       }));
 

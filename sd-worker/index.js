@@ -448,54 +448,42 @@ async function queueNotification(ticket) {
     const snapshot = await db.collection('serviceDesk_preferences').where('enabled', '==', true).get();
     if (snapshot.empty) return;
 
-    // 2. Format Message (User Requested Format w/ Conditional Fields)
-    // Novo Chamado em ServiceDesk 📝
-    // <newline>
-    // *Solicitante:* _Fulano_
-    // <newline>
-    // *Descrição:* _Desc_
-    // <newline>
-    // (If exist) *Local:* _Local_ *Sala:*_Sala_
-    // <newline>
-    // (If exist) *Agendado para:* _Date_
-    // <newline>
-    // 📅 *Formatted Date*
-
+    // 2. Format Message
     const solicitante = (ticket.solicitante || 'Desconhecido').trim();
-    // Trim description to ensure _italics_ wrapper works (no trailing spaces allowed inside)
     const rawDesc = ticket.descricao_completa || ticket.descricao || 'Sem descrição';
     const descricao = rawDesc.trim();
-
     const local = (ticket.local_instalacao || ticket.local || '').trim();
     const sala = (ticket.sala || '').trim();
-    const melhorData = ticket.melhor_data || ticket.data_atendimento; // Explicit fallback
-
-    // Format "abertura" date - prefer details page extraction, fallback to table scrape
+    const melhorData = ticket.melhor_data || ticket.data_atendimento;
     const rawDate = ticket.abertura_detalhes || ticket.abertura;
     const formattedDate = formatTicketDate(rawDate);
 
-    let message = `Novo Chamado em *ServiceDesk* 📝\n\n`;
-    message += `*Solicitante:* _${solicitante}_\n\n`;
-    message += `*Descrição:* _${descricao}_\n\n`;
+    // Build message with REAL newlines (not escaped)
+    let message = 'Novo Chamado em *ServiceDesk* 📝\n\n';
+    message += '*Solicitante:* _' + solicitante + '_\n\n';
+    message += '*Descrição:* ' + descricao + '\n\n';
 
     // Conditional Local/Sala
     if (local || sala) {
-      const localStr = local ? `*Local:* _${local}_` : '';
-      const salaStr = sala ? `*Sala:*_${sala}_` : '';
-      const space = (local && sala && localStr && salaStr) ? ' ' : '';
-      message += `${localStr}${space}${salaStr}\n\n`;
+      const localStr = local ? '*Local:* _' + local + '_' : '';
+      const salaStr = sala ? '*Sala:* _' + sala + '_' : '';
+      const space = (local && sala) ? ' ' : '';
+      message += localStr + space + salaStr + '\n\n';
     }
 
     // Conditional Agendado Para
     if (melhorData && melhorData !== 'Não informado') {
-      message += `*Agendado para:* _${melhorData}_\n\n`;
+      message += '*Agendado para:* _' + melhorData + '_\n\n';
     }
 
-    // Footer Date
+    // Link (bold label)
+    message += '*Ver no ServiceDesk:* https://servicedesk.unesp.br/atendimento/' + ticket.numero + '\n\n';
+
+    // Footer Date (sem negrito extra no emoji)
     if (formattedDate && formattedDate.includes(' de ')) {
-      message += `📅 *${formattedDate}*`;
+      message += '📅 ' + formattedDate;
     } else {
-      message += `📅 ${formattedDate || rawDate || ''}`;
+      message += '📅 ' + (formattedDate || rawDate || '');
     }
 
     // 3. Queue for each user
@@ -505,10 +493,9 @@ async function queueNotification(ticket) {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.phone) {
-        // Create a new doc in 'notification_queue'
         const queueRef = db.collection('notification_queue').doc();
         batch.set(queueRef, {
-          to: data.phone, // "14999..."
+          to: data.phone,
           message: message,
           status: 'pending',
           type: 'serviceDesk_new_ticket',

@@ -32,3 +32,11 @@ wpp-worker/dist/
 wpp-worker/node_modules/
 wpp-worker/.wwebjs_auth/
 
+
+# Environment variables
+.env
+.env.production
+.env.development
+sd-worker/.env
+wpp-worker/.env
+shadow-bot/.env
