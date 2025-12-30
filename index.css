@@ -11,43 +11,21 @@ textarea,
   caret-color: auto;
 }
 
-/* Efeito de Reflexo Suave (Sheen) */
+/* Efeito de Brilho Pulsante (Glow) */
 .animate-shine {
-  position: relative;
-  overflow: hidden;
+  animation: glow-pulse 2s ease-in-out infinite;
 }
 
-.animate-shine::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 150%;
-  height: 100%;
-  background: linear-gradient(to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.4) 50%,
-      rgba(255, 255, 255, 0) 100%);
-  transform: skewX(-20deg);
-  animation: shine 3s infinite;
-  pointer-events: none;
-}
+@keyframes glow-pulse {
 
-@keyframes shine {
-  0% {
-    left: -150%;
-  }
-
-  40% {
-    left: 150%;
-  }
-
-  /* Passada mais lenta e elegante */
+  0%,
   100% {
-    left: 150%;
+    box-shadow: 0 0 5px hsl(45, 100%, 51%, 0.4), inset 0 0 3px hsl(45, 100%, 51%, 0.1);
   }
 
-  /* Pausa longa */
+  50% {
+    box-shadow: 0 0 15px hsl(45, 100%, 51%, 0.7), inset 0 0 8px hsl(45, 100%, 51%, 0.2);
+  }
 }
 
 /* Custom Amber Color for ServiceDesk */
