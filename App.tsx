@@ -512,7 +512,8 @@ function App() {
               }}
             />
 
-            <main className="flex-1 overflow-y-auto wide:overflow-hidden py-8 px-8 wide:pl-8 wide:pr-0">
+            <main className={`flex-1 overflow-y-auto wide:overflow-hidden px-8 wide:pl-8 wide:pr-0 ${paginaAtual === 'clima' ? 'py-2' : 'py-8'
+              }`}>
               {renderizarConteudo()}
             </main>
           </div>

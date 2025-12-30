@@ -605,6 +605,21 @@ async function runWorker() {
       // Scrape tickets
       const tickets = await scrapeTickets();
 
+      // SAFETY CHECK 1: Filter Validation
+      // If we are filtering by "Nova" but find tickets with other statuses, the filter FAILED.
+      // In this case, we MUST ABORT processing to prevent "New Ticket" spam or mass deletion.
+      const hasInvalidStatus = tickets.some(t => {
+        const s = (t.status || '').toLowerCase();
+        return s.includes('atendimento') || s.includes('aguardando') || s.includes('fechado');
+      });
+
+      if (hasInvalidStatus) {
+        console.warn('⚠️ WARNING: Filter mismatch detected! Found tickets with non-Nova status.');
+        console.warn('   -> Aborting this cycle to prevent data corruption. Will filter again next cycle.');
+        await setupFilters(); // Force re-setup filter immediately
+        continue;
+      }
+
       if (tickets.length > 0) {
         const currentIds = new Set(tickets.map(t => t.numero));
 
@@ -614,7 +629,19 @@ async function runWorker() {
         // --- 1. SYNC: Remove tickets that disappeared ---
         const idsToDelete = [...lastKnownTickets].filter(id => !currentIds.has(id));
 
-        if (idsToDelete.length > 0) {
+        // SAFETY CHECK 2: Mass Deletion Protection
+        // If > 5 tickets disappeared at once (and it's > 20% of total), it's likely a glitch (e.g. empty page).
+        // Only allow large deletions if the new count is 0 (meaning we cleared the queue legitimately)
+        // OR if the user deliberately cleared them (hard to distinguish, so err on side of caution).
+        const isMassDeletion = idsToDelete.length > 5 && (idsToDelete.length > lastKnownTickets.size * 0.2);
+
+        if (isMassDeletion) {
+          console.warn(`⚠️ WARNING: Mass deletion detected (${idsToDelete.length} tickets). Checking for site glitch...`);
+          // If the site returned valid "Nova" tickets (tickets.length > 0) but we are missing many others,
+          // it could be that pagination logic messed up or we are viewing a different page.
+          // For safety, we SKIP deletion this cycle.
+          console.warn('   -> Skipping deletion this cycle to be safe.');
+        } else if (idsToDelete.length > 0) {
           console.log(`🗑️ Syncing: ${idsToDelete.length} tickets disappeared from ServiceDesk. Deleting from DB...`);
 
           for (const rawId of idsToDelete) {
@@ -630,6 +657,7 @@ async function runWorker() {
             }
           }
         }
+
 
         // --- 2. PROCESS: Handle New Tickets (respecting Ignore List) ---
         const newTickets = tickets.filter(t => !lastKnownTickets.has(t.numero));

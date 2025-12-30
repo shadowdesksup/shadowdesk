@@ -45,6 +45,10 @@ async function deleteQueryBatch(db, query, resolve) {
 async function main() {
   console.log(`Clearing collection: ${COLLECTION_NAME}...`);
   await deleteCollection(db, COLLECTION_NAME, 50);
+
+  console.log(`\nClearing collection: serviceDesk_ignored_tickets...`);
+  await deleteCollection(db, 'serviceDesk_ignored_tickets', 50);
+
   console.log('\nDone! All tickets deleted.');
 
   // Also clear the notification queue so we don't spam?

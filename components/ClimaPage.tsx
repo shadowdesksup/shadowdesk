@@ -8,11 +8,15 @@ import {
   Wind,
   Droplets,
   RefreshCw,
-  Umbrella, // Icone para chuva
-  Bell
+  Umbrella,
+  Bell,
+  Radar,
+  Satellite,
+  Waves,
+  Zap,
+  CloudRain,
+  Flag
 } from 'lucide-react';
-import WeatherNotificationModal, { WeatherAlertPreferences } from './WeatherNotificationModal';
-import { saveWeatherAlertPreferences, getWeatherAlertPreferences } from '../firebase/weatherAlerts';
 
 interface ClimaPageProps {
   theme?: 'dark' | 'light';
@@ -25,47 +29,34 @@ const DEFAULT_COORDS = {
   lon: -49.9458
 };
 
+// Map Layer Configuration
+const MAP_LAYERS = [
+  { id: 'radar', name: 'Radar', icon: Radar },
+  { id: 'satellite', name: 'Satélite', icon: Satellite },
+  { id: 'wind', name: 'Vento', icon: Wind },
+  { id: 'rain', name: 'Chuva, raios', icon: CloudRain },
+  { id: 'temp', name: 'Temperatura', icon: Thermometer },
+  { id: 'clouds', name: 'Nuvens', icon: Cloud },
+  { id: 'waves', name: 'Ondas', icon: Waves },
+  { id: 'rainAccu', name: 'Acúmulo chuva', icon: Droplets },
+  { id: 'gust', name: 'Rajadas', icon: Flag },
+];
+
 const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationName, setLocationName] = useState<string>('Obtendo localização...');
-  // Adicionado humidity no estado
   const [weatherData, setWeatherData] = useState<{ temp: number, wind: number, rainChance: number, humidity: number, description: string } | null>(null);
+
+  // Map Layer State
+  const [mapLayer, setMapLayer] = useState<string>('rain');
 
   // Estados para Refresh
   const [loading, setLoading] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
 
-  // Estado para o modal de notificações
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-
-  // Obter geolocalização do usuário
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCoords({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-          setLocationName('Sua localização');
-        },
-        (err) => {
-          console.warn('Geolocation error:', err.message);
-          setCoords(DEFAULT_COORDS);
-          setLocationName('Marília, SP (padrão)');
-        },
-        { timeout: 10000, enableHighAccuracy: false }
-      );
-    } else {
-      setCoords(DEFAULT_COORDS);
-      setLocationName('Marília, SP (padrão)');
-    }
-  }, []);
-
   // Carregar dados meteorológicos (Open-Meteo)
   const fetchWeatherData = async (lat: number, lon: number) => {
     try {
-      // Busca temperatura, vento e UMIDADE
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,relative_humidity_2m&hourly=precipitation_probability&forecast_days=1&timezone=auto`
       );
@@ -96,7 +87,29 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
     }
   };
 
-  // Carrega dados iniciais quando coords estiver pronto
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoords({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+          setLocationName('Sua localização');
+        },
+        (err) => {
+          console.warn('Geolocation error:', err.message);
+          setCoords(DEFAULT_COORDS);
+          setLocationName('Marília, SP (padrão)');
+        },
+        { timeout: 10000, enableHighAccuracy: false }
+      );
+    } else {
+      setCoords(DEFAULT_COORDS);
+      setLocationName('Marília, SP (padrão)');
+    }
+  }, []);
+
   useEffect(() => {
     if (coords) {
       fetchWeatherData(coords.lat, coords.lon).then(data => {
@@ -105,19 +118,15 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
     }
   }, [coords]);
 
-  // Função de Soft Refresh
   const loadAllData = async () => {
     if (!coords) return;
     setLoading(true);
 
-    // Atualiza dados numéricos
     const data = await fetchWeatherData(coords.lat, coords.lon);
     if (data) setWeatherData(data);
 
-    // Força reload do iframe
     setIframeKey(prev => prev + 1);
 
-    // Pequeno delay visual
     setTimeout(() => {
       setLoading(false);
     }, 800);
@@ -133,15 +142,15 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
       detailLon: coords.lon.toString(),
       width: '650',
       height: '450',
-      zoom: '5',
+      zoom: '11',
       level: 'surface',
-      overlay: 'rain',
+      overlay: mapLayer, // Use dynamic map layer
       product: 'ecmwf',
       menu: '',
       message: 'true',
       marker: 'true',
       calendar: 'now',
-      pressure: 'false', // Desativado por padrão conforme solicitado
+      pressure: 'false',
       type: 'map',
       location: 'coordinates',
       detail: '',
@@ -160,9 +169,9 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 -mt-6"
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-1"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden p-2 scrollbar-hide max-w-[85vw] md:max-w-none">
             {/* Botão Refresh */}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -172,30 +181,42 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
                 loadAllData();
               }}
               disabled={loading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${theme === 'dark'
-                ? 'bg-white/5 hover:bg-white/10 text-slate-300'
-                : 'bg-white hover:bg-slate-50 text-slate-600 shadow-sm border border-slate-200'
+              className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors border ${theme === 'dark'
+                ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/5'
+                : 'bg-white hover:bg-slate-50 text-slate-600 shadow-sm border-slate-200'
                 } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-              <span className="hidden sm:inline">{loading ? 'Atualizando...' : 'Atualizar'}</span>
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              <span className="hidden xl:inline text-sm whitespace-nowrap">{loading ? 'Atualizando...' : 'Atualizar'}</span>
             </motion.button>
 
-            {/* Botão Notifique-me */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowNotificationModal(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${theme === 'dark'
-                ? 'bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#25D366]'
-                : 'bg-green-50 hover:bg-green-100 text-green-600 shadow-sm border border-green-200'
-                }`}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
-              <span className="hidden sm:inline">Notifique-me</span>
-            </motion.button>
+            {/* Vertical Separator */}
+            <div className={`h-6 w-px mx-1 flex-shrink-0 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
+
+            {/* Map Layer Buttons */}
+            {MAP_LAYERS.map((layer) => {
+              const Icon = layer.icon;
+              const isActive = mapLayer === layer.id;
+              return (
+                <motion.button
+                  key={layer.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setMapLayer(layer.id)}
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors border ${isActive
+                    ? (theme === 'dark'
+                      ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
+                      : 'bg-cyan-50 border-cyan-200 text-cyan-600')
+                    : (theme === 'dark'
+                      ? 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/5'
+                      : 'bg-white hover:bg-slate-50 text-slate-600 shadow-sm border-slate-200')
+                    }`}
+                >
+                  <Icon size={16} />
+                  <span className="text-sm whitespace-nowrap">{layer.name}</span>
+                </motion.button>
+              );
+            })}
           </div>
 
           <div className="mr-6">
@@ -219,7 +240,6 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-lg'
             }`}
-          style={{ minHeight: '500px' }}
         >
           {!coords ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 bg-inherit">
@@ -236,120 +256,74 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
               height="100%"
               title="Mapa Windy"
               className="w-full h-full rounded-2xl border-none"
-              style={{ minHeight: '500px' }}
             ></iframe>
           )}
         </motion.div>
 
-        {/* Info Cards - Agora com 4 Colunas */}
+        {/* Cards de Clima */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          {/* Temperatura */}
+          {/* Card Temperatura */}
           <div className={`p-4 rounded-xl border flex items-center gap-4 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-sm'
             }`}>
-            <div className="p-3 rounded-full bg-orange-500/20">
-              <Thermometer size={24} className="text-orange-500" />
+            <div className="p-3 rounded-full bg-orange-500/20 text-orange-500">
+              <Thermometer size={24} />
             </div>
             <div>
-              <p className={`text-xs uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                Temperatura
-              </p>
-              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                {weatherData ? `${weatherData.temp}°C` : '--°C'}
-              </p>
+              <p className="text-xs uppercase font-bold opacity-60">Temperatura</p>
+              <p className="text-2xl font-bold">{weatherData?.temp ?? '--'}°C</p>
             </div>
           </div>
 
-          {/* Vento */}
+          {/* Card Vento */}
           <div className={`p-4 rounded-xl border flex items-center gap-4 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-sm'
             }`}>
-            <div className="p-3 rounded-full bg-cyan-500/20">
-              <Wind size={24} className="text-cyan-500" />
+            <div className="p-3 rounded-full bg-cyan-500/20 text-cyan-500">
+              <Wind size={24} />
             </div>
             <div>
-              <p className={`text-xs uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                Vento
-              </p>
-              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                {weatherData ? `${weatherData.wind} km/h` : '-- km/h'}
-              </p>
+              <p className="text-xs uppercase font-bold opacity-60">Vento</p>
+              <p className="text-2xl font-bold">{weatherData?.wind ?? '--'} km/h</p>
             </div>
           </div>
 
-          {/* Chuva */}
+          {/* Card Chuva */}
           <div className={`p-4 rounded-xl border flex items-center gap-4 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-sm'
             }`}>
-            <div className="p-3 rounded-full bg-blue-500/20">
-              {/* Ícone atualizado para guarda-chuva para diferenciar */}
-              <Umbrella size={24} className="text-blue-500" />
+            <div className="p-3 rounded-full bg-blue-500/20 text-blue-500">
+              <Umbrella size={24} />
             </div>
             <div>
-              <p className={`text-xs uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                Chance Chuva
-              </p>
-              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                {weatherData ? `${weatherData.rainChance}%` : '--%'}
-              </p>
+              <p className="text-xs uppercase font-bold opacity-60">Chance Chuva</p>
+              <p className="text-2xl font-bold">{weatherData?.rainChance ?? 0}%</p>
             </div>
           </div>
 
-          {/* Umidade */}
+          {/* Card Umidade */}
           <div className={`p-4 rounded-xl border flex items-center gap-4 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-sm'
             }`}>
-            <div className="p-3 rounded-full bg-indigo-500/20">
-              <Droplets size={24} className="text-indigo-500" />
+            <div className="p-3 rounded-full bg-indigo-500/20 text-indigo-500">
+              <Droplets size={24} />
             </div>
             <div>
-              <p className={`text-xs uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                Umidade
-              </p>
-              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                {weatherData ? `${weatherData.humidity}%` : '--%'}
-              </p>
+              <p className="text-xs uppercase font-bold opacity-60">Umidade</p>
+              <p className="text-2xl font-bold">{weatherData?.humidity ?? '--'}%</p>
             </div>
           </div>
-
         </motion.div>
       </div>
-
-      {/* Weather Notification Modal */}
-      {
-        showNotificationModal && (
-          <WeatherNotificationModal
-            theme={theme}
-            onClose={() => setShowNotificationModal(false)}
-            onSave={async (preferences) => {
-              // Save to Firestore if user is logged in
-              if (userId) {
-                await saveWeatherAlertPreferences(userId, preferences);
-              }
-              // Also save to localStorage as fallback
-              localStorage.setItem('weather_alert_preferences', JSON.stringify(preferences));
-              console.log('Weather alert preferences saved:', preferences);
-            }}
-            initialPreferences={(() => {
-              try {
-                const saved = localStorage.getItem('weather_alert_preferences');
-                return saved ? JSON.parse(saved) : null;
-              } catch {
-                return null;
-              }
-            })()}
-          />
-        )
-      }
     </>
   );
 };

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, limit, deleteDoc, doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Ticket, RefreshCw, Search, ChevronDown, ChevronUp, Phone, Mail, Building, Eye, Trash2, ExternalLink } from 'lucide-react';
+import { Ticket, RefreshCw, Search, ChevronDown, ChevronUp, Phone, Mail, Building, Eye, Trash2, ExternalLink, Bell } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import ServiceDeskNotificationModal from './ServiceDeskNotificationModal';
+import LembreteModal from './LembreteModal';
+import { criarLembrete, buscarUsuarios } from '../firebase/lembretes';
 
 const getNameColor = (name: string) => {
   const colors = [
@@ -93,6 +95,24 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   const [prefTelefone, setPrefTelefone] = useState('');
   const [prefEnabled, setPrefEnabled] = useState(false);
 
+  // Reminder Modal State
+  const [selectedTicketForReminder, setSelectedTicketForReminder] = useState<ServiceDeskTicket | null>(null);
+
+  const handleLembrarMe = (ticket: ServiceDeskTicket) => {
+    setSelectedTicketForReminder(ticket);
+  };
+
+  const handleCreateReminder = async (dados: any) => {
+    try {
+      if (!selectedTicketForReminder) return;
+      await criarLembrete(userId || '', userName, dados);
+      setSelectedTicketForReminder(null);
+    } catch (err) {
+      console.error('Error creating reminder:', err);
+      alert('Erro ao criar lembrete');
+    }
+  };
+
   // Load User Preferences on Mount
   useEffect(() => {
     if (!userId) return;
@@ -165,20 +185,6 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
       if (ticket) {
         setExpandedTicket(targetId);
         markAsViewed(ticket);
-
-        // Scroll logic (Wait a tick for render)
-        setTimeout(() => {
-          const element = document.getElementById(`ticket-${targetId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add temporary highlight
-            element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
-            setTimeout(() => {
-              element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
-            }, 3000);
-          }
-        }, 100);
-
         if (onContextUsed) onContextUsed();
       }
     }
@@ -249,7 +255,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-auto relative pr-8">
+    <div className="flex-1 flex flex-col h-full overflow-auto relative">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
@@ -281,6 +287,38 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
           onSave={handleSaveNotification}
           initialPhone={prefTelefone}
           initialEnabled={prefEnabled}
+        />
+      )}
+
+      {/* Reminder Modal */}
+      {selectedTicketForReminder && (
+        <LembreteModal
+          isServiceDesk={true}
+          theme={theme}
+          onClose={() => setSelectedTicketForReminder(null)}
+          onSave={handleCreateReminder}
+          lembrete={{
+            id: '',
+            titulo: ` solicitante: ${selectedTicketForReminder.solicitante}`,
+            descricao: `${selectedTicketForReminder.descricao_completa || selectedTicketForReminder.descricao || ''}`,
+            dataHora: new Date().toISOString(),
+            cor: 'sand',
+            somNotificacao: 'sino',
+            status: 'pendente',
+            criadoPor: userId || '',
+            criadoEm: new Date().toISOString(),
+            tipo: 'servicedesk',
+            metadata: {
+              solicitante: selectedTicketForReminder.solicitante,
+              local: selectedTicketForReminder.local,
+              sala: selectedTicketForReminder.sala,
+              dataAgendamento: (selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento) !== 'Não informado'
+                ? (selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento)
+                : undefined,
+              ticketId: selectedTicketForReminder.numero
+            }
+          } as any}
+          buscarUsuarios={buscarUsuarios}
         />
       )}
 
@@ -399,7 +437,6 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                     return (
                       <React.Fragment key={ticket.id}>
                         <tr
-                          id={`ticket-${ticket.id}`}
                           className={`transition-colors cursor-pointer 
                             ${expandedTicket === ticket.id ? (theme === 'dark' ? 'bg-blue-500/5' : 'bg-blue-50') : ''}
                             ${isNewAndUnviewed
@@ -414,8 +451,8 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`inline-block w-3 h-3 rounded-full ${isNewAndUnviewed ? 'bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]' : getPriorityColor(ticket.prioridade)}`}
-                              title={isNewAndUnviewed ? 'Nova / Não visualizada' : (ticket.prioridade || 'Normal')}
+                              className={`inline-block w-3 h-3 rounded-full ${getPriorityColor(ticket.prioridade)} ${isNewAndUnviewed ? 'animate-pulse-green shadow-[0_0_8px_rgba(34,197,94,0.6)]' : ''}`}
+                              title={ticket.prioridade || 'Normal'}
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -470,65 +507,57 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                                 <h3 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-500'}`}>
                                   Informações do Chamado
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                   {(ticket.tipo_servico || ticket.servico) && (
-                                    <div className="md:col-span-4">
+                                    <div className="md:col-span-2">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Tipo de Serviço:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.tipo_servico || ticket.servico}</span>
                                     </div>
                                   )}
                                   {ticket.local_instalacao && (
-                                    <div className="md:col-span-4">
+                                    <div className="md:col-span-2">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Local de Instalação:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.local_instalacao}</span>
                                     </div>
                                   )}
                                   {ticket.patrimonio && (
-                                    <div className="md:col-span-1">
+                                    <div>
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Patrimônio:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.patrimonio}</span>
                                     </div>
                                   )}
                                   {ticket.sala && (
-                                    <div className="md:col-span-1">
+                                    <div>
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Sala:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.sala}</span>
                                     </div>
                                   )}
                                   {ticket.ramal && (
-                                    <div className="md:col-span-1">
+                                    <div>
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Ramal:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.ramal}</span>
                                     </div>
                                   )}
                                   {ticket.celular && (
-                                    <div className="md:col-span-1">
+                                    <div>
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Celular:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.celular}</span>
                                     </div>
                                   )}
                                   {ticket.email && (
-                                    <div className="md:col-span-4">
+                                    <div className="md:col-span-2">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>E-mail:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.email}</span>
                                     </div>
                                   )}
-                                  {(ticket.melhor_data || ticket.data_atendimento) && (ticket.melhor_data !== 'Não informado') && (
-                                    <div className="md:col-span-4">
-                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Agendado para:</span>
-                                      <span className={`font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                                        {ticket.melhor_data || ticket.data_atendimento}
-                                      </span>
-                                    </div>
-                                  )}
                                   {(ticket.descricao_completa || ticket.descricao) && (
-                                    <div className={`md:col-span-4 p-3 rounded-lg border ${theme === 'dark' ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}>
+                                    <div className={`md:col-span-2 p-3 rounded-lg border ${theme === 'dark' ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}>
                                       <span className={`block mb-2 font-semibold ${theme === 'dark' ? 'text-gray-500' : 'text-blue-600'}`}>Descrição do Serviço:</span>
                                       <p className={`whitespace-pre-wrap ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>{ticket.descricao_completa || ticket.descricao}</p>
                                     </div>
                                   )}
                                 </div>
-                                <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
+                                <div className={`mt-4 pt-4 border-t flex items-center gap-4 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
                                   <a
                                     href={`https://servicedesk.unesp.br/atendimento/${ticket.numero}`}
                                     target="_blank"
@@ -538,6 +567,14 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                                     <ExternalLink className="w-4 h-4" />
                                     Ver no ServiceDesk oficial
                                   </a>
+
+                                  <button
+                                    onClick={() => handleLembrarMe(ticket)}
+                                    className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'text-yellow-400 hover:text-yellow-300 animate-pulse drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]' : 'text-yellow-600 hover:text-yellow-700'}`}
+                                  >
+                                    <Bell className="w-4 h-4" />
+                                    Lembrar-me
+                                  </button>
                                 </div>
                               </div>
                             </td>

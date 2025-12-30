@@ -188,6 +188,14 @@ export interface Lembrete {
   finalizadoEm?: string; // Data de conclusão
   telefone?: string; // WhatsApp de destino
   dataHoraEnvio?: any; // Timestamp Firestore (usado pelo Worker)
+  tipo?: 'geral' | 'servicedesk';
+  metadata?: {
+    solicitante?: string;
+    local?: string;
+    sala?: string;
+    dataAgendamento?: string;
+    ticketId?: string;
+  };
 }
 
 // Tipo de notificação geral do sistema

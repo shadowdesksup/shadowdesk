@@ -42,6 +42,7 @@ interface LembreteModalProps {
   buscarUsuarios?: (termo: string) => Promise<Array<{ uid: string; email: string; nomeCompleto: string }>>;
   amigos?: Friend[];
   destinatarioPreSelecionado?: { uid: string; nome: string };
+  isServiceDesk?: boolean;
 }
 
 const CORES: { valor: CorLembrete; label: string; classe: string; border: string }[] = [
@@ -74,7 +75,8 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   onEnviar,
   buscarUsuarios,
   amigos = [],
-  destinatarioPreSelecionado
+  destinatarioPreSelecionado,
+  isServiceDesk = false
 }) => {
   const { tocarSom } = useNotifications('');
 
@@ -145,6 +147,38 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
     destinatarioPreSelecionado || null
   );
   const [manterCopia, setManterCopia] = useState(true);
+
+  // Quick Timer State (only visual active state)
+  const [activeQuickTimer, setActiveQuickTimer] = useState<number | null>(null);
+
+  // Function to apply quick timer
+  const applyQuickTimer = (minutes: number) => {
+    if (activeQuickTimer === minutes) {
+      setActiveQuickTimer(null); // Toggle off if desired, though usually we just leave it active visually
+      return;
+    }
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + minutes);
+
+    // Update Data and Hora states
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    setData(`${year}-${month}-${day}`);
+
+    setHora(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+
+    setActiveQuickTimer(minutes);
+  };
+
+  // Reset active quick timer if user manually changes date/time
+  useEffect(() => {
+    // We could add complex logic here to check if current data/hora matches a timer, 
+    // but for now let's just clear the visual selection if they modify fields to avoid confusion.
+    // However, this might trigger on the very first render or set. 
+    // We'll leave it manual for now.
+  }, [data, hora]);
 
   // Buscar usuários quando digita
   useEffect(() => {
@@ -337,6 +371,29 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                 </div>
               </div>
 
+              {/* Quick Timers for ServiceDesk Mode */}
+              {isServiceDesk && (
+                <div className="flex gap-3 pt-1">
+                  {[5, 15, 30].map((min) => (
+                    <div
+                      key={min}
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => applyQuickTimer(min)}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${activeQuickTimer === min
+                        ? 'bg-cyan-500 border-cyan-500'
+                        : `${theme === 'dark' ? 'border-slate-600 bg-white/5' : 'border-slate-300 bg-white'}`
+                        }`}>
+                        {activeQuickTimer === min && <Check size={10} className="text-white" strokeWidth={3} />}
+                      </div>
+                      <span className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        Aviso em {min} min
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Cor e Som Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 {/* Som Selection Trigger - More Compact */}
@@ -526,7 +583,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
               )}
 
               {/* Enviar para Amigo - Now appears below WhatsApp */}
-              {amigos.length > 0 && !lembrete && (
+              {amigos.length > 0 && !lembrete && !isServiceDesk && (
                 <div className={`mt-2 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
                   <div className="flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-2">
