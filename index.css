@@ -49,3 +49,28 @@ textarea,
 
   /* Pausa longa */
 }
+
+/* Custom Amber Color for ServiceDesk */
+.bg-custom-amber {
+  background-color: hsl(45, 100%, 51%);
+}
+
+.text-custom-amber {
+  color: hsl(45, 100%, 51%);
+}
+
+.border-custom-amber {
+  border-color: hsl(45, 100%, 51%);
+}
+
+.bg-custom-amber\/20 {
+  background-color: hsl(45, 100%, 51%, 0.2);
+}
+
+.bg-custom-amber\/30 {
+  background-color: hsl(45, 100%, 51%, 0.3);
+}
+
+.border-custom-amber\/30 {
+  border-color: hsl(45, 100%, 51%, 0.3);
+}

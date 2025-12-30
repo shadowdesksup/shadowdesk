@@ -404,7 +404,9 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
               <thead className={`border-b ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
                 <tr className={`text-left text-xs uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600 font-semibold'}`}>
                   <th className="px-4 py-3 w-[80px]">#</th>
-                  <th className="px-4 py-3 text-center w-[120px]">Prioridade</th>
+                  <th className="px-4 py-3 text-center w-[120px]">
+                    <span className="sr-only">Indicador</span>
+                  </th>
                   <th className="px-4 py-3 w-[140px]">Status</th>
                   <th className="px-4 py-3 w-[30%]">Solicitante</th>
                   <th className="px-4 py-3 w-[25%]">Local</th>
@@ -433,6 +435,32 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                     const isViewedByMe = viewersList.includes(userName);
                     const isViewedByAny = viewersList.length > 0;
                     const isNewAndUnviewed = ticket.status === 'Nova' && !isViewedByMe;
+                    const isNewButViewed = ticket.status === 'Nova' && isViewedByMe;
+
+                    // DOT LOGIC
+                    let dotClass = getPriorityColor(ticket.prioridade);
+                    if (isNewAndUnviewed) {
+                      dotClass = 'bg-custom-amber animate-pulse shadow-[0_0_8px_hsl(45,100%,51%,0.6)]';
+                    } else if (isNewButViewed) {
+                      dotClass = 'bg-cyan-400';
+                    }
+
+                    // STATUS LOGIC
+                    let statusLabel = ticket.status;
+                    let statusClass = '';
+
+                    if (ticket.status === 'Nova') {
+                      statusLabel = 'Novo';
+                      if (isNewAndUnviewed) {
+                        statusClass = 'bg-custom-amber/20 text-custom-amber border border-custom-amber/30 animate-shine font-bold';
+                      } else {
+                        statusClass = 'bg-cyan-400/20 text-cyan-400 border border-cyan-400/30';
+                      }
+                    } else if (ticket.status?.includes('Atendimento')) {
+                      statusClass = 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                    } else {
+                      statusClass = 'bg-gray-700/50 text-gray-300 border border-gray-600/30';
+                    }
 
                     return (
                       <React.Fragment key={ticket.id}>
@@ -451,18 +479,13 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`inline-block w-3 h-3 rounded-full ${getPriorityColor(ticket.prioridade)} ${isNewAndUnviewed ? 'animate-pulse-green shadow-[0_0_8px_rgba(34,197,94,0.6)]' : ''}`}
-                              title={ticket.prioridade || 'Normal'}
+                              className={`inline-block w-3 h-3 rounded-full ${dotClass}`}
+                              title={isNewAndUnviewed ? 'Novo / Não visualizado' : (ticket.prioridade || 'Normal')}
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${ticket.status === 'Nova'
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                              : ticket.status?.includes('Atendimento')
-                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                                : 'bg-gray-700/50 text-gray-300 border border-gray-600/30'
-                              }`}>
-                              {ticket.status}
+                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusClass}`}>
+                              {statusLabel}
                             </span>
                           </td>
                           <td className={`px-4 py-3 text-sm max-w-[300px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700 font-medium'}`} title={ticket.solicitante}>
