@@ -87,15 +87,36 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
     }
   };
 
+  // Obter nome da cidade via Reverse Geocoding
+  const fetchCityName = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`
+      );
+      if (!res.ok) throw new Error('Falha ao obter localidade');
+      const data = await res.json();
+
+      const city = data.city || data.locality || '';
+      const state = data.principalSubdivisionCode ? data.principalSubdivisionCode.split('-')[1] : data.principalSubdivision;
+
+      if (city && state) return `${city}, ${state}`;
+      return city || state || 'Sua localização';
+    } catch (err) {
+      console.warn('Erro Reverse Geocode:', err);
+      return 'Sua localização';
+    }
+  };
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCoords({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-          setLocationName('Sua localização');
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setCoords({ lat: latitude, lon: longitude });
+
+          // Buscar nome do lugar
+          const name = await fetchCityName(latitude, longitude);
+          setLocationName(name);
         },
         (err) => {
           console.warn('Geolocation error:', err.message);
@@ -122,8 +143,14 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
     if (!coords) return;
     setLoading(true);
 
-    const data = await fetchWeatherData(coords.lat, coords.lon);
+    // Atualizar clima e nome da cidade
+    const [data, name] = await Promise.all([
+      fetchWeatherData(coords.lat, coords.lon),
+      fetchCityName(coords.lat, coords.lon)
+    ]);
+
     if (data) setWeatherData(data);
+    if (name) setLocationName(name);
 
     setIframeKey(prev => prev + 1);
 
@@ -164,14 +191,14 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full gap-2 pr-8">
+      <div className="flex flex-col h-full gap-2 px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-1"
         >
-          <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden p-2 scrollbar-hide max-w-[85vw] md:max-w-none">
+          <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden px-1 py-3 scrollbar-hide max-w-[85vw] md:max-w-none">
             {/* Botão Refresh */}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -219,7 +246,7 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
             })}
           </div>
 
-          <div className="mr-6">
+          <div className="pr-4">
             <h1 className={`text-3xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
               <Cloud className="text-cyan-400" size={32} />
               Clima

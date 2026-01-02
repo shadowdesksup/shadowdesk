@@ -384,7 +384,11 @@ function App() {
         );
 
       case 'perfil':
-        return <ProfilePage usuario={usuario!} dadosUsuario={dadosUsuario} theme={theme} />;
+        return (
+          <div className="h-full overflow-y-auto pr-8">
+            <ProfilePage usuario={usuario!} dadosUsuario={dadosUsuario} theme={theme} />
+          </div>
+        );
 
       case 'descritivos':
         return (
@@ -512,7 +516,9 @@ function App() {
               }}
             />
 
-            <main className={`flex-1 overflow-y-auto wide:overflow-hidden px-8 wide:pl-8 wide:pr-0 ${paginaAtual === 'clima' ? 'py-2' : 'py-8'
+            <main className={`flex-1 overflow-y-auto wide:overflow-hidden ${paginaAtual === 'clima'
+              ? 'px-4 wide:px-4 py-2'
+              : 'px-8 wide:pl-8 wide:pr-0 pt-8 pb-0'
               }`}>
               {renderizarConteudo()}
             </main>

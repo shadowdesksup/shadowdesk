@@ -20,6 +20,15 @@ const ServiceDeskNotificationModal: React.FC<ServiceDeskNotificationModalProps> 
 }) => {
   const [telefone, setTelefone] = useState(initialPhone);
   const [enabled, setEnabled] = useState(initialEnabled);
+
+  // Sync state with props if they change (e.g. from global profile update)
+  useEffect(() => {
+    setEnabled(initialEnabled);
+  }, [initialEnabled]);
+
+  useEffect(() => {
+    setTelefone(initialPhone);
+  }, [initialPhone]);
   const [manterNumeroSalvo, setManterNumeroSalvo] = useState(() => {
     return localStorage.getItem('whatsapp_manter_numero') !== 'false';
   });

@@ -114,40 +114,39 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   };
 
   // Load User Preferences on Mount
+  // Load User Preferences from Global Profile
   useEffect(() => {
-    if (!userId) return;
-    const loadPref = async () => {
-      try {
-        const docRef = doc(db, 'serviceDesk_preferences', userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setPrefEnabled(data.enabled || false);
-          setPrefTelefone(data.phone || '');
-        } else {
-          const localPhone = localStorage.getItem('last_whatsapp_number');
-          if (localPhone) setPrefTelefone(localPhone);
-        }
-      } catch (e) {
-        console.error('Error loading preferences', e);
+    if (dadosUsuario) {
+      setPrefEnabled(dadosUsuario.whatsappLembretesEnabled || false);
+      setPrefTelefone(dadosUsuario.telefone || '');
+
+      // If no phone in profile, check local storage as fallback suggestion
+      if (!dadosUsuario.telefone) {
+        const localPhone = localStorage.getItem('last_whatsapp_number');
+        if (localPhone) setPrefTelefone(localPhone);
       }
-    };
-    loadPref();
-  }, [userId]);
+    }
+  }, [dadosUsuario]);
 
   const handleSaveNotification = async (telefone: string, enabled: boolean) => {
     if (!userId) return;
-    await setDoc(doc(db, 'serviceDesk_preferences', userId), {
-      userId,
-      phone: telefone,
-      enabled,
-      updatedAt: new Date().toISOString()
-    });
-    setPrefTelefone(telefone);
-    setPrefEnabled(enabled);
+    try {
+      // Update global user profile
+      await updateDoc(doc(db, 'users', userId), {
+        telefone,
+        whatsappLembretesEnabled: enabled
+      });
 
-    if (enabled && telefone) {
-      localStorage.setItem('last_whatsapp_number', telefone);
+      // Update local state (optimistic update to feel snappy)
+      setPrefTelefone(telefone);
+      setPrefEnabled(enabled);
+
+      if (enabled && telefone) {
+        localStorage.setItem('last_whatsapp_number', telefone);
+      }
+    } catch (e) {
+      console.error('Error saving preferences:', e);
+      alert('Erro ao salvar preferências.');
     }
   };
 
@@ -295,11 +294,12 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
         <LembreteModal
           isServiceDesk={true}
           theme={theme}
+          dadosUsuario={dadosUsuario}
           onClose={() => setSelectedTicketForReminder(null)}
           onSave={handleCreateReminder}
           lembrete={{
             id: '',
-            titulo: ` solicitante: ${selectedTicketForReminder.solicitante}`,
+            titulo: `Solicitante: ${selectedTicketForReminder.solicitante}`,
             descricao: `${selectedTicketForReminder.descricao_completa || selectedTicketForReminder.descricao || ''}`,
             dataHora: new Date().toISOString(),
             cor: 'sand',
@@ -309,13 +309,13 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
             criadoEm: new Date().toISOString(),
             tipo: 'servicedesk',
             metadata: {
-              solicitante: selectedTicketForReminder.solicitante,
-              local: selectedTicketForReminder.local,
-              sala: selectedTicketForReminder.sala,
-              dataAgendamento: (selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento) !== 'Não informado'
+              solicitante: selectedTicketForReminder.solicitante || '',
+              local: selectedTicketForReminder.local || '',
+              sala: selectedTicketForReminder.sala || '',
+              dataAgendamento: ((selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento) && (selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento) !== 'Não informado')
                 ? (selectedTicketForReminder.melhor_data || selectedTicketForReminder.data_atendimento)
-                : undefined,
-              ticketId: selectedTicketForReminder.numero
+                : null,
+              ticketId: selectedTicketForReminder.numero || ''
             }
           } as any}
           buscarUsuarios={buscarUsuarios}
@@ -543,34 +543,42 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.local_instalacao}</span>
                                     </div>
                                   )}
-                                  {ticket.patrimonio && (
-                                    <div>
-                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Patrimônio:</span>
-                                      <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.patrimonio}</span>
-                                    </div>
-                                  )}
-                                  {ticket.sala && (
-                                    <div>
-                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Sala:</span>
-                                      <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.sala}</span>
-                                    </div>
-                                  )}
-                                  {ticket.ramal && (
-                                    <div>
-                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Ramal:</span>
-                                      <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.ramal}</span>
-                                    </div>
-                                  )}
-                                  {ticket.celular && (
-                                    <div>
-                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Celular:</span>
-                                      <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.celular}</span>
-                                    </div>
-                                  )}
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:col-span-2">
+                                    {ticket.patrimonio && (
+                                      <div>
+                                        <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Patrimônio:</span>
+                                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.patrimonio}</span>
+                                      </div>
+                                    )}
+                                    {ticket.sala && (
+                                      <div>
+                                        <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Sala:</span>
+                                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.sala}</span>
+                                      </div>
+                                    )}
+                                    {ticket.ramal && (
+                                      <div>
+                                        <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Ramal:</span>
+                                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.ramal}</span>
+                                      </div>
+                                    )}
+                                    {ticket.celular && (
+                                      <div>
+                                        <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Celular:</span>
+                                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.celular}</span>
+                                      </div>
+                                    )}
+                                  </div>
                                   {ticket.email && (
                                     <div className="md:col-span-2">
                                       <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>E-mail:</span>
                                       <span className={theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}>{ticket.email}</span>
+                                    </div>
+                                  )}
+                                  {ticket.melhor_data && (
+                                    <div className="md:col-span-2">
+                                      <span className={`block mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-400'}`}>Agendado para:</span>
+                                      <span className={`font-bold ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'}`}>{ticket.melhor_data}</span>
                                     </div>
                                   )}
                                   {(ticket.descricao_completa || ticket.descricao) && (

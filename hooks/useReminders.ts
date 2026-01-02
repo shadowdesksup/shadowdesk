@@ -34,6 +34,8 @@ export interface UseRemindersReturn {
     cor: CorLembrete;
     somNotificacao: SomNotificacao;
     telefone?: string;
+    tipo?: 'geral' | 'servicedesk';
+    metadata?: any;
   }) => Promise<{ id: string } | null>;
   atualizar: (id: string, dados: Partial<Lembrete>) => Promise<void>;
   deletar: (id: string) => Promise<void>;
@@ -97,6 +99,8 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
     cor: CorLembrete;
     somNotificacao: SomNotificacao;
     telefone?: string;
+    tipo?: 'geral' | 'servicedesk';
+    metadata?: any;
   }) => {
     try {
       const id = await criarLembrete(userId, userNome, dados);

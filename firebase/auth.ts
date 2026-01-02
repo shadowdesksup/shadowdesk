@@ -18,6 +18,8 @@ export interface UserData {
   nomeCompleto: string;
   criadoEm: any;
   ultimoLogin: any;
+  telefone?: string;
+  whatsappLembretesEnabled?: boolean;
 }
 
 /**

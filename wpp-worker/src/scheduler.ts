@@ -48,6 +48,12 @@ export const startScheduler = () => {
     console.log(`Found ${reminders.length} pending reminders.`);
 
     for (const reminder of reminders) {
+      // Ignorar lembretes sem telefone (apenas web)
+      if (!reminder.telefone) {
+        console.log(`Skipping reminder ${reminder.id}: No phone number.`);
+        continue;
+      }
+
       // Format date only (no time per user request)
       const dataHora = new Date(reminder.dataHora);
       const dataFormatada = dataHora.toLocaleDateString('pt-BR', {
@@ -57,10 +63,26 @@ export const startScheduler = () => {
         year: 'numeric'
       });
 
-      const msg = `Lembrete ShadowDesk 📌\n\n` +
-        `*${reminder.titulo}*\n` +
-        `${reminder.descricao ? `_${reminder.descricao}_\n` : ''}` +
-        `\n📅 ${dataFormatada}`;
+      let msg = '';
+
+      if (reminder.tipo === 'servicedesk' && reminder.metadata) {
+        // Formatação Específica ServiceDesk
+        const meta = reminder.metadata;
+        const cleanDesc = (reminder.descricao || '').replace(/_/g, ' '); // Remove underscores to avoid italic issues
+
+        msg = `Lembrete ShadowDesk 📌\n\n` +
+          `*Solicitante:* _${meta.solicitante || 'N/A'}_\n` +
+          `\n*Descrição:* ${cleanDesc}\n` +
+          `${(meta.local || meta.sala) ? `\n*Local:* _${meta.local || '-'}_` + (meta.sala ? `   *Sala:* _${meta.sala}_` : '') : ''}` +
+          `${meta.dataAgendamento ? `\n\n*Agendado para:* _${meta.dataAgendamento}_` : ''}` +
+          `\n\n📅 ${dataFormatada}`;
+      } else {
+        // Formatação Padrão (Manter exatamente como era para lembretes normais)
+        msg = `Lembrete ShadowDesk 📌\n\n` +
+          `*${reminder.titulo}*\n` +
+          `${reminder.descricao ? `_${reminder.descricao}_\n` : ''}` +
+          `\n📅 ${dataFormatada}`;
+      }
 
       console.log(`Processing reminder for ${reminder.telefone}: ${reminder.titulo}`);
 

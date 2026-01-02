@@ -236,7 +236,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className={`flex flex-col gap-6 rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+      className={`flex flex-col gap-0 rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
         ? 'border-white/10 bg-slate-900/80 shadow-2xl shadow-black/20'
         : 'border-slate-200 bg-white shadow-sm'
         }`}
@@ -451,7 +451,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
-        className="flex flex-col gap-6 overflow-y-auto pr-2 -mr-2 no-scrollbar flex-1 min-h-0 p-1 cursor-grab active:cursor-grabbing select-none"
+        className="flex flex-col gap-6 overflow-y-auto pr-2 -mr-2 no-scrollbar flex-1 min-h-0 p-1 pt-4 cursor-grab active:cursor-grabbing select-none"
         variants={{
           hidden: { opacity: 0 },
           show: {

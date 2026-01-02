@@ -43,6 +43,7 @@ interface LembreteModalProps {
   amigos?: Friend[];
   destinatarioPreSelecionado?: { uid: string; nome: string };
   isServiceDesk?: boolean;
+  dadosUsuario?: { telefone?: string; whatsappLembretesEnabled?: boolean } | null;
 }
 
 const CORES: { valor: CorLembrete; label: string; classe: string; border: string }[] = [
@@ -76,7 +77,8 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
   buscarUsuarios,
   amigos = [],
   destinatarioPreSelecionado,
-  isServiceDesk = false
+  isServiceDesk = false,
+  dadosUsuario
 }) => {
   const { tocarSom } = useNotifications('');
 
@@ -111,18 +113,33 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
 
   const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'sand');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
-  // WhatsApp state - remembers toggle preference (Lazy initialization for performance)
+  // WhatsApp state - uses Profile data as fallback when localStorage is empty
   const [telefone, setTelefone] = useState(() => {
     if (lembrete?.telefone) return lembrete.telefone;
+
+    // Priority 1: localStorage (Local Context Preference)
     const manter = localStorage.getItem('whatsapp_manter_numero') !== 'false';
     const saved = localStorage.getItem('last_whatsapp_number') || '';
-    return manter ? saved : '';
+    if (manter && saved) return saved;
+
+    // Priority 2: Profile Phone (Global Default)
+    if (dadosUsuario?.telefone) return dadosUsuario.telefone;
+
+    return '';
   });
 
   const [whatsappEnabled, setWhatsappEnabled] = useState(() => {
     if (lembrete?.telefone) return true;
-    return localStorage.getItem('whatsapp_toggle_enabled') === 'true';
+    // Profile setting is the source of truth for default state
+    return dadosUsuario?.whatsappLembretesEnabled ?? false;
   });
+
+  // Sync with global profile changes if not editing an existing reminder with phone
+  useEffect(() => {
+    if (!lembrete?.telefone && dadosUsuario?.whatsappLembretesEnabled !== undefined) {
+      setWhatsappEnabled(dadosUsuario.whatsappLembretesEnabled);
+    }
+  }, [dadosUsuario?.whatsappLembretesEnabled, lembrete?.telefone]);
 
   const [manterNumeroSalvo, setManterNumeroSalvo] = useState(() => {
     return localStorage.getItem('whatsapp_manter_numero') !== 'false';
@@ -241,11 +258,28 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
           destinatarioNome: amigoSelecionado.nome,
           manterCopia
         } : {}),
-        telefone: whatsappEnabled ? telefone.trim() : ''
+        telefone: whatsappEnabled ? telefone.trim() : '',
+        ...(lembrete?.tipo ? { tipo: lembrete.tipo } : {}),
+        ...(lembrete?.metadata ? { metadata: lembrete.metadata } : {})
       });
       // Only save to localStorage if toggle is on AND 'manter número salvo' is checked
       if (whatsappEnabled && telefone.trim() && manterNumeroSalvo) {
         localStorage.setItem('last_whatsapp_number', telefone.trim());
+
+        // Auto-register to Profile: save phone and enable WhatsApp globally
+        try {
+          const { doc, updateDoc } = await import('firebase/firestore');
+          const { db } = await import('../firebase/config');
+          const { auth } = await import('../firebase/config');
+          if (auth.currentUser) {
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+              telefone: telefone.trim(),
+              whatsappLembretesEnabled: true
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to auto-register phone to profile:', e);
+        }
       } else {
         localStorage.removeItem('last_whatsapp_number');
       }

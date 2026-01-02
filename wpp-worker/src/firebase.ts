@@ -11,6 +11,14 @@ export interface Lembrete {
   dataHoraEnvio: admin.firestore.Timestamp; // The worker Timestamp
   enviado: boolean;
   enviadoEm?: admin.firestore.FieldValue;
+  tipo?: 'geral' | 'servicedesk';
+  metadata?: {
+    solicitante?: string;
+    local?: string;
+    sala?: string;
+    dataAgendamento?: string;
+    ticketId?: string;
+  };
 }
 
 export interface NotificationQueueItem {

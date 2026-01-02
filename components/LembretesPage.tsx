@@ -965,6 +965,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             buscarUsuarios={buscarUsuariosParaCompartilhar}
             amigos={amigos}
             destinatarioPreSelecionado={destinatarioPreSelecionado || undefined}
+            dadosUsuario={dadosUsuario}
           />
         )}
       </AnimatePresence>

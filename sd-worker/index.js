@@ -441,6 +441,129 @@ function formatTicketDate(dateStr) {
   }
 }
 
+// ================== AUTO-REMINDER LOGIC ==================
+
+/**
+ * Parse Brazilian date format to JS Date
+ * Supports: "14/07/2025 13:00", "14/07/2025", "14/07/2025 às 13:00"
+ */
+function parseSchedulingDate(dateStr) {
+  if (!dateStr || dateStr === 'Não informado' || dateStr.trim() === '') return null;
+
+  // Match DD/MM/YYYY with optional time (HH:mm or às HH:mm)
+  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s*(?:às\s*)?(\d{2}):(\d{2}))?/);
+  if (!match) return null;
+
+  const [_, day, month, year, hour = '09', minute = '00'] = match;
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Get user ID from Firestore by phone number
+ */
+async function getUserIdByPhone(phone) {
+  try {
+    // First check users collection
+    const usersSnap = await db.collection('users').where('telefone', '==', phone).limit(1).get();
+    if (!usersSnap.empty) return usersSnap.docs[0].id;
+
+    // Fallback: check serviceDesk_preferences for userId
+    const prefSnap = await db.collection('serviceDesk_preferences').where('phone', '==', phone).limit(1).get();
+    if (!prefSnap.empty) {
+      const data = prefSnap.docs[0].data();
+      return data.userId || prefSnap.docs[0].id;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting user ID by phone:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Create an auto-reminder for a scheduled ticket
+ */
+async function createAutoReminder(ticket, userPhone) {
+  try {
+    const melhorData = ticket.melhor_data || ticket.data_atendimento;
+
+    // 1. Parse the scheduling date
+    const scheduledDate = parseSchedulingDate(melhorData);
+    if (!scheduledDate) {
+      console.log(`    [Auto-Reminder] Skipping ticket ${ticket.numero}: Invalid date format "${melhorData}"`);
+      return;
+    }
+
+    // 2. Check if date is in the future
+    const now = new Date();
+    if (scheduledDate <= now) {
+      console.log(`    [Auto-Reminder] Skipping ticket ${ticket.numero}: Date is in the past (${melhorData})`);
+      return;
+    }
+
+    // 3. Get user ID
+    const userId = await getUserIdByPhone(userPhone);
+    if (!userId) {
+      console.log(`    [Auto-Reminder] Skipping ticket ${ticket.numero}: No user found for phone ${userPhone}`);
+      return;
+    }
+
+    // 4. Check for duplicates
+    const existingSnap = await db.collection('lembretes')
+      .where('criadorId', '==', userId)
+      .where('tipo', '==', 'servicedesk')
+      .get();
+
+    // Check if any existing reminder has this ticket ID in metadata
+    const isDuplicate = existingSnap.docs.some(doc => {
+      const data = doc.data();
+      return data.metadata && data.metadata.ticketId === ticket.numero;
+    });
+
+    if (isDuplicate) {
+      console.log(`    [Auto-Reminder] Skipping ticket ${ticket.numero}: Reminder already exists`);
+      return;
+    }
+
+    // 5. Create the reminder
+    const solicitante = (ticket.solicitante || 'Desconhecido').trim();
+    const descricao = (ticket.descricao_completa || ticket.descricao || '').trim();
+    const local = (ticket.local_instalacao || ticket.local || '').trim();
+    const sala = (ticket.sala || '').trim();
+
+    const reminderData = {
+      titulo: `Solicitante: ${solicitante}`,
+      descricao: descricao,
+      dataHora: scheduledDate.toISOString(),
+      cor: 'sand',
+      somNotificacao: 'sino',
+      status: 'pendente',
+      criadorId: userId,
+      criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      telefone: userPhone,
+      enviadaWhatsapp: false,
+      tipo: 'servicedesk',
+      metadata: {
+        solicitante: solicitante || null,
+        local: local || null,
+        sala: sala || null,
+        dataAgendamento: melhorData || null,
+        ticketId: ticket.numero || null,
+        autoCreated: true
+      }
+    };
+
+    await db.collection('lembretes').add(reminderData);
+    console.log(`    [Auto-Reminder] ✓ Created reminder for ticket ${ticket.numero} -> ${scheduledDate.toLocaleString('pt-BR')}`);
+
+  } catch (error) {
+    console.error(`    [Auto-Reminder] Error for ticket ${ticket.numero}:`, error.message);
+  }
+}
+
 // Helper to Queue Notification
 async function queueNotification(ticket) {
   try {
@@ -509,6 +632,19 @@ async function queueNotification(ticket) {
     if (count > 0) {
       await batch.commit();
       console.log(`    -> Queued notification for ${count} users.`);
+
+      // Auto-create reminders for scheduled tickets
+      const melhorData = ticket.melhor_data || ticket.data_atendimento;
+      if (melhorData && melhorData !== 'Não informado') {
+        console.log(`    [Auto-Reminder] Checking ticket ${ticket.numero} with date: ${melhorData}`);
+        // Create reminder for each user
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          if (data.phone) {
+            await createAutoReminder(ticket, data.phone);
+          }
+        }
+      }
     }
 
   } catch (error) {
