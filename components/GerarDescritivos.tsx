@@ -467,7 +467,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 relative"
+      className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden pt-2 px-2 pb-0 relative"
     >
 
       {/* MODAL */}

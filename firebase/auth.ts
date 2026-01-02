@@ -20,6 +20,7 @@ export interface UserData {
   ultimoLogin: any;
   telefone?: string;
   whatsappLembretesEnabled?: boolean;
+  whatsappServiceDeskEnabled?: boolean;
 }
 
 /**

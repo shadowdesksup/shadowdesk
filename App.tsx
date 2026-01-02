@@ -518,7 +518,7 @@ function App() {
 
             <main className={`flex-1 overflow-y-auto wide:overflow-hidden ${paginaAtual === 'clima'
               ? 'px-4 wide:px-4 py-2'
-              : 'px-8 wide:pl-8 wide:pr-0 pt-8 pb-0'
+              : 'px-8 wide:pl-8 wide:pr-0 pt-8 pb-[7px]'
               }`}>
               {renderizarConteudo()}
             </main>

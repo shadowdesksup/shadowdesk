@@ -521,7 +521,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto overflow-hidden relative pr-8">
+    <div className="flex flex-col h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto overflow-hidden relative">
       <style>{scrollbarHideStyles}</style>
 
       {/* Bulk Action Bar - Floating Pill */}
@@ -567,7 +567,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
 
       {/* Header */}
       <div
-        className="mb-6 flex justify-between items-start"
+        className="mb-6 flex justify-between items-start w-full"
       >
         <div>
           <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
@@ -592,7 +592,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0 pr-8">
         {/* Calendário */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

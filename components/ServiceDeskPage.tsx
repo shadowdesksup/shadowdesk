@@ -24,26 +24,39 @@ const getNameColor = (name: string) => {
 const ViewersFader = ({ viewers }: { viewers: string[] }) => {
   const [index, setIndex] = useState(0);
 
+  // Ordena os nomes alfabeticamente para uma sequência visualmente melhor
+  const sortedViewers = React.useMemo(() => [...viewers].sort(), [viewers]);
+
   useEffect(() => {
-    if (viewers.length <= 1) return;
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % viewers.length);
-    }, 3000); // 3 seconds per name
+    if (sortedViewers.length <= 1) return;
+
+    // Sincroniza com o relógio global para que todos os cards mudem juntos
+    // Usa 3000ms (tempo original) mantendo a sincronia
+    const syncWithGlobalClock = () => {
+      const timeSlot = Math.floor(Date.now() / 3000);
+      setIndex(timeSlot % sortedViewers.length);
+    };
+
+    syncWithGlobalClock(); // Set inicial
+
+    // Verifica a cada 100ms se mudou o "slot" de tempo
+    const interval = setInterval(syncWithGlobalClock, 100);
+
     return () => clearInterval(interval);
-  }, [viewers.length]);
+  }, [sortedViewers.length]);
 
   return (
     <div className="h-6 w-full flex items-center justify-center overflow-hidden relative">
       <AnimatePresence mode="wait">
         <motion.span
-          key={`viewer-${viewers[index]}`}
+          key={`viewer-${sortedViewers[index]}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className={`font-semibold whitespace-nowrap px-1 ${getNameColor(viewers[index])}`}
+          className={`font-semibold whitespace-nowrap px-1 ${getNameColor(sortedViewers[index])}`}
         >
-          {viewers[index]}
+          {sortedViewers[index]}
         </motion.span>
       </AnimatePresence>
     </div>
@@ -117,7 +130,12 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   // Load User Preferences from Global Profile
   useEffect(() => {
     if (dadosUsuario) {
-      setPrefEnabled(dadosUsuario.whatsappLembretesEnabled || false);
+      const masterEnabled = dadosUsuario.whatsappLembretesEnabled === true;
+
+      // Master Switch is ABSOLUTE:
+      // If Master is ON -> local toggle shows ON (regardless of local pref)
+      // If Master is OFF -> local toggle shows OFF
+      setPrefEnabled(masterEnabled);
       setPrefTelefone(dadosUsuario.telefone || '');
 
       // If no phone in profile, check local storage as fallback suggestion
@@ -131,19 +149,20 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   const handleSaveNotification = async (telefone: string, enabled: boolean) => {
     if (!userId) return;
     try {
-      // Update global user profile
-      await updateDoc(doc(db, 'users', userId), {
-        telefone,
-        whatsappLembretesEnabled: enabled
-      });
+      // Local toggles can ONLY enable Profile, never disable
+      // If enabled with phone -> Enable Profile + save phone
+      // If disabled -> Just close modal, don't touch Profile
+      if (enabled && telefone.trim()) {
+        await updateDoc(doc(db, 'users', userId), {
+          telefone: telefone.trim(),
+          whatsappLembretesEnabled: true
+        });
+        localStorage.setItem('last_whatsapp_number', telefone.trim());
+      }
 
       // Update local state (optimistic update to feel snappy)
       setPrefTelefone(telefone);
       setPrefEnabled(enabled);
-
-      if (enabled && telefone) {
-        localStorage.setItem('last_whatsapp_number', telefone);
-      }
     } catch (e) {
       console.error('Error saving preferences:', e);
       alert('Erro ao salvar preferências.');
@@ -440,7 +459,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                     // DOT LOGIC
                     let dotClass = getPriorityColor(ticket.prioridade);
                     if (isNewAndUnviewed) {
-                      dotClass = 'bg-custom-amber animate-pulse shadow-[0_0_8px_hsl(45,100%,51%,0.6)]';
+                      dotClass = 'bg-custom-amber animate-pulse-grow shadow-[0_0_8px_hsl(45,100%,51%,0.6)]';
                     } else if (isNewButViewed) {
                       dotClass = 'bg-cyan-400';
                     }

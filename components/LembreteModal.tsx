@@ -113,33 +113,73 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
 
   const [cor, setCor] = useState<CorLembrete>(lembrete?.cor || 'sand');
   const [somNotificacao, setSomNotificacao] = useState<SomNotificacao>(lembrete?.somNotificacao || 'sino');
-  // WhatsApp state - uses Profile data as fallback when localStorage is empty
+  // WhatsApp phone - only auto-fill if "Lembrar número" checkbox is checked
   const [telefone, setTelefone] = useState(() => {
+    // If editing existing reminder with phone, use it
     if (lembrete?.telefone) return lembrete.telefone;
 
-    // Priority 1: localStorage (Local Context Preference)
+    // Check if "Lembrar número" is checked
     const manter = localStorage.getItem('whatsapp_manter_numero') !== 'false';
-    const saved = localStorage.getItem('last_whatsapp_number') || '';
-    if (manter && saved) return saved;
 
-    // Priority 2: Profile Phone (Global Default)
-    if (dadosUsuario?.telefone) return dadosUsuario.telefone;
+    // Only auto-fill if checkbox is checked
+    if (manter) {
+      const saved = localStorage.getItem('last_whatsapp_number') || '';
+      if (saved) return saved;
+      // Fall back to Profile phone
+      if (dadosUsuario?.telefone) return dadosUsuario.telefone;
+    }
 
+    // Checkbox unchecked = empty field waiting for user input
     return '';
   });
 
+  // Toggle state: Profile is MASTER. localStorage only applies when Profile is ON.
   const [whatsappEnabled, setWhatsappEnabled] = useState(() => {
+    // If editing existing reminder with phone, obviously ON
     if (lembrete?.telefone) return true;
-    // Profile setting is the source of truth for default state
-    return dadosUsuario?.whatsappLembretesEnabled ?? false;
+
+    // PROFILE IS MASTER: If Profile is OFF -> toggle is OFF
+    if (dadosUsuario?.whatsappLembretesEnabled !== true) {
+      return false;
+    }
+
+    // Profile is ON: check localStorage for user's local preference
+    const saved = localStorage.getItem('whatsapp_notification_enabled');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+
+    // Default ON when Profile is ON
+    return true;
   });
 
-  // Sync with global profile changes if not editing an existing reminder with phone
+  // Sync with Profile in real-time
   useEffect(() => {
-    if (!lembrete?.telefone && dadosUsuario?.whatsappLembretesEnabled !== undefined) {
-      setWhatsappEnabled(dadosUsuario.whatsappLembretesEnabled);
+    // If Profile turns OFF, force toggle OFF
+    if (dadosUsuario?.whatsappLembretesEnabled !== true && !lembrete?.telefone) {
+      setWhatsappEnabled(false);
+    }
+    // If Profile turns ON and no local preference, turn toggle ON
+    if (dadosUsuario?.whatsappLembretesEnabled === true && !lembrete?.telefone) {
+      const saved = localStorage.getItem('whatsapp_notification_enabled');
+      if (saved === null) {
+        setWhatsappEnabled(true);
+      }
     }
   }, [dadosUsuario?.whatsappLembretesEnabled, lembrete?.telefone]);
+
+  // Toggle handler - saves to localStorage immediately
+  const handleToggleWhatsapp = () => {
+    const newState = !whatsappEnabled;
+    setWhatsappEnabled(newState);
+    localStorage.setItem('whatsapp_notification_enabled', String(newState));
+
+    // When enabling, load saved phone if checkbox is checked and field is empty
+    if (newState && !telefone.trim() && manterNumeroSalvo) {
+      const saved = localStorage.getItem('last_whatsapp_number') || dadosUsuario?.telefone || '';
+      if (saved) setTelefone(saved);
+    }
+  };
 
   const [manterNumeroSalvo, setManterNumeroSalvo] = useState(() => {
     return localStorage.getItem('whatsapp_manter_numero') !== 'false';
@@ -262,16 +302,22 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
         ...(lembrete?.tipo ? { tipo: lembrete.tipo } : {}),
         ...(lembrete?.metadata ? { metadata: lembrete.metadata } : {})
       });
-      // Only save to localStorage if toggle is on AND 'manter número salvo' is checked
+      // 1. Local Storage Consistency (controlled by checkbox)
       if (whatsappEnabled && telefone.trim() && manterNumeroSalvo) {
         localStorage.setItem('last_whatsapp_number', telefone.trim());
+      } else {
+        localStorage.removeItem('last_whatsapp_number');
+      }
 
-        // Auto-register to Profile: save phone and enable WhatsApp globally
+      // 2. Global Profile Sync (controlled by Toggle + Phone presence)
+      // "desgraça não é apenas a checkbox é o troggle button que já ativa"
+      if (whatsappEnabled && telefone.trim()) {
         try {
           const { doc, updateDoc } = await import('firebase/firestore');
           const { db } = await import('../firebase/config');
           const { auth } = await import('../firebase/config');
           if (auth.currentUser) {
+            // Force enablement of Global Master Switch
             await updateDoc(doc(db, 'users', auth.currentUser.uid), {
               telefone: telefone.trim(),
               whatsappLembretesEnabled: true
@@ -280,8 +326,6 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
         } catch (e) {
           console.warn('Failed to auto-register phone to profile:', e);
         }
-      } else {
-        localStorage.removeItem('last_whatsapp_number');
       }
       onClose();
     } catch (err: any) {
@@ -527,16 +571,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                         ? 'bg-[#25D366]'
                         : (theme === 'dark' ? 'bg-white/10' : 'bg-slate-200')
                         }`}
-                      onClick={() => {
-                        const newValue = !whatsappEnabled;
-                        setWhatsappEnabled(newValue);
-                        localStorage.setItem('whatsapp_toggle_enabled', String(newValue));
-                        if (newValue && !telefone.trim() && manterNumeroSalvo) {
-                          // Load saved number when enabling ONLY if 'Remember' is checked
-                          const saved = localStorage.getItem('last_whatsapp_number') || '';
-                          setTelefone(saved);
-                        }
-                      }}
+                      onClick={handleToggleWhatsapp}
                     >
                       <motion.div
                         className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm"

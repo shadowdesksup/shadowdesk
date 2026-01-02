@@ -22,6 +22,89 @@ const LOGIN_URL = 'https://servicedesk.unesp.br/atendimento';
 const CHECK_INTERVAL = 30 * 1000; // 30 seconds between checks
 const REFRESH_INTERVAL = 1; // Refresh page every cycle (ensure new tickets are seen)
 
+// Business Hours Configuration (America/Sao_Paulo timezone)
+const WORK_START_HOUR = 7;
+const WORK_START_MINUTE = 40;
+const WORK_END_HOUR = 19;
+const WORK_END_MINUTE = 0;
+const WORK_DAYS = [1, 2, 3, 4, 5]; // Monday=1 to Friday=5 (0=Sunday, 6=Saturday)
+
+/**
+ * Get time remaining until work starts (in São Paulo timezone)
+ * Returns object with days, hours, minutes
+ */
+function getTimeUntilWorkStarts() {
+  const now = new Date();
+  const saoPauloTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+
+  let targetDate = new Date(saoPauloTime);
+  targetDate.setHours(WORK_START_HOUR, WORK_START_MINUTE, 0, 0);
+
+  const dayOfWeek = saoPauloTime.getDay();
+  const currentTimeInMinutes = saoPauloTime.getHours() * 60 + saoPauloTime.getMinutes();
+  const startTimeInMinutes = WORK_START_HOUR * 60 + WORK_START_MINUTE;
+
+  // If it's a work day but after start time, move to next day
+  if (WORK_DAYS.includes(dayOfWeek) && currentTimeInMinutes >= startTimeInMinutes) {
+    targetDate.setDate(targetDate.getDate() + 1);
+  }
+
+  // Find next work day
+  let daysToAdd = 0;
+  let checkDay = targetDate.getDay();
+  while (!WORK_DAYS.includes(checkDay) && daysToAdd < 7) {
+    targetDate.setDate(targetDate.getDate() + 1);
+    checkDay = targetDate.getDay();
+    daysToAdd++;
+  }
+
+  const diffMs = targetDate.getTime() - saoPauloTime.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const days = Math.floor(diffMins / (60 * 24));
+  const hours = Math.floor((diffMins % (60 * 24)) / 60);
+  const minutes = diffMins % 60;
+
+  return { days, hours, minutes };
+}
+
+/**
+ * Format countdown string
+ */
+function formatCountdown(time) {
+  const parts = [];
+  if (time.days > 0) parts.push(`${time.days}d`);
+  if (time.hours > 0) parts.push(`${time.hours}h`);
+  if (time.minutes > 0 || parts.length === 0) parts.push(`${time.minutes}m`);
+  return parts.join(' ');
+}
+
+/**
+ * Check if current time is within working hours (Brasilia/São Paulo timezone)
+ * Working hours: 7:40 - 19:00, Monday to Friday
+ */
+function isWithinWorkingHours() {
+  // Get current time in São Paulo timezone
+  const now = new Date();
+  const saoPauloTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+
+  const dayOfWeek = saoPauloTime.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const hour = saoPauloTime.getHours();
+  const minute = saoPauloTime.getMinutes();
+  const currentTimeInMinutes = hour * 60 + minute;
+
+  const startTimeInMinutes = WORK_START_HOUR * 60 + WORK_START_MINUTE;
+  const endTimeInMinutes = WORK_END_HOUR * 60 + WORK_END_MINUTE;
+
+  const isWorkDay = WORK_DAYS.includes(dayOfWeek);
+  const isWorkTime = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
+
+  if (!isWorkDay || !isWorkTime) {
+    return false;
+  }
+
+  return true;
+}
+
 let browser = null;
 let page = null;
 let isLoggedIn = false;
@@ -683,11 +766,29 @@ async function runWorker() {
   console.log(`Check interval: ${CHECK_INTERVAL / 1000}s, Refresh every ${REFRESH_INTERVAL} cycles`);
 
   let cycleCount = 0;
+  let lastLogHour = -1;
 
   while (true) {
     try {
       cycleCount++;
       const timestamp = new Date().toLocaleString('pt-BR');
+
+      // Check if within working hours BEFORE doing anything
+      if (!isWithinWorkingHours()) {
+        const countdown = getTimeUntilWorkStarts();
+
+        // Log only once per hour to avoid spam, but check every minute for punctuality
+        const currentHour = new Date().getHours();
+        if (lastLogHour !== currentHour) {
+          const countdownStr = formatCountdown(countdown);
+          console.log(`[${timestamp}] ⏸️  Fora do expediente. Próximo início em: ${countdownStr}`);
+          lastLogHour = currentHour;
+        }
+
+        await wait(60 * 1000); // Sleep 1 minute (check often to be punctual)
+        continue; // Skip this cycle entirely
+      }
+
       console.log(`\n[${timestamp}] Cycle #${cycleCount}`);
 
       // Initialize browser if needed
