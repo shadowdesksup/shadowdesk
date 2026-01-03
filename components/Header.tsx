@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         )}
         <div className="p-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-white/10 shadow-lg hidden md:block">
-          <img src="/shadow-logo-final.png" alt="ShadowDesk Logo" className="w-6 h-6 object-contain" />
+          <img src="/shadow-logo-v3.png" alt="ShadowDesk Logo" className="w-6 h-6 object-contain" />
         </div>
         <h2 className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
           }`}>ShadowDesk</h2>

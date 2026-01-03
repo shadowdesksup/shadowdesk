@@ -44,9 +44,36 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
           }`}
       >
         <div className="flex gap-4 items-center mb-4 p-4 text-left">
-          <div className="relative size-10 rounded-full overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-white/10 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-            <img src="/shadow-logo-final.png" alt="ShadowDesk Logo" className="w-6 h-6 object-contain" />
-          </div>
+          <motion.div
+            className={`relative group w-14 h-14 rounded-full overflow-hidden border flex items-center justify-center p-2.5 transition-all duration-300 ${theme === 'dark'
+              ? 'bg-[rgb(17,46,82)] border-white/10'
+              : 'bg-white border-cyan-200 shadow-lg shadow-cyan-500/20'
+              }`}
+            animate={{
+              boxShadow: theme === 'dark'
+                ? [
+                  "inset 0 0 8px rgba(34,211,238,0.3), 0 0 10px rgba(34,211,238,0.3)",
+                  "inset 0 0 12px rgba(34,211,238,0.5), 0 0 20px rgba(34,211,238,0.5)",
+                  "inset 0 0 8px rgba(34,211,238,0.3), 0 0 10px rgba(34,211,238,0.3)"
+                ]
+                : [
+                  "0 0 0 rgba(34,211,238,0)",
+                  "0 0 15px rgba(34,211,238,0.4)",
+                  "0 0 0 rgba(34,211,238,0)"
+                ]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <img
+              src="/shadow-logo-v2.png"
+              alt="ShadowDesk Logo"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
           <div className="flex flex-col">
             <h1 className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'
               }`}>ShadowDesk</h1>

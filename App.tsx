@@ -26,6 +26,8 @@ import ServiceDeskPage from './components/ServiceDeskPage';
 import LembretesPage from './components/LembretesPage';
 import ReminderAlarmPopup from './components/ReminderAlarmPopup';
 import DashboardReminders from './components/DashboardReminders';
+import DashboardWeather from './components/DashboardWeather';
+import DashboardTicketsTicker from './components/DashboardTicketsTicker';
 import LembreteViewModal from './components/LembreteViewModal';
 import { useReminders } from './hooks/useReminders';
 import { useReminderAlarm } from './hooks/useReminderAlarm';
@@ -245,7 +247,7 @@ function App() {
       case 'dashboard':
         const estatisticas = obterEstatisticas();
         return (
-          <div className="h-full flex flex-col gap-8 pr-8 overflow-y-auto">
+          <div className="h-full flex flex-col gap-8 pr-8 overflow-y-auto pb-8">
             <Dashboard
               estatisticas={estatisticas}
               theme={theme}
@@ -254,9 +256,9 @@ function App() {
               onEncerramentoClick={handleEncerramentoClick}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-[600px] items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Lembretes Agendados */}
-              <div className="lg:col-span-5 w-full">
+              <div className="lg:col-span-5 w-full flex flex-col gap-0">
 
 
                 <DashboardReminders
@@ -267,30 +269,23 @@ function App() {
                   onView={(lembrete) => setLembreteParaVisualizar(lembrete)}
                   deletingId={lembreteParaExcluir}
                 />
+
+                {/* Weather Cards */}
+                <DashboardWeather theme={theme} />
+
+                {/* ServiceDesk Tickets Ticker (Moved to Right Column) */}
+
               </div>
 
-              {/* Registros Recentes */}
-              <div className="lg:col-span-7 h-full flex flex-col">
-                <ListaRegistros
-                  key="lista-registros-dashboard"
-                  registros={registros}
-                  limite={10}
-                  customMaxHeight="100%"
-                  customMinHeight="100%"
-                  onEditar={(registro) => {
-                    setRegistroEditando(registro);
-                    setPaginaAtual('novo');
-                  }}
-                  onDeletar={(id) => {
-                    setModalConfirmacao({ isOpen: true, id });
-                  }}
-                  onAtualizarStatus={async (id, novoStatus) => {
-                    await atualizar(id, {
-                      status: novoStatus,
-                      dataHora: new Date().toISOString()
-                    });
-                  }}
+              {/* ServiceDesk Tickets Ticker (Replaces Registros Recentes) */}
+              <div className="lg:col-span-7 flex flex-col">
+                <DashboardTicketsTicker
                   theme={theme}
+                  userName={userNome}
+                  onTicketClick={(ticketId) => {
+                    setLembretesContext({ page: 'servicedesk', ticketId });
+                    setPaginaAtual('servicedesk');
+                  }}
                 />
               </div>
             </div>

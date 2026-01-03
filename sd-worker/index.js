@@ -19,7 +19,7 @@ const COLLECTION_NAME = 'serviceDesk_tickets';
 
 // Configuration
 const LOGIN_URL = 'https://servicedesk.unesp.br/atendimento';
-const CHECK_INTERVAL = 30 * 1000; // 30 seconds between checks
+const CHECK_INTERVAL = 5 * 1000; // 5 seconds (Turbo Mode)
 const REFRESH_INTERVAL = 1; // Refresh page every cycle (ensure new tickets are seen)
 
 // Business Hours Configuration (America/Sao_Paulo timezone)
@@ -227,12 +227,19 @@ async function setupFilters() {
     // 2. Type "Nova" in filter
     const filterInput = await page.$('.dataTables_filter input') ||
       await page.$('input[type="search"]');
+
     if (filterInput) {
-      await filterInput.click();
-      await filterInput.evaluate(el => el.value = '');
-      await filterInput.type('Nova', { delay: 50 });
-      console.log('Filter "Nova": SET');
-      await wait(2000); // Wait for filter to apply
+      // SMART CHECK: Only type if needed
+      const currentValue = await filterInput.evaluate(el => el.value);
+      if (currentValue !== 'Nova') {
+        await filterInput.click();
+        await filterInput.evaluate(el => el.value = '');
+        await filterInput.type('Nova', { delay: 50 });
+        console.log('Filter "Nova": SET');
+        await wait(2000); // Wait only if we changed something
+      } else {
+        console.log('Filter "Nova": Already set (Skipping)');
+      }
     }
 
     // 3. Sort by "Abertura" descending
@@ -739,17 +746,24 @@ async function refreshPage() {
   try {
     console.log('Refreshing page...');
 
-    // "Soft Refresh" - Just navigate to the list URL again. 
-    // This handles session timeouts better than reload() and is faster.
-    try {
-      await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    } catch (e) {
-      console.log("Navigation timed out, checking if table loaded anyway...");
-    }
+    const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => { });
 
-    // Wait for the table explicitly. 
-    // If this fails, THEN we know we are truly broken.
-    await page.waitForSelector('#GridDatatable', { timeout: 20000 });
+    // "Soft Refresh" - Click the "Meus Atendimentos" link or similar if possible, 
+    // but for now we stick to goto but optimized with waiters.
+    await page.goto(LOGIN_URL).catch(() => { });
+
+    await navigationPromise;
+
+    // WAIT for the table explicitly using a selector
+    // This removes the need for arbitrary sleeps. 
+    // It returns as soon as the element exists.
+    try {
+      await page.waitForSelector('#GridDatatable', { timeout: 30000 });
+      console.log('Table loaded!');
+    } catch (e) {
+      console.log("Table not found after wait, page might be broken.");
+      throw new Error('Table selector timeout');
+    }
 
     // Re-apply filters after refresh
     await setupFilters();
@@ -771,6 +785,7 @@ async function runWorker() {
   while (true) {
     try {
       cycleCount++;
+      let hasActivity = false;
       const timestamp = new Date().toLocaleString('pt-BR');
 
       // Check if within working hours BEFORE doing anything
@@ -789,7 +804,11 @@ async function runWorker() {
         continue; // Skip this cycle entirely
       }
 
-      console.log(`\n[${timestamp}] Cycle #${cycleCount}`);
+
+      // LOGIC: Silence logs unless activity detected or heartbeat (every 20 cycles)
+      const isHeartbeat = (cycleCount % 20 === 0);
+
+      if (isHeartbeat) console.log(`\n[${timestamp}] Cycle #${cycleCount} (Heartbeat)`);
 
       // Initialize browser if needed
       if (!browser) {
@@ -889,6 +908,7 @@ async function runWorker() {
               await admin.firestore().collection('serviceDesk_tickets').doc(docId).delete();
               lastKnownTickets.delete(rawId);
               console.log(`   - Successfully Deleted #${id}`);
+              hasActivity = true;
             } catch (err) {
               console.error(`   ❌ Failed to delete #${id} (doc: ${docId}):`, err);
             }
@@ -914,6 +934,8 @@ async function runWorker() {
 
           if (toProcess.length > 0) {
             console.log(`🆕 Found ${toProcess.length} REALLY new ticket(s)!`);
+            hasActivity = true;
+
 
             for (const t of toProcess) {
               console.log(`  - #${t.numero}: ${t.solicitante} | ${t.servico}`);
@@ -934,7 +956,7 @@ async function runWorker() {
           }
 
         } else {
-          console.log(`✓ Monitoring ${tickets.length} tickets (Synced)`);
+          if (isHeartbeat) console.log(`✓ Monitoring ${tickets.length} tickets (Synced)`);
         }
 
         // Memory is explicitly managed above (add/delete), no need to bulk overwrite
@@ -942,8 +964,22 @@ async function runWorker() {
         console.log('⚠ No tickets found (table might be empty or filter returned nothing)');
       }
 
+
+      // ADAPTIVE INTERVAL LOGIC
+      let currentInterval = 30000;
+
+      if (hasActivity) {
+        console.log('⚡ High activity detected! Keeping fast pace (5s)...');
+        currentInterval = 5000;
+      } else {
+        // User requested MAXIMUM SPEED. Reducing idle to 5s.
+        if (isHeartbeat) console.log('⚡ Speed Mode: Waiting 5s...');
+        currentInterval = 5000;
+      }
+
       // Wait for next cycle
-      await wait(CHECK_INTERVAL);
+      await wait(currentInterval);
+
 
     } catch (error) {
       console.error('Cycle error:', error.message);
