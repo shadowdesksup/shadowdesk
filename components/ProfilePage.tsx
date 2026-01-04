@@ -121,14 +121,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
   }, [whatsappPhone, whatsappEnabled, usuario.uid]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col gap-8 max-w-4xl mx-auto pb-16"
-    >
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-16">
       {/* Header */}
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h2 className={`text-3xl font-bold tracking-tight mb-2 flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <UserIcon className="text-cyan-400" size={32} />
           Meu Perfil
@@ -136,13 +135,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
         <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
           Gerencie suas informações e segurança
         </p>
-      </div>
+      </motion.div>
 
       {/* Info Card */}
-      <div className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
-        : 'border-slate-200 bg-white/50 backdrop-blur-sm'
-        }`}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+          ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
+          : 'border-slate-200 bg-white/50 backdrop-blur-sm'
+          }`}
+      >
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1 h-6 bg-cyan-500 rounded-full"></span>
           Informações Pessoais
@@ -193,13 +197,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
             </motion.button>
           </div>
         </form>
-      </div>
+      </motion.div>
 
       {/* Security Card */}
-      <div className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
-        : 'border-slate-200 bg-white/50 backdrop-blur-sm'
-        }`}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+          ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
+          : 'border-slate-200 bg-white/50 backdrop-blur-sm'
+          }`}
+      >
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
           Segurança
@@ -295,13 +304,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
             </motion.button>
           </div>
         </form>
-      </div>
+      </motion.div>
 
       {/* WhatsApp Card */}
-      <div className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
-        : 'border-slate-200 bg-white/50 backdrop-blur-sm'
-        }`}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className={`rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
+          ? 'border-white/10 bg-slate-900/30 backdrop-blur-sm'
+          : 'border-slate-200 bg-white/50 backdrop-blur-sm'
+          }`}
+      >
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1 h-6 bg-[#25D366] rounded-full"></span>
           Notificações WhatsApp
@@ -437,7 +451,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
           )}
 
         </div>
-      </div>
+      </motion.div>
 
       {/* Modal de Confirmação de Remoção - FORA do form para aparecer no centro */}
       <ConfirmationModal
@@ -468,7 +482,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ usuario, dadosUsuario, theme 
         confirmText="Remover Definitivamente"
         isDestructive={true}
       />
-    </motion.div>
+    </div>
   );
 };
 

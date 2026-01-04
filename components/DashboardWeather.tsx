@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Thermometer, Droplets, CloudRain, MapPin, Loader2, Sun, Moon, CloudSun } from 'lucide-react';
+import { Thermometer, Droplets, CloudRain, MapPin, Loader2, Sun, Moon, CloudSun, Wind } from 'lucide-react';
 
 interface DashboardWeatherProps {
   theme?: 'dark' | 'light';
+  onClick?: () => void;
 }
 
 // Coordenadas padrão: Marília-SP
@@ -16,9 +17,10 @@ interface WeatherData {
   temp: number;
   rainChance: number;
   humidity: number;
+  windSpeed: number;
 }
 
-const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) => {
+const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark', onClick }) => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [locationName, setLocationName] = useState<string>('');
@@ -26,7 +28,7 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
   const fetchWeatherData = async (lat: number, lon: number) => {
     try {
       const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day&hourly=precipitation_probability&forecast_days=1&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,wind_speed_10m&hourly=precipitation_probability&forecast_days=1&timezone=auto`
       );
 
       if (!res.ok) throw new Error('Falha ao obter dados do clima');
@@ -39,6 +41,7 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
         temp: Math.round(data.current.temperature_2m),
         humidity: Math.round(data.current.relative_humidity_2m),
         rainChance: rainChance,
+        windSpeed: Math.round(data.current.wind_speed_10m),
         isDay: data.current.is_day === 1
       };
     } catch (err) {
@@ -129,9 +132,10 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className={`mt-6 rounded-2xl border overflow-hidden ${theme === 'dark'
-        ? 'bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-800/40 border-white/10'
-        : 'bg-white border-slate-200 shadow-lg'
+      onClick={onClick}
+      className={`rounded-2xl border overflow-hidden cursor-pointer hover:shadow-lg transition-all ${theme === 'dark'
+        ? 'bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-800/40 border-white/10 hover:border-white/20'
+        : 'bg-white border-slate-200 shadow-lg hover:shadow-xl'
         }`}
     >
       {/* Header with gradient */}
@@ -193,7 +197,7 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 divide-x divide-white/5">
+      <div className="grid grid-cols-3 divide-x divide-white/5">
         {/* Rain Chance */}
         <motion.div
           whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.03)' }}
@@ -208,7 +212,7 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
               <CloudRain size={18} className="text-blue-400" />
             </motion.div>
             <div>
-              <p className={`text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-[10px] font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 Chuva
               </p>
               <motion.p
@@ -237,7 +241,7 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
               <Droplets size={18} className="text-indigo-400" />
             </motion.div>
             <div>
-              <p className={`text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-[10px] font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 Umidade
               </p>
               {loading ? (
@@ -250,6 +254,39 @@ const DashboardWeather: React.FC<DashboardWeatherProps> = ({ theme = 'dark' }) =
                 >
                   {weatherData?.humidity ?? '--'}
                   <span className="text-sm font-medium opacity-60">%</span>
+                </motion.p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Wind Speed */}
+        <motion.div
+          whileHover={{ backgroundColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.05)' : 'rgba(20, 184, 166, 0.03)' }}
+          className="px-5 py-4 transition-colors cursor-default"
+        >
+          <div className="flex items-center gap-3">
+            <motion.div
+              animate={{ x: [-1, 1, -1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="p-2 rounded-lg bg-teal-500/20"
+            >
+              <Wind size={18} className="text-teal-400" />
+            </motion.div>
+            <div>
+              <p className={`text-[10px] font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                Vento
+              </p>
+              {loading ? (
+                <div className="w-12 h-5 bg-slate-700/50 rounded animate-pulse mt-1" />
+              ) : (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                >
+                  {weatherData?.windSpeed ?? '--'}
+                  <span className="text-sm font-medium opacity-60">km/h</span>
                 </motion.p>
               )}
             </div>

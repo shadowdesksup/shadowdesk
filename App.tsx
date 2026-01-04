@@ -258,8 +258,14 @@ function App() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Lembretes Agendados */}
-              <div className="lg:col-span-5 w-full flex flex-col gap-0">
+              <div className="lg:col-span-5 w-full flex flex-col gap-8">
 
+
+                {/* Weather Cards */}
+                <DashboardWeather
+                  theme={theme}
+                  onClick={() => setPaginaAtual('clima')}
+                />
 
                 <DashboardReminders
                   lembretes={lembretes.filter(l => l.titulo !== 'Encerramento de Chamados')}
@@ -269,9 +275,6 @@ function App() {
                   onView={(lembrete) => setLembreteParaVisualizar(lembrete)}
                   deletingId={lembreteParaExcluir}
                 />
-
-                {/* Weather Cards */}
-                <DashboardWeather theme={theme} />
 
                 {/* ServiceDesk Tickets Ticker (Moved to Right Column) */}
 

@@ -74,7 +74,7 @@ const DashboardReminders: React.FC<DashboardRemindersProps> = ({ lembretes, them
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.5, delay: 0.5 }}
       className={`h-fit flex flex-col rounded-2xl border p-6 overflow-hidden ${theme === 'dark'
         ? 'bg-slate-900/50 border-white/10'
         : 'bg-white border-slate-200 shadow-sm'
@@ -98,12 +98,12 @@ const DashboardReminders: React.FC<DashboardRemindersProps> = ({ lembretes, them
 
       <div className="flex-1 overflow-y-auto p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:none]">
         {lembretesFuturos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center opacity-50 space-y-4">
+          <div className={`flex flex-col items-center justify-center h-full text-center space-y-4 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
             <div className="relative">
               <Calendar size={64} strokeWidth={1.5} />
               <div className="absolute -top-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-xs font-bold text-white">0</div>
             </div>
-            <p>Nenhum lembrete agendado</p>
+            <p className="font-medium">Nenhum lembrete agendado</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-5">

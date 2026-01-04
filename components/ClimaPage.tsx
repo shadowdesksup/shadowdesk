@@ -303,8 +303,8 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
               <Thermometer size={24} />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold opacity-60">Temperatura</p>
-              <p className="text-2xl font-bold">{weatherData?.temp ?? '--'}°C</p>
+              <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Temperatura</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{weatherData?.temp ?? '--'}°C</p>
             </div>
           </div>
 
@@ -317,8 +317,8 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
               <Wind size={24} />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold opacity-60">Vento</p>
-              <p className="text-2xl font-bold">{weatherData?.wind ?? '--'} km/h</p>
+              <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Vento</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{weatherData?.wind ?? '--'} km/h</p>
             </div>
           </div>
 
@@ -331,8 +331,8 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
               <Umbrella size={24} />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold opacity-60">Chance Chuva</p>
-              <p className="text-2xl font-bold">{weatherData?.rainChance ?? 0}%</p>
+              <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Chance Chuva</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{weatherData?.rainChance ?? 0}%</p>
             </div>
           </div>
 
@@ -345,8 +345,8 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
               <Droplets size={24} />
             </div>
             <div>
-              <p className="text-xs uppercase font-bold opacity-60">Umidade</p>
-              <p className="text-2xl font-bold">{weatherData?.humidity ?? '--'}%</p>
+              <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Umidade</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{weatherData?.humidity ?? '--'}%</p>
             </div>
           </div>
         </motion.div>

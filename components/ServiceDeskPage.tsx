@@ -618,7 +618,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
 
                                   <button
                                     onClick={() => handleLembrarMe(ticket)}
-                                    className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'text-yellow-400 hover:text-yellow-300 animate-pulse drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]' : 'text-yellow-600 hover:text-yellow-700'}`}
+                                    className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'text-emerald-400 hover:text-emerald-300 animate-pulse drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'text-emerald-600 hover:text-emerald-700'}`}
                                   >
                                     <Bell className="w-4 h-4" />
                                     Lembrar-me

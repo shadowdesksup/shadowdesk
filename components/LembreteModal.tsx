@@ -427,7 +427,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                   <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                     Data
                   </label>
-                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
                     <Calendar size={14} className="text-cyan-500 shrink-0" />
                     <input
                       type="date"
@@ -441,7 +441,7 @@ const LembreteModal: React.FC<LembreteModalProps> = ({
                   <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                     Hora
                   </label>
-                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
                     <Clock size={14} className="text-cyan-500 shrink-0" />
                     <input
                       type="time"

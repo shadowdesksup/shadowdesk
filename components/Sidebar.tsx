@@ -45,34 +45,50 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
       >
         <div className="flex gap-4 items-center mb-4 p-4 text-left">
           <motion.div
-            className={`relative group w-14 h-14 rounded-full overflow-hidden border flex items-center justify-center p-2.5 transition-all duration-300 ${theme === 'dark'
-              ? 'bg-[rgb(17,46,82)] border-white/10'
-              : 'bg-white border-cyan-200 shadow-lg shadow-cyan-500/20'
-              }`}
-            animate={{
-              boxShadow: theme === 'dark'
-                ? [
-                  "inset 0 0 8px rgba(34,211,238,0.3), 0 0 10px rgba(34,211,238,0.3)",
-                  "inset 0 0 12px rgba(34,211,238,0.5), 0 0 20px rgba(34,211,238,0.5)",
-                  "inset 0 0 8px rgba(34,211,238,0.3), 0 0 10px rgba(34,211,238,0.3)"
-                ]
-                : [
-                  "0 0 0 rgba(34,211,238,0)",
-                  "0 0 15px rgba(34,211,238,0.4)",
-                  "0 0 0 rgba(34,211,238,0)"
-                ]
-            }}
+            className="relative group w-14 h-14 flex items-center justify-center rounded-full"
+            animate={{ y: [-2, 2, -2] }}
             transition={{
-              duration: 3,
+              duration: 4,
               repeat: Infinity,
               ease: "easeInOut"
             }}
           >
-            <img
-              src="/shadow-logo-sidebar.png"
-              alt="ShadowDesk Logo"
-              className="w-full h-full object-contain"
+            {/* Nebula/Glow Effect Background - More spread, less opaque */}
+            <div className={`absolute inset-0 rounded-full opacity-50 blur-lg transition-opacity duration-500 group-hover:opacity-80 scale-110 ${theme === 'dark' ? 'bg-cyan-500/20' : 'bg-cyan-400/30'
+              }`} />
+
+            {/* Rotating Border Container */}
+            <motion.div
+              className={`absolute inset-0 rounded-full p-[1.5px] ${theme === 'dark'
+                ? 'bg-gradient-to-tr from-cyan-500 via-transparent to-purple-600'
+                : 'bg-gradient-to-tr from-cyan-400 via-transparent to-purple-500'
+                }`}
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              style={{
+                borderRadius: '50%',
+                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                maskComposite: 'exclude',
+                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'xor',
+              }}
             />
+
+            {/* Inner Content Container - Slightly darker as requested */}
+            <div className={`relative w-full h-full rounded-full overflow-hidden flex items-center justify-center p-2.5 backdrop-blur-[2px] z-10 ${theme === 'dark'
+              ? 'bg-slate-900/50'
+              : 'bg-white/40 shadow-sm'
+              }`}>
+              <img
+                src="/shadow-logo-sidebar.png"
+                alt="ShadowDesk Logo"
+                className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]"
+              />
+            </div>
           </motion.div>
           <div className="flex flex-col">
             <h1 className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'

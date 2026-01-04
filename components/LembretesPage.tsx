@@ -566,7 +566,10 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
       </AnimatePresence>
 
       {/* Header */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
         className="mb-6 flex justify-between items-start w-full"
       >
         <div>
@@ -590,7 +593,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
           <Users size={20} />
           <span className="hidden sm:inline font-medium">Amigos</span>
         </button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0 pr-8">
         {/* Calendário */}
