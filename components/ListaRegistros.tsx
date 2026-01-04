@@ -280,7 +280,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
         <div className="flex items-center gap-3">
           <h3 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'
             }`}>
-            {showServiceDesk ? 'ServiceDesk' : (limite ? 'Registros Recentes' : 'Todos os Registros')}
+            {showServiceDesk ? 'Registros Concluídos' : (limite ? 'Registros Recentes' : 'Todos os Registros')}
           </h3>
         </div>
 
@@ -296,7 +296,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                 }`}
             >
               <div className={`w-2 h-2 rounded-full ${showServiceDesk ? 'bg-white animate-pulse' : 'bg-emerald-500/50'}`}></div>
-              ServiceDesk
+              Registros Concluídos
             </button>
             <div className="relative flex-1 md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
