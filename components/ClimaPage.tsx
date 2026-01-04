@@ -169,7 +169,7 @@ const ClimaPage: React.FC<ClimaPageProps> = ({ theme = 'dark', userId }) => {
       detailLon: coords.lon.toString(),
       width: '650',
       height: '450',
-      zoom: '11',
+      zoom: '8',
       level: 'surface',
       overlay: mapLayer, // Use dynamic map layer
       product: 'ecmwf',
