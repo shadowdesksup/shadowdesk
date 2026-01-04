@@ -126,23 +126,21 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
     }
   };
 
-  // Load User Preferences on Mount
-  // Load User Preferences from Global Profile
+  // Load User Preferences from Firebase ONLY
   useEffect(() => {
     if (dadosUsuario) {
-      const masterEnabled = dadosUsuario.whatsappLembretesEnabled === true;
-
-      // Master Switch is ABSOLUTE:
-      // If Master is ON -> local toggle shows ON (regardless of local pref)
-      // If Master is OFF -> local toggle shows OFF
-      setPrefEnabled(masterEnabled);
+      // Se whatsappServiceDeskEnabled não está DEFINIDO, herda do Main
+      // Se está definido (true ou false), usa o valor dele
+      console.log('🔍 ServiceDesk Debug:', {
+        whatsappServiceDeskEnabled: dadosUsuario.whatsappServiceDeskEnabled,
+        whatsappLembretesEnabled: dadosUsuario.whatsappLembretesEnabled,
+        isUndefined: dadosUsuario.whatsappServiceDeskEnabled === undefined
+      });
+      const sdEnabled = dadosUsuario.whatsappServiceDeskEnabled !== undefined
+        ? dadosUsuario.whatsappServiceDeskEnabled
+        : (dadosUsuario.whatsappLembretesEnabled ?? false);
+      setPrefEnabled(sdEnabled);
       setPrefTelefone(dadosUsuario.telefone || '');
-
-      // If no phone in profile, check local storage as fallback suggestion
-      if (!dadosUsuario.telefone) {
-        const localPhone = localStorage.getItem('last_whatsapp_number');
-        if (localPhone) setPrefTelefone(localPhone);
-      }
     }
   }, [dadosUsuario]);
 

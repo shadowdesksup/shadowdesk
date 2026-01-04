@@ -69,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
             }}
           >
             <img
-              src="/shadow-logo-v2.png"
+              src="/shadow-logo-sidebar.png"
               alt="ShadowDesk Logo"
               className="w-full h-full object-contain"
             />
