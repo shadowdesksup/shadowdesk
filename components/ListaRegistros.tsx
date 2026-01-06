@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RegistroAtendimento, StatusAtendimento, TipoSolicitante } from '../types';
-import { Clock, CheckCircle2, AlertCircle, Pencil, Trash2, Eye, Check, Search, Filter, X, FileText, User } from 'lucide-react';
+import { Clock, CheckCircle2, AlertCircle, Pencil, Trash2, Eye, Check, Search, Filter, X, FileText, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatarDataHora, tempoRelativo } from '../utils/helpers';
 
 interface ListaRegistrosProps {
@@ -119,11 +119,13 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
   // Logic for Selection Mode
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isMarkAsReadOpen, setIsMarkAsReadOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false); // Restore isFocused state for search input animation
 
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode);
     setSelectedItems([]);
+    setIsMarkAsReadOpen(false);
   };
 
   const toggleItemSelection = (id: string) => {
@@ -131,14 +133,6 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
       setSelectedItems(selectedItems.filter(item => item !== id));
     } else {
       setSelectedItems([...selectedItems, id]);
-    }
-  };
-
-  const handleBulkUpdate = async () => {
-    if (onAtualizarStatus) {
-      await Promise.all(selectedItems.map(id => onAtualizarStatus(id, 'Registrado')));
-      setIsSelectionMode(false);
-      setSelectedItems([]);
     }
   };
 
@@ -286,6 +280,7 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
 
         {!ocultarBusca && (
           <div className="flex gap-2 w-full md:w-auto relative">
+            {/* Removed Mark as Read Button Group as it was migrated to ServiceDeskPage */}
             <button
               onClick={() => setShowServiceDesk(!showServiceDesk)}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-bold transition-all ${showServiceDesk

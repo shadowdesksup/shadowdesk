@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, limit, deleteDoc, doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Ticket, RefreshCw, Search, ChevronDown, ChevronUp, Phone, Mail, Building, Eye, Trash2, ExternalLink, Bell } from 'lucide-react';
+import { Ticket, RefreshCw, Search, ChevronDown, ChevronUp, Phone, Mail, Building, Eye, Trash2, ExternalLink, Bell, CheckCircle2, Check } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import ServiceDeskNotificationModal from './ServiceDeskNotificationModal';
@@ -115,6 +115,63 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
     setSelectedTicketForReminder(ticket);
   };
 
+  // Duplicate state removed from here
+
+  // Selection & Mark as Read State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+  const [isMarkAsReadOpen, setIsMarkAsReadOpen] = useState(false);
+  const [markAsReadConfirm, setMarkAsReadConfirm] = useState<'all' | 'selected' | null>(null);
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedTickets([]);
+    setIsMarkAsReadOpen(false);
+  };
+
+  const toggleTicketSelection = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (selectedTickets.includes(id)) {
+      setSelectedTickets(prev => prev.filter(ticketId => ticketId !== id));
+    } else {
+      setSelectedTickets(prev => [...prev, id]);
+    }
+  };
+
+  const handleBulkMarkAsRead = () => {
+    // Filter to only include tickets the user hasn't viewed yet
+    const unreadSelected = selectedTickets.filter(id => {
+      const ticket = tickets.find(t => t.id === id);
+      return ticket && !ticket.viewedBy?.includes(userName);
+    });
+    if (unreadSelected.length > 0) {
+      setSelectedTickets(unreadSelected); // Update selection to only unread
+      setMarkAsReadConfirm('selected');
+    }
+  };
+
+  const handleMarkAllAsRead = () => {
+    // Filter to only include tickets the user hasn't viewed yet
+    const unreadTickets = tickets.filter(t => !t.viewedBy?.includes(userName));
+    if (unreadTickets.length > 0) {
+      setMarkAsReadConfirm('all');
+      setIsMarkAsReadOpen(false);
+    }
+  };
+
+  const confirmMarkAsRead = async () => {
+    if (markAsReadConfirm === 'all') {
+      // Only mark actually unread tickets
+      const unreadIds = tickets.filter(t => !t.viewedBy?.includes(userName)).map(t => t.id);
+      await handleMarkAsRead(unreadIds);
+    } else if (markAsReadConfirm === 'selected') {
+      await handleMarkAsRead(selectedTickets);
+      setIsSelectionMode(false);
+      setSelectedTickets([]);
+    }
+    setMarkAsReadConfirm(null);
+  };
+
   const handleCreateReminder = async (dados: any) => {
     try {
       if (!selectedTicketForReminder) return;
@@ -164,6 +221,39 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
     } catch (e) {
       console.error('Error saving preferences:', e);
       alert('Erro ao salvar preferências.');
+    }
+  };
+
+  // Click outside handler for dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMarkAsReadOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleMarkAsRead = async (ticketIds: string[]) => {
+    if (!userName || ticketIds.length === 0) return;
+
+    try {
+      // Update firestore - add user to viewedBy array (marks as read visually)
+      const promises = ticketIds.map(id =>
+        updateDoc(doc(db, 'serviceDesk_tickets', id), {
+          viewedBy: arrayUnion(userName)
+        })
+      );
+
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      alert('Erro ao marcar como lido');
     }
   };
 
@@ -368,6 +458,38 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
         </div>
       )}
 
+      {/* Mark as Read Confirmation Modal */}
+      {markAsReadConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`border rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
+            <h3 className={`text-xl font-bold mb-2 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+              <Eye className="w-5 h-5 text-blue-400" />
+              Marcar como Lido
+            </h3>
+            <p className={`mb-6 text-left ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>
+              {markAsReadConfirm === 'all'
+                ? `Marcar todos os ${tickets.filter(t => !t.viewedBy?.includes(userName)).length} chamados não lidos como lidos?`
+                : `Marcar ${selectedTickets.length} chamado(s) selecionado(s) como lido(s)?`
+              }
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setMarkAsReadConfirm(null)}
+                className={`px-4 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-600 hover:bg-slate-100'}`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmMarkAsRead}
+                className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Sim, Marcar como Lido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -376,6 +498,81 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
             Chamados ServiceDesk
           </h1>
           <div className="flex items-center gap-3">
+            {/* Mark as Read Button Group */}
+            {isSelectionMode ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-3"
+              >
+                <button
+                  onClick={toggleSelectionMode}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${theme === 'dark' ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20 hover:text-red-400' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleBulkMarkAsRead}
+                  disabled={selectedTickets.length === 0}
+                  className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all
+                    ${selectedTickets.length > 0
+                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30 shadow-[0_0_10px_-3px_#3b82f6]'
+                      : (theme === 'dark' ? 'bg-white/5 text-slate-500 border-white/10 cursor-not-allowed' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed')}
+                  `}
+                >
+                  <Eye size={16} />
+                  Ler selecionados ({selectedTickets.length})
+                </button>
+              </motion.div>
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsMarkAsReadOpen(!isMarkAsReadOpen)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${isMarkAsReadOpen
+                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-[0_0_10px_-3px_#3b82f6]'
+                    : (theme === 'dark' ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10 shadow-[0_0_10px_-3px_rgba(255,255,255,0.15)]' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 shadow-[0_0_10px_-3px_rgba(100,116,139,0.2)]')
+                    }`}
+                >
+                  <Eye size={16} />
+                  Marcar como lido
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${isMarkAsReadOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isMarkAsReadOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                      className={`absolute right-0 top-full mt-1 w-48 border rounded-xl shadow-2xl z-50 overflow-hidden ${theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+                    >
+                      <div className="p-1.5 flex flex-col gap-1">
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}
+                        >
+                          <CheckCircle2 size={16} className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'}`} />
+                          Todos
+                        </button>
+                        <button
+                          onClick={() => {
+                            toggleSelectionMode();
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}
+                        >
+                          <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                          Selecione
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             {/* Notification Button */}
             <button
               onClick={() => setShowNotificationModal(true)}
@@ -488,11 +685,37 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
                               ? (theme === 'dark' ? 'bg-cyan-500/10 border-l-2 border-cyan-500' : 'bg-cyan-50 border-l-2 border-cyan-500')
                               : ''}
                             ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50'}
+                            ${isSelectionMode && !isNewAndUnviewed ? 'opacity-50 cursor-not-allowed' : ''}
                           `}
-                          onClick={() => toggleExpand(ticket.id)}
+                          onClick={() => {
+                            if (isSelectionMode) {
+                              if (isNewAndUnviewed) toggleTicketSelection(ticket.id);
+                            } else {
+                              toggleExpand(ticket.id);
+                            }
+                          }}
                         >
                           <td className="px-4 py-3">
-                            <span className="text-blue-400 font-mono font-medium">{ticket.numero}</span>
+                            {isSelectionMode ? (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isNewAndUnviewed) toggleTicketSelection(ticket.id);
+                                }}
+                                className={`
+                                  w-5 h-5 rounded flex items-center justify-center transition-all border
+                                  ${selectedTickets.includes(ticket.id)
+                                    ? 'bg-blue-500 border-blue-600 text-white'
+                                    : (theme === 'dark' ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300')
+                                  }
+                                  ${!isNewAndUnviewed ? 'opacity-30 cursor-not-allowed bg-gray-100' : 'cursor-pointer hover:border-slate-400'}
+                                `}
+                              >
+                                {selectedTickets.includes(ticket.id) && <Check size={12} strokeWidth={3} />}
+                              </div>
+                            ) : (
+                              <span className="text-blue-400 font-mono font-medium">{ticket.numero}</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span

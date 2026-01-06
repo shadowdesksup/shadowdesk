@@ -19,14 +19,14 @@ const COLLECTION_NAME = 'serviceDesk_tickets';
 
 // Configuration
 const LOGIN_URL = 'https://servicedesk.unesp.br/atendimento';
-const CHECK_INTERVAL = 5 * 1000; // 5 seconds (Turbo Mode)
+const CHECK_INTERVAL = 2 * 1000; // 2 seconds (Ultra Turbo Mode)
 const REFRESH_INTERVAL = 1; // Refresh page every cycle (ensure new tickets are seen)
 
 // Business Hours Configuration (America/Sao_Paulo timezone)
 const WORK_START_HOUR = 7;
 const WORK_START_MINUTE = 40;
-const WORK_END_HOUR = 19;
-const WORK_END_MINUTE = 0;
+const WORK_END_HOUR = 18;
+const WORK_END_MINUTE = 30;
 const WORK_DAYS = [1, 2, 3, 4, 5]; // Monday=1 to Friday=5 (0=Sunday, 6=Saturday)
 
 /**
@@ -207,22 +207,29 @@ async function setupFilters() {
     await page.waitForSelector('#GridDatatable', { timeout: 15000 });
     await wait(2000); // Give DataTables time to initialize
 
-    // 1. Set pagination to "Não" (show all)
-    const paginationSet = await page.evaluate(() => {
+    // 1. Set pagination to "Não" (show all) - with skip check
+    const paginationResult = await page.evaluate(() => {
       const selects = document.querySelectorAll('select');
       for (const select of selects) {
         const options = Array.from(select.options);
         const naoOption = options.find(o => o.text === 'Não' || o.value === '-1');
         if (naoOption) {
+          if (select.value === naoOption.value) {
+            return 'already_set';
+          }
           select.value = naoOption.value;
           select.dispatchEvent(new Event('change', { bubbles: true }));
-          return true;
+          return 'set';
         }
       }
-      return false;
+      return 'not_found';
     });
-    console.log('Pagination "Não":', paginationSet ? 'SET' : 'not found');
-    await wait(1500);
+    if (paginationResult === 'already_set') {
+      console.log('Pagination "Não": Already set (Skipping)');
+    } else {
+      console.log('Pagination "Não":', paginationResult === 'set' ? 'SET' : 'not found');
+      await wait(1000); // Only wait if changed
+    }
 
     // 2. Type "Nova" in filter
     const filterInput = await page.$('.dataTables_filter input') ||
@@ -256,8 +263,12 @@ async function setupFilters() {
       }
       return 'not_found';
     });
-    console.log('Sort by Abertura:', sorted);
-    await wait(1000);
+    if (sorted === 'already_desc') {
+      console.log('Sort by Abertura: Already set (Skipping)');
+    } else {
+      console.log('Sort by Abertura:', sorted);
+      await wait(800); // Only wait if clicked
+    }
 
     return true;
   } catch (error) {
@@ -657,9 +668,12 @@ async function createAutoReminder(ticket, userPhone) {
 // Helper to Queue Notification
 async function queueNotification(ticket) {
   try {
-    // 1. Get recipients
-    const snapshot = await db.collection('serviceDesk_preferences').where('enabled', '==', true).get();
-    if (snapshot.empty) return;
+    // 1. Get recipients from USERS collection (where frontend saves preferences)
+    const snapshot = await db.collection('users').where('whatsappServiceDeskEnabled', '==', true).get();
+    if (snapshot.empty) {
+      console.log('    [Notification] No users with whatsappServiceDeskEnabled=true');
+      return;
+    }
 
     // 2. Format Message
     const solicitante = (ticket.solicitante || 'Desconhecido').trim();
@@ -705,10 +719,10 @@ async function queueNotification(ticket) {
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (data.phone) {
+      if (data.telefone) {
         const queueRef = db.collection('notification_queue').doc();
         batch.set(queueRef, {
-          to: data.phone,
+          to: data.telefone,
           message: message,
           status: 'pending',
           type: 'serviceDesk_new_ticket',
@@ -730,8 +744,8 @@ async function queueNotification(ticket) {
         // Create reminder for each user
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          if (data.phone) {
-            await createAutoReminder(ticket, data.phone);
+          if (data.telefone) {
+            await createAutoReminder(ticket, data.telefone);
           }
         }
       }

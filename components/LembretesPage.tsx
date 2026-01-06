@@ -373,7 +373,8 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             descricao: dados.descricao,
             dataHora: dados.dataHora,
             cor: dados.cor,
-            somNotificacao: dados.somNotificacao
+            somNotificacao: dados.somNotificacao,
+            telefone: dados.telefone // Preserva o telefone
           });
 
           // 2. Criar o lembrete para ENVIAR (separado)
@@ -382,7 +383,8 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             descricao: dados.descricao,
             dataHora: dados.dataHora,
             cor: dados.cor,
-            somNotificacao: dados.somNotificacao
+            somNotificacao: dados.somNotificacao,
+            // Telefone não vai para o enviado (quem recebe define suas notificações)
           });
 
           // 3. Enviar o segundo lembrete
@@ -403,6 +405,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             dataHora: dados.dataHora,
             cor: dados.cor,
             somNotificacao: dados.somNotificacao
+            // Sem telefone, pois é para outro
           });
           // Enviar para o amigo
           if (novoLembrete && enviar) {
