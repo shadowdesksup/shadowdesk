@@ -19,14 +19,14 @@ const COLLECTION_NAME = 'serviceDesk_tickets';
 
 // Configuration
 const LOGIN_URL = 'https://servicedesk.unesp.br/atendimento';
-const CHECK_INTERVAL = 2 * 1000; // 2 seconds (Ultra Turbo Mode)
+const CHECK_INTERVAL = 2 * 1000; // 2 seconds between checks (Real-time)
 const REFRESH_INTERVAL = 1; // Refresh page every cycle (ensure new tickets are seen)
 
 // Business Hours Configuration (America/Sao_Paulo timezone)
 const WORK_START_HOUR = 7;
 const WORK_START_MINUTE = 40;
 const WORK_END_HOUR = 18;
-const WORK_END_MINUTE = 30;
+const WORK_END_MINUTE = 0;
 const WORK_DAYS = [1, 2, 3, 4, 5]; // Monday=1 to Friday=5 (0=Sunday, 6=Saturday)
 
 /**
@@ -126,9 +126,7 @@ async function initBrowser() {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--single-process',
-      '--no-zygote'
+      '--disable-gpu'
     ]
   });
   page = await browser.newPage();
@@ -173,7 +171,8 @@ async function login() {
       await wait(500);
 
       // Find and click submit button
-      const button = await page.$('button[type="submit"]') || await page.$('button');
+      // Find and click submit button (it is type="button", not submit)
+      const button = await page.$('button[name="button_entrar"]') || await page.$('button[aria-label="Entrar"]');
       if (button) {
         await Promise.all([
           page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
@@ -195,79 +194,92 @@ async function login() {
     return false;
   } catch (error) {
     console.error('Login error:', error.message);
+    // Force browser restart on login failure to prevent "zombie" browser loops
+    await closeBrowser();
     return false;
   }
 }
 
 async function setupFilters() {
   try {
-    console.log('Setting up filters...');
+    // 0. Check current state to skip redundant actions
+    const state = await page.evaluate(() => {
+      // Check Pagination
+      const paginationSelect = Array.from(document.querySelectorAll('select')).find(s =>
+        Array.from(s.options).some(o => o.text === 'Não' || o.value === '-1')
+      );
+      const isPaginationSet = paginationSelect && paginationSelect.value === '-1';
+
+      // Check Filter
+      const filterInput = document.querySelector('.dataTables_filter input') || document.querySelector('input[type="search"]');
+      const isFilterSet = filterInput && filterInput.value === 'Nova';
+
+      // Check Sort
+      const headerAbertura = Array.from(document.querySelectorAll('th')).find(th => th.innerText.includes('Abertura'));
+      const isSortSet = headerAbertura && headerAbertura.classList.contains('sorting_desc');
+
+      return { isPaginationSet, isFilterSet, isSortSet };
+    });
+
+    // If everything is already set, exit early (Ninja mode)
+    if (state.isPaginationSet && state.isFilterSet && state.isSortSet) {
+      return true;
+    }
+
+    console.log('Setting up filters (changes detected)...');
 
     // Wait for table to be present
     await page.waitForSelector('#GridDatatable', { timeout: 15000 });
-    await wait(2000); // Give DataTables time to initialize
 
-    // 1. Set pagination to "Não" (show all) - with skip check
-    const paginationResult = await page.evaluate(() => {
-      const selects = document.querySelectorAll('select');
-      for (const select of selects) {
-        const options = Array.from(select.options);
-        const naoOption = options.find(o => o.text === 'Não' || o.value === '-1');
-        if (naoOption) {
-          if (select.value === naoOption.value) {
-            return 'already_set';
+    // 1. Set pagination to "Não" (show all) if needed
+    if (!state.isPaginationSet) {
+      const paginationSet = await page.evaluate(() => {
+        const selects = document.querySelectorAll('select');
+        for (const select of selects) {
+          const options = Array.from(select.options);
+          const naoOption = options.find(o => o.text === 'Não' || o.value === '-1');
+          if (naoOption) {
+            select.value = naoOption.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            return true;
           }
-          select.value = naoOption.value;
-          select.dispatchEvent(new Event('change', { bubbles: true }));
-          return 'set';
         }
-      }
-      return 'not_found';
-    });
-    if (paginationResult === 'already_set') {
-      console.log('Pagination "Não": Already set (Skipping)');
-    } else {
-      console.log('Pagination "Não":', paginationResult === 'set' ? 'SET' : 'not found');
-      await wait(1000); // Only wait if changed
+        return false;
+      });
+      console.log('  Pagination "Não":', paginationSet ? 'SET' : 'not found');
+      await wait(1500);
     }
 
-    // 2. Type "Nova" in filter
-    const filterInput = await page.$('.dataTables_filter input') ||
-      await page.$('input[type="search"]');
-
-    if (filterInput) {
-      // SMART CHECK: Only type if needed
-      const currentValue = await filterInput.evaluate(el => el.value);
-      if (currentValue !== 'Nova') {
+    // 2. Type "Nova" in filter if needed
+    if (!state.isFilterSet) {
+      const filterInput = await page.$('.dataTables_filter input') ||
+        await page.$('input[type="search"]');
+      if (filterInput) {
         await filterInput.click();
         await filterInput.evaluate(el => el.value = '');
-        await filterInput.type('Nova', { delay: 50 });
-        console.log('Filter "Nova": SET');
-        await wait(2000); // Wait only if we changed something
-      } else {
-        console.log('Filter "Nova": Already set (Skipping)');
+        await filterInput.type('Nova', { delay: 20 }); // Faster typing
+        console.log('  Filter "Nova": SET');
+        await wait(1500);
       }
     }
 
-    // 3. Sort by "Abertura" descending
-    const sorted = await page.evaluate(() => {
-      const headers = document.querySelectorAll('th');
-      for (const th of headers) {
-        if (th.innerText.includes('Abertura')) {
-          if (!th.classList.contains('sorting_desc')) {
-            th.click();
-            return 'clicked';
+    // 3. Sort by "Abertura" descending if needed
+    if (!state.isSortSet) {
+      const sorted = await page.evaluate(() => {
+        const headers = document.querySelectorAll('th');
+        for (const th of headers) {
+          if (th.innerText.includes('Abertura')) {
+            if (!th.classList.contains('sorting_desc')) {
+              th.click();
+              return 'clicked';
+            }
+            return 'already_desc';
           }
-          return 'already_desc';
         }
-      }
-      return 'not_found';
-    });
-    if (sorted === 'already_desc') {
-      console.log('Sort by Abertura: Already set (Skipping)');
-    } else {
-      console.log('Sort by Abertura:', sorted);
-      await wait(800); // Only wait if clicked
+        return 'not_found';
+      });
+      console.log('  Sort by Abertura:', sorted);
+      await wait(1000);
     }
 
     return true;
@@ -552,7 +564,7 @@ function parseSchedulingDate(dateStr) {
   if (!dateStr || dateStr === 'Não informado' || dateStr.trim() === '') return null;
 
   // Match DD/MM/YYYY with optional time (HH:mm or às HH:mm)
-  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s*(?:às\s*)?(\d{2}):(\d{2}))?/);
+  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s*(?:[\w\u00E0-\u00FF]+\s*)?(\d{2}):(\d{2}))?/);
   if (!match) return null;
 
   const [_, day, month, year, hour = '09', minute = '00'] = match;
@@ -570,12 +582,7 @@ async function getUserIdByPhone(phone) {
     const usersSnap = await db.collection('users').where('telefone', '==', phone).limit(1).get();
     if (!usersSnap.empty) return usersSnap.docs[0].id;
 
-    // Fallback: check serviceDesk_preferences for userId
-    const prefSnap = await db.collection('serviceDesk_preferences').where('phone', '==', phone).limit(1).get();
-    if (!prefSnap.empty) {
-      const data = prefSnap.docs[0].data();
-      return data.userId || prefSnap.docs[0].id;
-    }
+    return null;
 
     return null;
   } catch (error) {
@@ -640,12 +647,15 @@ async function createAutoReminder(ticket, userPhone) {
       descricao: descricao,
       dataHora: scheduledDate.toISOString(),
       cor: 'sand',
-      somNotificacao: 'sino',
+      somNotificacao: 'notif-sd',
+      prioridade: 'alta',
       status: 'pendente',
       criadorId: userId,
       criadoEm: admin.firestore.FieldValue.serverTimestamp(),
       telefone: userPhone,
-      enviadaWhatsapp: false,
+      enviado: false, // Usado pelo wpp-worker TS
+      enviadaWhatsapp: false, // Legado
+      dataHoraEnvio: scheduledDate, // Date object para virar Timestamp no Firestore
       tipo: 'servicedesk',
       metadata: {
         solicitante: solicitante || null,
@@ -668,10 +678,10 @@ async function createAutoReminder(ticket, userPhone) {
 // Helper to Queue Notification
 async function queueNotification(ticket) {
   try {
-    // 1. Get recipients from USERS collection (where frontend saves preferences)
+    // 1. Get recipients from 'users' collection with ServiceDesk notifications enabled
     const snapshot = await db.collection('users').where('whatsappServiceDeskEnabled', '==', true).get();
     if (snapshot.empty) {
-      console.log('    [Notification] No users with whatsappServiceDeskEnabled=true');
+      console.log('    -> No users found with WhatsApp ServiceDesk notifications enabled.');
       return;
     }
 
@@ -756,28 +766,21 @@ async function queueNotification(ticket) {
   }
 }
 
-async function refreshPage() {
+async function refreshPage(silent = false) {
   try {
-    console.log('Refreshing page...');
+    if (!silent) console.log('Refreshing page...');
 
-    const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => { });
-
-    // "Soft Refresh" - Click the "Meus Atendimentos" link or similar if possible, 
-    // but for now we stick to goto but optimized with waiters.
-    await page.goto(LOGIN_URL).catch(() => { });
-
-    await navigationPromise;
-
-    // WAIT for the table explicitly using a selector
-    // This removes the need for arbitrary sleeps. 
-    // It returns as soon as the element exists.
+    // "Soft Refresh" - Just navigate to the list URL again. 
+    // This handles session timeouts better than reload() and is faster.
     try {
-      await page.waitForSelector('#GridDatatable', { timeout: 30000 });
-      console.log('Table loaded!');
+      await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
     } catch (e) {
-      console.log("Table not found after wait, page might be broken.");
-      throw new Error('Table selector timeout');
+      console.log("Navigation timed out, checking if table loaded anyway...");
     }
+
+    // Wait for the table explicitly. 
+    // If this fails, THEN we know we are truly broken.
+    await page.waitForSelector('#GridDatatable', { timeout: 20000 });
 
     // Re-apply filters after refresh
     await setupFilters();
@@ -799,7 +802,6 @@ async function runWorker() {
   while (true) {
     try {
       cycleCount++;
-      let hasActivity = false;
       const timestamp = new Date().toLocaleString('pt-BR');
 
       // Check if within working hours BEFORE doing anything
@@ -818,11 +820,11 @@ async function runWorker() {
         continue; // Skip this cycle entirely
       }
 
+      const isSilentCycle = cycleCount % 15 !== 0; // Show logs every ~30s if nothing new
 
-      // LOGIC: Silence logs unless activity detected or heartbeat (every 20 cycles)
-      const isHeartbeat = (cycleCount % 20 === 0);
-
-      if (isHeartbeat) console.log(`\n[${timestamp}] Cycle #${cycleCount} (Heartbeat)`);
+      if (!isSilentCycle) {
+        console.log(`\n[${timestamp}] Cycle #${cycleCount}`);
+      }
 
       // Initialize browser if needed
       if (!browser) {
@@ -863,7 +865,7 @@ async function runWorker() {
 
       // Refresh page periodically
       if (cycleCount > 1 && cycleCount % REFRESH_INTERVAL === 0) {
-        const refreshed = await refreshPage();
+        const refreshed = await refreshPage(isSilentCycle);
         if (!refreshed) {
           // If refresh fails, reset everything
           isLoggedIn = false;
@@ -922,7 +924,6 @@ async function runWorker() {
               await admin.firestore().collection('serviceDesk_tickets').doc(docId).delete();
               lastKnownTickets.delete(rawId);
               console.log(`   - Successfully Deleted #${id}`);
-              hasActivity = true;
             } catch (err) {
               console.error(`   ❌ Failed to delete #${id} (doc: ${docId}):`, err);
             }
@@ -948,8 +949,6 @@ async function runWorker() {
 
           if (toProcess.length > 0) {
             console.log(`🆕 Found ${toProcess.length} REALLY new ticket(s)!`);
-            hasActivity = true;
-
 
             for (const t of toProcess) {
               console.log(`  - #${t.numero}: ${t.solicitante} | ${t.servico}`);
@@ -969,8 +968,9 @@ async function runWorker() {
             console.log("✓ New tickets found but all were ignored.");
           }
 
-        } else {
-          if (isHeartbeat) console.log(`✓ Monitoring ${tickets.length} tickets (Synced)`);
+          if (!isSilentCycle) {
+            console.log(`✓ Monitoring ${tickets.length} tickets (Synced)`);
+          }
         }
 
         // Memory is explicitly managed above (add/delete), no need to bulk overwrite
@@ -978,22 +978,8 @@ async function runWorker() {
         console.log('⚠ No tickets found (table might be empty or filter returned nothing)');
       }
 
-
-      // ADAPTIVE INTERVAL LOGIC
-      let currentInterval = 30000;
-
-      if (hasActivity) {
-        console.log('⚡ High activity detected! Keeping fast pace (5s)...');
-        currentInterval = 5000;
-      } else {
-        // User requested MAXIMUM SPEED. Reducing idle to 5s.
-        if (isHeartbeat) console.log('⚡ Speed Mode: Waiting 5s...');
-        currentInterval = 5000;
-      }
-
       // Wait for next cycle
-      await wait(currentInterval);
-
+      await wait(CHECK_INTERVAL);
 
     } catch (error) {
       console.error('Cycle error:', error.message);

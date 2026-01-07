@@ -85,9 +85,9 @@ export const useNotifications = (userId: string, userName?: string) => {
     setSomTocando(false);
 
     try {
-      // Prioridade: Som customizado "Ding" para ServiceDesk
-      if (som === 'ding') {
-        const audio = new Audio('/sounds/ding.mp3');
+      // Prioridade: Som customizado para ServiceDesk
+      if (som === 'ding' || som === 'notif-sd') {
+        const audio = new Audio('/sounds/new-notification-021-370045.mp3');
         audio.volume = 0.5;
 
         audio.onplay = () => setSomTocando(true);

@@ -152,7 +152,7 @@ export interface DescricaoEquipamento {
 export type StatusLembrete = 'pendente' | 'disparado' | 'expirado' | 'finalizado';
 
 // Som de notificação
-export type SomNotificacao = 'sino' | 'campainha' | 'alerta' | 'gentil' | 'urgente';
+export type SomNotificacao = 'sino' | 'campainha' | 'alerta' | 'gentil' | 'urgente' | 'notif-sd';
 
 // Cores dos lembretes (Nova Paleta Pastel)
 export type CorLembrete =
