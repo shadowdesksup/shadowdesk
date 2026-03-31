@@ -21,6 +21,8 @@ import { SessionExpiredModal } from './components/SessionExpiredModal';
 import { RegistrationSuspendedModal } from './components/RegistrationSuspendedModal';
 import ClimaPage from './components/ClimaPage';
 import ServiceDeskPage from './components/ServiceDeskPage';
+import EstoquePage from './components/EstoquePage';
+import ManutencoesPage from './components/ManutencoesPage';
 
 // Sistema de Lembretes
 import LembretesPage from './components/LembretesPage';
@@ -411,6 +413,12 @@ function App() {
 
       case 'clima':
         return <ClimaPage theme={theme} userId={usuario?.uid} />;
+
+      case 'estoque':
+        return <EstoquePage theme={theme} />;
+
+      case 'manutencoes':
+        return <ManutencoesPage theme={theme} />;
 
       case 'servicedesk':
         return (

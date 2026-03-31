@@ -215,3 +215,94 @@ export interface Notificacao {
   criadoEm: string;
   userId: string;
 }
+
+// ==========================================
+// SISTEMA DE ESTOQUE
+// ==========================================
+
+export type StatusEquipamento = 'BENS_ATIVOS' | 'MANUTENCAO' | 'DESCARTE' | 'AVALIACAO' | 'DISPONIVEL' | 'DESCARTADO' | 'TRANSFERIDO';
+
+export interface EstoqueHistorico {
+  data: string; // ISO 8601 
+  acao: string;
+  usuarioId: string; // UID do usuário
+  usuarioNome: string; // Nome do usuário
+  detalhes?: string;
+}
+
+export interface RegistroManutencao {
+  solicitante: string;
+  dataInicio: string; // ISO 8601
+  problema: string;
+  tecnicoResponsavelId: string;
+  tecnicoResponsavelNome: string;
+}
+
+export interface EquipamentoEstoque {
+  id: string;
+  tipo: string; // ex: Computador, Impressora
+  marca: string;
+  modelo: string;
+  patrimonio?: string;
+  numeroSerie?: string;
+  temProjeto?: boolean;
+  agenciaFomento?: string;
+  numeroProcesso?: string; // Para identificar equipamentos de projeto sem chapa
+  numeroTermo?: string;
+  imagemUrl?: string; // Imagem em base64 da foto do equipamento
+  isImagemPrincipal?: boolean; // Se esta imagem deve ser a capa do grupo/modelo
+  status: StatusEquipamento;
+  usuarioCadastro: string; // Nome de quem cadastrou inicialmente
+  usuarioCadastroId?: string; // ID de quem cadastrou
+  dataEntrada: string; // ISO 8601
+  dataSaida?: string; // ISO 8601
+  historico: EstoqueHistorico[];
+  manutencaoAtual?: RegistroManutencao;
+  bensAtivos?: {
+    solicitante?: string;
+    vinculo?: string;
+    dataEntradaItem: string; // ISO date
+    origem: string; // Nome do local de origem
+    alocadoEm?: string; // Nome do local físico atual
+    condicao?: 'Boa' | 'Ruim'; // Condição física
+  };
+  detalhes?: {
+    // Usado p/ Descarte
+    laudoId?: string;
+    motivoDescarte?: string;
+    // Usado p/ Transferência
+    localDestinoId?: string;
+    localDestinoNome?: string;
+    recebedorNome?: string; // Funcionario ou terceiro
+    vinculoDestino?: string; // Ex: Docente, Servidor
+    dataSaidaTransferencia?: string; // Data real da saída (ISO)
+    motivoTransferencia?: string; // Texto para o Laudo
+  };
+}
+
+export interface LocalTransferencia {
+  id: string;
+  nome: string;
+  criadoPor?: string; // username ou UID
+  criadoEm?: string; // ISO 8601
+}
+
+export interface TipoEquipamento {
+  id: string;
+  nome: string;
+}
+
+export interface MarcaEquipamento {
+  id: string;
+  nome: string;
+}
+
+export interface ModeloEquipamento {
+  id: string;
+  nome: string;
+}
+
+export interface AgenciaProjeto {
+  id: string;
+  nome: string;
+}

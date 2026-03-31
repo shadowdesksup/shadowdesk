@@ -10,6 +10,7 @@ services:
       - USER_PASSWORD=${USER_PASSWORD}
     volumes:
       - ./serviceAccountKey.json:/app/serviceAccountKey.json
+      - ./index.js:/app/index.js
     # Memory limits to prevent crashing the VPS
     deploy:
       resources:

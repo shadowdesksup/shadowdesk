@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, PlusCircle, List, FileText, Settings, User, FileEdit, Bell, Cloud, Ticket } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, List, FileText, Settings, User, FileEdit, Bell, Cloud, Ticket, Package, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SidebarProps {
@@ -14,6 +14,8 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', pagina: 'dashboard' },
     { icon: <Ticket size={20} />, label: 'ServiceDesk', pagina: 'servicedesk' },
+    { icon: <Package size={20} />, label: 'Estoque', pagina: 'estoque' },
+    { icon: <Wrench size={20} />, label: 'Manutenção', pagina: 'manutencoes' },
     { icon: <PlusCircle size={20} />, label: 'Novo Registro', pagina: 'novo' },
     { icon: <List size={20} />, label: 'Meus Registros', pagina: 'historico' },
     { icon: <FileEdit size={20} />, label: 'Gerar Descritivos', pagina: 'descritivos' },

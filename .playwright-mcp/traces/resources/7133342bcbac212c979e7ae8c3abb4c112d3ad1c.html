@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<!-- UNESPAUTH_LOGIN_PAGE -->
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+	<meta name="viewport" content="width=device-width">
+	
+	<title>Sistemas Unesp - Autenticação</title>
+	
+	<script src="bower_components/angular/angular.min.js"></script>
+	<script src="bower_components/angular-resource/angular-resource.min.js"></script>
+	<script src="bower_components/angular-animate/angular-animate.min.js"></script>
+	<script src="bower_components/angular-aria/angular-aria.min.js"></script>
+	<script src="bower_components/angular-messages/angular-messages.min.js"></script>
+	<script src="bower_components/angular-sanitize/angular-sanitize.min.js"></script>
+	<script src="bower_components/angular-route/angular-route.min.js"></script>
+	<script src="bower_components/angular-material/angular-material.min.js"></script>  
+
+	<link rel="stylesheet" href="css/material-icons/material-icons.css" type="text/css">
+	<link rel="stylesheet" href="bower_components/angular-material/angular-material.min.css" type="text/css">
+    <link rel="stylesheet" href="css/custom.css" rel="stylesheet" type="text/css">
+    
+    
+    <script src="js/app.js"></script>
+    
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'>
+    <script>
+    var app = angular.module('unespauth');
+    app.controller('LoginController', function($scope,$location) {
+        $scope.login = function(){
+        	document.getElementById('form').submit();
+        }
+        $scope.primeiroAcessoUrl = "redirect/central/primeiroAcesso";
+        $scope.recuperarSenhaUrl = "redirect/central/recuperarSenha";
+        $scope.recuperarIdentificacaoUrl = "redirect/central/recuperarIdentificacao";
+        $scope.playAudio = function(){
+        	document.getElementById("audio").play(); 
+        }
+        $scope.keyPressed = function(keyEvent) {
+            if (keyEvent.keyCode === 13) {
+              $scope.login();
+            }
+        };
+    });
+    </script>
+</head>
+<body layout="column" data-ng-app="unespauth" ng-cloak data-ng-controller="LoginController">
+	<md-toolbar layout="row" class="md-whiteframe-z1">
+		<div class="md-toolbar-tools">
+	        <h2>
+	          	<img src="imgs/unesplogowhite.png" class="logo"/>
+	        </h2>
+		</div>
+	</md-toolbar>
+	<md-content>
+	   	<div layout="row" layout-align="center top" flex layout-padding>
+			<div flex-gt-md="40" flex="100">
+				<form id="form" action="login" method="post">
+					<md-card layout-padding layout-margin>
+						<md-card-title-text>
+	            			<span class="md-headline">Faça o login para continuar.</span>
+	            				            		</md-card-title-text>
+	            		
+	            			
+		    			<md-input-container class="md-icon-float md-block" >
+							<label>Identificação UNESP</label>
+							<md-icon class="material-icons">account_circle</md-icon>
+		      				<input type="text" name="username" value="" ng-keypress="keyPressed($event)" />
+		    			</md-input-container>
+		    			<md-input-container class="md-block">
+							<label>Senha</label>
+							<md-icon class="material-icons">lock</md-icon>
+		      				<input type="password" name="password" value="" ng-keypress="keyPressed($event)"/>
+		    			</md-input-container>
+		    			<md-button data-ng-click="login()" name="button_entrar" class="md-raised md-primary">Entrar</md-button>
+		    			<br/>
+		    			<md-button class="md-primary" name="button_primeiro_acesso" ng-href="{{primeiroAcessoUrl}}">Primeiro acesso?</md-button>
+		    			<md-button class="md-primary" name="button_recuperar_identificacao" ng-href="{{recuperarIdentificacaoUrl}}">Esqueceu sua identificação?</md-button>
+		    			<md-button class="md-primary" name="button_recuperar_senha" ng-href="{{recuperarSenhaUrl}}">Esqueceu sua senha?</md-button>
+		    		</md-card>
+		    		<input type="hidden" id="csrf_token" name="_csrf"
+									value="d1249800-7fc9-494b-af95-e85576311291" /> 
+				</form>				
+			</div>
+	    </div>
+	    <div layout-padding flex="noshrink">
+	     	<div layout="row" flex="noshrink" layout-align="center center">
+		        <div id="footer" flex>
+		           Proprietário: CTINF - Coordenadoria de Tecnologia da Informação | Desenvolvido por: GTDSI - Grupo Técnico de Desenvolvimento de Sistemas Institucionais &nbsp; | &nbsp; <a href="faleConosco">Fale Conosco - Suporte</a>
+		        </div>
+	      	</div>
+      	</div>
+	</md-content>
+</body>
+<!-- END UNESPAUTH_LOGIN_PAGE -->
+</html>

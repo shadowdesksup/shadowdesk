@@ -8,7 +8,7 @@ import {
   User,
   UserCredential
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot, Unsubscribe, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { auth, db } from './config';
 
 // Interface para dados do usuário
@@ -164,6 +164,20 @@ export const obterDadosUsuario = async (uid: string): Promise<UserData | null> =
   } catch (error) {
     console.error('Erro ao obter dados do usuário:', error);
     return null;
+  }
+};
+
+/**
+ * Listar todos os usuários (para seleção de técnicos responsáveis)
+ */
+export const listarUsuarios = async (): Promise<UserData[]> => {
+  try {
+    const q = query(collection(db, 'users'), orderBy('nomeCompleto', 'asc'));
+    const docSnap = await getDocs(q);
+    return docSnap.docs.map(d => d.data() as UserData);
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    return [];
   }
 };
 
