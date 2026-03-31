@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Package, Save, Plus, Image as ImageIcon, Wrench, ShieldCheck, Server } from 'lucide-react';
+import { Upload, Package, Save, Plus, Image as ImageIcon, Wrench, ShieldCheck, Server, Camera } from 'lucide-react';
 import { EquipamentoEstoque, StatusEquipamento, TipoEquipamento, MarcaEquipamento, ModeloEquipamento, AgenciaProjeto } from '../types';
 import EstoqueSidePanel from './EstoqueSidePanel';
+import WebcamCaptureModal from './WebcamCaptureModal';
 import { listarTiposEquipamento, criarTipoEquipamento } from '../firebase/tiposEquipamento';
 import { listarMarcasEquipamento } from '../firebase/marcasEquipamento';
 import { listarModelosEquipamento } from '../firebase/modelosEquipamento';
@@ -80,6 +81,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const [status, setStatus] = useState<StatusEquipamento | ''>('');
   const [manterAberto, setManterAberto] = useState(false);
   const [sucessoSalvar, setSucessoSalvar] = useState('');
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   // Bens Ativos Fields
   const [baSolicitante, setBaSolicitante] = useState('');
@@ -416,21 +418,34 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         {/* Imagem */}
         <div className="flex-shrink-0 flex flex-col items-center justify-center pt-6">
           <div
-            className={`w-64 h-64 rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors relative group ${isDark ? 'border-slate-700 hover:border-cyan-500 bg-slate-800/50' : 'border-slate-300 hover:border-cyan-500 bg-slate-50'
+            className={`w-64 h-64 rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors relative group ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
               }`}
-            onClick={() => fileInputRef.current?.click()}
           >
             {imagemUrl ? (
               <>
                 <img src={imagemUrl} alt="Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                  <Upload className="text-white" size={32} />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-3 items-center justify-center backdrop-blur-sm">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-colors">
+                    <Upload size={16} /> Trocar Arquivo
+                  </button>
+                  <button type="button" onClick={() => setShowCameraModal(true)} className="flex items-center gap-2 px-4 py-2 bg-cyan-600/80 hover:bg-cyan-500 text-white rounded-xl text-sm font-bold transition-colors">
+                    <Camera size={16} /> Tirar Foto
+                  </button>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center text-slate-400">
-                <ImageIcon size={40} className="mb-2 opacity-50" />
-                <span className="text-sm font-medium">Fazer Upload</span>
+              <div className="flex flex-col items-center justify-center h-full w-full gap-4">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className={`flex flex-col items-center gap-2 p-4 w-[80%] rounded-2xl border border-dashed transition-all hover:scale-105 shadow-md ${isDark ? 'border-slate-600 bg-slate-800/80 hover:bg-slate-700 hover:border-cyan-500 text-slate-300 hover:text-cyan-400' : 'border-slate-300 bg-white hover:border-cyan-400 text-slate-500 hover:text-cyan-600'}`}>
+                  <Upload size={24} />
+                  <span className="text-xs font-bold text-center">Fazer Upload</span>
+                </button>
+                <div className="w-[80%] flex items-center gap-2 text-xs font-medium text-slate-500 opacity-50">
+                  <div className="h-px flex-1 bg-slate-500"></div>OU<div className="h-px flex-1 bg-slate-500"></div>
+                </div>
+                <button type="button" onClick={() => setShowCameraModal(true)} className={`flex flex-col items-center gap-2 p-4 w-[80%] rounded-2xl border border-transparent transition-all hover:scale-105 shadow-md ${isDark ? 'bg-cyan-900/30 hover:bg-cyan-800/50 text-cyan-400 border-cyan-500/30 hover:border-cyan-400' : 'bg-cyan-50 hover:bg-cyan-100 text-cyan-600 border-cyan-200'}`}>
+                  <Camera size={24} />
+                  <span className="text-xs font-bold text-center">Tirar Foto (Webcam)</span>
+                </button>
               </div>
             )}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
@@ -1181,6 +1196,17 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             </div>
           )}
         </AnimatePresence>
+
+        <WebcamCaptureModal
+          isOpen={showCameraModal}
+          onClose={() => setShowCameraModal(false)}
+          theme={theme}
+          onCapture={(imgData) => {
+            setImagemUrl(imgData);
+            setErroImagem('');
+            setShowCameraModal(false);
+          }}
+        />
       </form>
     </EstoqueSidePanel>
   );
