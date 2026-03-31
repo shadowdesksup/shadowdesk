@@ -116,7 +116,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
           {/* Photo */}
           <div className="flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-start">
             {item.imagemUrl ? (
-              <div className={`relative w-48 h-48 md:w-64 md:h-64 rounded-[2rem] border-[4px] overflow-hidden shadow-2xl group ${item.isImagemPrincipal ? 'border-cyan-500/80 shadow-cyan-500/30' : (isDark ? 'border-slate-800/80 shadow-black/50' : 'border-white shadow-slate-300')}`}>
+              <div className={`relative w-48 h-48 md:w-64 md:h-64 rounded-[2rem] border-[4px] overflow-hidden shadow-2xl group ${isDark ? 'border-slate-800/80 shadow-black/50' : 'border-white shadow-slate-300'}`}>
                 <img src={item.imagemUrl} alt="Foto do Equipamento" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-[2rem]"></div>
               </div>

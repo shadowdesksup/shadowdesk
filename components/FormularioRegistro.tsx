@@ -334,8 +334,8 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4 items-end mt-auto pt-2">
-          <div className="col-span-4 flex flex-col gap-1.5">
+        <div className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-end mt-auto pt-2">
+          <div className="sm:col-span-4 flex flex-col gap-1.5">
             <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
               Status *
             </label>
@@ -355,7 +355,7 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
             </div>
           </div>
 
-          <div className="col-span-8">
+          <div className="sm:col-span-8">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

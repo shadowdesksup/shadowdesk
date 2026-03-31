@@ -32,7 +32,7 @@ const StatCard: React.FC<{
       style={{
         boxShadow: theme === 'light' ? undefined : undefined
       }}
-      className={`relative rounded-xl border p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
+      className={`relative rounded-xl border p-3 sm:p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
         ? 'border-white/10 bg-slate-900/50 hover:border-white/20'
         : `border-slate-100 bg-white shadow-sm hover:shadow-xl ${sombraCor}`
         }`}
@@ -46,7 +46,7 @@ const StatCard: React.FC<{
             }`}>
             {titulo}
           </p>
-          <p className={`text-4xl font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+          <p className={`text-2xl sm:text-4xl font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
             }`}>
             {valor}
           </p>
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
       </motion.div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <StatCard
           titulo="Total Geral"
           valor={estatisticas.total}
@@ -164,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
             boxShadow: theme === 'light' ? undefined : undefined
           }}
           onClick={() => onEncerramentoClick?.(dataEncerramento)}
-          className={`relative rounded-xl border p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
+          className={`relative rounded-xl border p-3 sm:p-6 overflow-hidden group cursor-pointer transition-all duration-300 ${theme === 'dark'
             ? 'border-white/10 bg-slate-900/50 hover:border-white/20'
             : 'border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-rose-500/20'
             }`}>
@@ -251,7 +251,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
-        className={`rounded-2xl border p-8 backdrop-blur-md transition-colors duration-300 ${theme === 'dark'
+        className={`rounded-2xl border p-4 sm:p-8 backdrop-blur-md transition-colors duration-300 ${theme === 'dark'
           ? 'border-white/10 bg-white/5'
           : 'border-slate-200 bg-white shadow-sm'
           }`}
@@ -262,7 +262,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
           Resumo por Período
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {/* Hoje */}
           <div className={`flex flex-col gap-3 p-4 rounded-xl border transition-colors duration-300 ${theme === 'dark'
             ? 'bg-white/5 border-white/5'

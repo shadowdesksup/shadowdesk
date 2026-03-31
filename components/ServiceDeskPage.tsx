@@ -361,7 +361,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-auto relative pr-8">
+    <div className="flex-1 flex flex-col h-full overflow-auto relative pr-0 sm:pr-8">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
@@ -492,12 +492,12 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <h1 className={`text-2xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className={`text-xl sm:text-2xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
             <Ticket className="w-6 h-6 text-blue-400" />
             Chamados ServiceDesk
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Mark as Read Button Group */}
             {isSelectionMode ? (
               <motion.div
@@ -614,7 +614,7 @@ export default function ServiceDeskPage({ theme = 'dark', initialContext, onCont
         {/* Table */}
         <div className={`rounded-lg border overflow-hidden ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed">
+            <table className="w-full table-fixed min-w-[600px]">
               <thead className={`border-b ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
                 <tr className={`text-left text-xs uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600 font-semibold'}`}>
                   <th className="px-4 py-3 w-[80px]">#</th>

@@ -45,14 +45,16 @@ const EstoqueGrid: React.FC<EstoqueGridProps> = ({ estoque, busca, theme = 'dark
     });
     
     return Array.from(mapa.entries()).map(([key, list]) => {
+      const itemPrincipal = list.find(i => i.isImagemPrincipal && i.imagemUrl);
+      const capaUrl = itemPrincipal ? itemPrincipal.imagemUrl : list.find(i => i.imagemUrl)?.imagemUrl;
       return {
         id: key,
         tipo: list[0].tipo,
         marca: list[0].marca,
         modelo: list[0].modelo,
-        imagemUrl: list.find(i => i.imagemUrl)?.imagemUrl,
+        imagemUrl: capaUrl,
         itens: list,
-        quantidade: list.length
+        quantidade: list.filter(i => i.status !== 'DESCARTADO' && i.status !== 'DESCARTE' && i.status !== 'TRANSFERIDO').length
       } as GrupoEstoque;
     }).sort((a, b) => a.tipo.localeCompare(b.tipo) || a.marca.localeCompare(b.marca));
   }, [estoque, busca]);

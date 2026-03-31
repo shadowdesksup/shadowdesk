@@ -524,7 +524,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto overflow-hidden relative">
+    <div className="flex flex-col min-h-0 lg:h-[calc(100vh-9rem)] w-full max-w-[1920px] mx-auto lg:overflow-hidden relative">
       <style>{scrollbarHideStyles}</style>
 
       {/* Bulk Action Bar - Floating Pill */}
@@ -598,13 +598,13 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
         </button>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0 pr-8">
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-8 flex-1 min-h-0 pr-0 sm:pr-8">
         {/* Calendário */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className={`lg:col-span-1 rounded-2xl border p-8 flex flex-col h-fit gap-6 ${theme === 'dark'
+          className={`lg:col-span-1 rounded-2xl border p-4 sm:p-8 flex flex-col h-fit gap-4 sm:gap-6 ${theme === 'dark'
             ? 'bg-slate-900/50 border-white/10'
             : 'bg-white border-slate-200 shadow-lg'
             }`}
@@ -760,7 +760,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
             }`}>
             <button
               onClick={() => handleTabChange('meus')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors ${tabAtual === 'meus'
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 font-medium transition-colors ${tabAtual === 'meus'
                 ? theme === 'dark'
                   ? 'text-cyan-400 border-b-2 border-cyan-400'
                   : 'text-cyan-600 border-b-2 border-cyan-600'
@@ -770,12 +770,12 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 }`}
             >
               <Calendar size={18} />
-              {diaSelecionado ? 'Dia Selecionado' : 'Meus Lembretes'}
+              <span className="hidden sm:inline text-sm">{diaSelecionado ? 'Dia Selecionado' : 'Meus Lembretes'}</span>
             </button>
 
             <button
               onClick={() => handleTabChange('expirados')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative ${tabAtual === 'expirados'
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative ${tabAtual === 'expirados'
                 ? theme === 'dark'
                   ? 'text-red-400 border-b-2 border-red-400'
                   : 'text-red-600 border-b-2 border-red-600'
@@ -785,7 +785,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 }`}
             >
               <AlertCircle size={18} />
-              Expirados
+              <span className="hidden sm:inline text-sm">Expirados</span>
               {hasUnreadExpirados && (
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -796,7 +796,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
 
             <button
               onClick={() => handleTabChange('recebidos')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative ${tabAtual === 'recebidos'
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative ${tabAtual === 'recebidos'
                 ? theme === 'dark'
                   ? 'text-purple-400 border-b-2 border-purple-400'
                   : 'text-purple-600 border-b-2 border-purple-600'
@@ -806,7 +806,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 }`}
             >
               <Inbox size={18} />
-              Recebidos ({lembretesRecebidos.length})
+              <span className="hidden sm:inline text-sm">Recebidos ({lembretesRecebidos.length})</span>
               {hasUnreadRecebidos && (
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -817,7 +817,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
 
             <button
               onClick={() => handleTabChange('concluidos')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors ${tabAtual === 'concluidos'
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative ${tabAtual === 'concluidos'
                 ? theme === 'dark'
                   ? 'text-green-400 border-b-2 border-green-400'
                   : 'text-green-600 border-b-2 border-green-600'
@@ -827,7 +827,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
                 }`}
             >
               <CheckCircle size={18} />
-              Concluídos
+              <span className="hidden sm:inline text-sm">Concluídos</span>
               {hasUnreadConcluidos && (
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -838,7 +838,7 @@ const LembretesPage: React.FC<LembretesPageProps> = ({ remindersData, theme = 'd
           </div>
 
           {/* Conteúdo com rolagem e sem barra visível */}
-          <div className="p-8 overflow-y-auto no-scrollbar flex-1 pb-4 min-h-0">
+          <div className="p-4 sm:p-8 overflow-y-auto no-scrollbar flex-1 pb-4 min-h-0">
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500" />

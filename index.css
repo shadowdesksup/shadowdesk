@@ -71,3 +71,15 @@ textarea,
 .border-custom-amber\/30 {
   border-color: hsl(45, 100%, 51%, 0.3);
 }
+
+/* iOS Safe Area Bottom Padding */
+.pb-safe {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* Mobile: remove overflow-hidden from body so content can scroll */
+@media (max-width: 767px) {
+  body {
+    overflow: auto !important;
+  }
+}

@@ -83,6 +83,44 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const [sucessoSalvar, setSucessoSalvar] = useState('');
   const [showCameraModal, setShowCameraModal] = useState(false);
 
+  const [focusedTipoIndex, setFocusedTipoIndex] = useState(-1);
+  const [focusedMarcaIndex, setFocusedMarcaIndex] = useState(-1);
+  const [focusedModeloIndex, setFocusedModeloIndex] = useState(-1);
+  const [focusedAgenciaIndex, setFocusedAgenciaIndex] = useState(-1);
+
+  const handleComboboxKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    showDropdown: boolean,
+    setShowDropdown: React.Dispatch<React.SetStateAction<boolean>>,
+    focusedIndex: number,
+    setFocusedIndex: React.Dispatch<React.SetStateAction<number>>,
+    items: any[],
+    setValue: (val: string) => void
+  ) => {
+    if (!showDropdown) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        e.preventDefault();
+        setShowDropdown(true);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex(prev => (prev < items.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex(prev => (prev > 0 ? prev - 1 : prev));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (focusedIndex >= 0 && focusedIndex < items.length) {
+        setValue(items[focusedIndex].nome);
+        setShowDropdown(false);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
+  };
+
   // Bens Ativos Fields
   const [baSolicitante, setBaSolicitante] = useState('');
   const [baVinculo, setBaVinculo] = useState('');
@@ -304,7 +342,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
     }
 
     if (!imagemUrl && !permitirSemImagem) {
-      setErroImagem('A imagem é obrigatória. Marque a caixa abaixo se deseja anexar depois.');
+      setErroImagem('A imagem é obrigatória. Faça upload, capture uma foto ou marque a opção "Usar imagem definida na capa".');
       return;
     }
     setErroImagem('');
@@ -413,10 +451,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
   return (
     <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-16rem)] max-w-none">
-      <form onSubmit={handleSave} className="p-8 pb-32 flex flex-col lg:flex-row items-start gap-12">
+      <form onSubmit={handleSave} className="p-4 sm:p-8 pb-32 flex flex-col lg:flex-row items-start gap-8 sm:gap-12">
 
         {/* Imagem */}
-        <div className="flex-shrink-0 flex flex-col items-center justify-center pt-6">
+        <div className="flex-shrink-0 flex flex-col items-center justify-center pt-6 w-full lg:w-auto">
           <div
             className={`w-64 h-64 rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors relative group ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
               }`}
@@ -452,13 +490,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
           </div>
 
           {imagemUrl && (
-            <div className="mt-4 flex items-start gap-2 max-w-[16rem] bg-cyan-500/10 p-3 rounded-xl border border-cyan-500/20">
+            <div className={`mt-4 flex items-start gap-3 w-full max-w-[18rem] p-3 rounded-xl border ${isDark ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-cyan-50 border-cyan-200'} transition-all`}>
               <input
                 type="checkbox"
                 id="isImagemPrincipal"
                 checked={isImagemPrincipal}
                 onChange={(e) => setIsImagemPrincipal(e.target.checked)}
-                className={`mt-1 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500`}
+                className={`mt-0.5 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500 flex-shrink-0`}
               />
               <label htmlFor="isImagemPrincipal" className={`text-xs font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-700'} cursor-pointer select-none leading-relaxed`}>
                 Definir esta foto como capa padrão do modelo ({tipo} {marca})
@@ -466,21 +504,23 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             </div>
           )}
 
-          <div className="mt-4 flex items-start gap-2 max-w-[16rem]">
-            <input
-              type="checkbox"
-              id="permitirSemImagem"
-              checked={permitirSemImagem}
-              onChange={(e) => {
-                setPermitirSemImagem(e.target.checked);
-                if (e.target.checked) setErroImagem('');
-              }}
-              className={`mt-1 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500`}
-            />
-            <label htmlFor="permitirSemImagem" className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} cursor-pointer select-none leading-relaxed`}>
-              Registrar sem imagem temporariamente (anexar depois na edição)
-            </label>
-          </div>
+          {!imagemUrl && (
+            <div className={`mt-4 flex items-start gap-3 w-full max-w-[18rem] p-3 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'} transition-all`}>
+              <input
+                type="checkbox"
+                id="permitirSemImagem"
+                checked={permitirSemImagem}
+                onChange={(e) => {
+                  setPermitirSemImagem(e.target.checked);
+                  if (e.target.checked) setErroImagem('');
+                }}
+                className={`mt-0.5 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500 flex-shrink-0`}
+              />
+              <label htmlFor="permitirSemImagem" className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} cursor-pointer select-none leading-relaxed`}>
+                Usar imagem definida na capa (Não requer upload no momento)
+              </label>
+            </div>
+          )}
           {erroImagem && (
             <div className="mt-2 text-red-500 text-xs font-bold text-center max-w-[16rem] bg-red-500/10 p-2 rounded-lg border border-red-500/20">
               {erroImagem}
@@ -506,12 +546,19 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     if (bloqueiaEdicaoGrupo) return;
                     setTipo(e.target.value);
                     setShowTiposDropdown(true);
+                    setFocusedTipoIndex(-1);
                   }}
                   onFocus={() => {
                     if (bloqueiaEdicaoGrupo) return;
                     carregarTipos();
                     setShowTiposDropdown(true);
                   }}
+                  onClick={() => {
+                    if (bloqueiaEdicaoGrupo) return;
+                    carregarTipos();
+                    setShowTiposDropdown(true);
+                  }}
+                  onKeyDown={e => handleComboboxKeyDown(e, showTiposDropdown, setShowTiposDropdown, focusedTipoIndex, setFocusedTipoIndex, tiposToShow, setTipo)}
                   onBlur={() => setTimeout(() => setShowTiposDropdown(false), 200)}
                   placeholder="Ex: Computador, Notebook"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
@@ -529,10 +576,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         Nenhuma sugestão para "{tipo}". Apenas salve para registrar.
                       </div>
                     ) : (
-                      tiposToShow.map(t => (
+                      tiposToShow.map((t, idx) => (
                         <div
                           key={t.id}
-                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedTipoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setTipo(t.nome);
                             setShowTiposDropdown(false);
@@ -826,12 +873,19 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     if (bloqueiaEdicaoGrupo) return;
                     setMarca(e.target.value);
                     setShowMarcasDropdown(true);
+                    setFocusedMarcaIndex(-1);
                   }}
                   onFocus={() => {
                     if (bloqueiaEdicaoGrupo) return;
                     carregarMarcas();
                     setShowMarcasDropdown(true);
                   }}
+                  onClick={() => {
+                    if (bloqueiaEdicaoGrupo) return;
+                    carregarMarcas();
+                    setShowMarcasDropdown(true);
+                  }}
+                  onKeyDown={e => handleComboboxKeyDown(e, showMarcasDropdown, setShowMarcasDropdown, focusedMarcaIndex, setFocusedMarcaIndex, marcasToShow, setMarca)}
                   onBlur={() => setTimeout(() => setShowMarcasDropdown(false), 200)}
                   placeholder="Ex: Dell, HP, Lenovo"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
@@ -849,10 +903,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         Nenhuma sugestão para "{marca}". Apenas salve para registrar.
                       </div>
                     ) : (
-                      marcasToShow.map(t => (
+                      marcasToShow.map((t, idx) => (
                         <div
                           key={t.id}
-                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedMarcaIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setMarca(t.nome);
                             setShowMarcasDropdown(false);
@@ -893,12 +947,19 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     if (bloqueiaEdicaoGrupo) return;
                     setModelo(e.target.value);
                     setShowModelosDropdown(true);
+                    setFocusedModeloIndex(-1);
                   }}
                   onFocus={() => {
                     if (bloqueiaEdicaoGrupo) return;
                     carregarModelos();
                     setShowModelosDropdown(true);
                   }}
+                  onClick={() => {
+                    if (bloqueiaEdicaoGrupo) return;
+                    carregarModelos();
+                    setShowModelosDropdown(true);
+                  }}
+                  onKeyDown={e => handleComboboxKeyDown(e, showModelosDropdown, setShowModelosDropdown, focusedModeloIndex, setFocusedModeloIndex, modelosToShow, setModelo)}
                   onBlur={() => setTimeout(() => setShowModelosDropdown(false), 200)}
                   placeholder="Ex: Optiplex 3020"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
@@ -916,10 +977,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         Nenhuma sugestão para "{modelo}". Apenas salve para registrar.
                       </div>
                     ) : (
-                      modelosToShow.map(t => (
+                      modelosToShow.map((t, idx) => (
                         <div
                           key={t.id}
-                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                          className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedModeloIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setModelo(t.nome);
                             setShowModelosDropdown(false);
@@ -949,8 +1010,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
           <div className="col-span-1 md:col-span-2 mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800">
             {/* Patrimônio */}
             <div>
-              <label className={`block text-sm font-bold mb-1 flex items-center justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                Número de Patrimônio
+              <label className={`block text-sm font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <span className="block">Número de Patrimônio</span>
                 {!semRegistro && <span className={`text-xs font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>* Obrigatório (se não houver Serial)</span>}
               </label>
               <input
@@ -969,8 +1030,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
             {/* Série */}
             <div>
-              <label className={`block text-sm font-bold mb-1 flex items-center justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                Número de Série (S/N)
+              <label className={`block text-sm font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <span className="block">Número de Série (S/N)</span>
                 {!semRegistro && <span className={`text-xs font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>* Obrigatório (se não houver Patrimônio)</span>}
               </label>
               <input
@@ -988,18 +1049,20 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             </div>
             
             {/* Checkbox Sem Registro */}
-            <div className="col-span-1 md:col-span-2 flex items-center gap-3 mt-2 bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
-              <input
-                type="checkbox"
-                id="semRegistroCheckbox"
-                checked={semRegistro}
-                onChange={(e) => setSemRegistro(e.target.checked)}
-                className={`w-5 h-5 rounded cursor-pointer ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-rose-500 focus:ring-rose-500`}
-              />
-              <label htmlFor="semRegistroCheckbox" className={`text-sm font-bold cursor-pointer select-none ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
-                Bem sem informação de registro
-              </label>
-              <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-2 bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="semRegistroCheckbox"
+                  checked={semRegistro}
+                  onChange={(e) => setSemRegistro(e.target.checked)}
+                  className={`w-5 h-5 rounded cursor-pointer flex-shrink-0 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-rose-500 focus:ring-rose-500`}
+                />
+                <label htmlFor="semRegistroCheckbox" className={`text-sm font-bold cursor-pointer select-none ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
+                  Bem sem informação de registro
+                </label>
+              </div>
+              <span className={`text-xs sm:ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 (Marque se o item for antigo ou não possuir nenhum número de identificação)
               </span>
             </div>
@@ -1045,11 +1108,17 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           onChange={e => {
                             setAgenciaFomento(e.target.value);
                             setShowAgenciasDropdown(true);
+                            setFocusedAgenciaIndex(-1);
                           }}
                           onFocus={() => {
                             carregarAgencias();
                             setShowAgenciasDropdown(true);
                           }}
+                          onClick={() => {
+                            carregarAgencias();
+                            setShowAgenciasDropdown(true);
+                          }}
+                          onKeyDown={e => handleComboboxKeyDown(e, showAgenciasDropdown, setShowAgenciasDropdown, focusedAgenciaIndex, setFocusedAgenciaIndex, agenciasToShow, setAgenciaFomento)}
                           onBlur={() => setTimeout(() => setShowAgenciasDropdown(false), 200)}
                           placeholder="Ex: CNPq, FAPESP"
                           className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500'} border`}
@@ -1063,10 +1132,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                                 Nenhuma sugestão para "{agenciaFomento}". Apenas salve para registrar.
                               </div>
                             ) : (
-                              agenciasToShow.map(t => (
+                              agenciasToShow.map((t, idx) => (
                                 <div
                                   key={t.id}
-                                  className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                  className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedAgenciaIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                                   onClick={() => {
                                     setAgenciaFomento(t.nome);
                                     setShowAgenciasDropdown(false);

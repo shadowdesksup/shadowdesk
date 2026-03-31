@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MapPin, Search, Truck, Printer } from 'lucide-react';
+import { Package, MapPin, Search, Truck, Printer, ScanLine } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useEstoque } from '../hooks/useEstoque';
 import EstoqueStats from './EstoqueStats';
@@ -18,6 +18,7 @@ import EstoqueMovimentacaoModal from './EstoqueMovimentacaoModal';
 import EstoqueMovimentadosModal from './EstoqueMovimentadosModal';
 import EstoqueItemViewModal from './EstoqueItemViewModal';
 import EstoquePrintingModal from './EstoquePrintingModal';
+import CameraBarcodeScannerModal from './CameraBarcodeScannerModal';
 import { EquipamentoEstoque } from '../types';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 
@@ -36,7 +37,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
 
   // Gestão de Paineis
   const [grupoSelecionadoId, setGrupoSelecionadoId] = useState<string | null>(null);
-  
+
   // Painel de Formulário
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [equipamentoEditando, setEquipamentoEditando] = useState<EquipamentoEstoque | null>(null);
@@ -53,9 +54,10 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   const [movimentacaoPreItem, setMovimentacaoPreItem] = useState<EquipamentoEstoque | null>(null);
   const [isMovimentadosModalOpen, setIsMovimentadosModalOpen] = useState(false);
   const [isPrintingModalOpen, setIsPrintingModalOpen] = useState(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
   // Painel de Fluxos
-  const [fluxoConfig, setFluxoConfig] = useState<{isOpen: boolean, modo: ModoFluxo, item: EquipamentoEstoque | null}>({
+  const [fluxoConfig, setFluxoConfig] = useState<{ isOpen: boolean, modo: ModoFluxo, item: EquipamentoEstoque | null }>({
     isOpen: false, modo: null, item: null
   });
 
@@ -63,25 +65,24 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   const [scannedItem, setScannedItem] = useState<EquipamentoEstoque | null>(null);
 
   // Escutador Global do Barcode Scanner
-  useBarcodeScanner({
-    onScan: (codigo) => {
-      // 1. Procurar no estoque inteiro (ativo, manutenção, transferido, etc)
-      // Como patrimônio e serial teoricamente são únicos, pegamos o primeiro match exato.
-      const match = estoque.find(
-        (e) => 
-          `SD-${e.id.substring(0,8).toUpperCase()}` === codigo.toUpperCase() ||
-          e.patrimonio?.toLowerCase() === codigo.toLowerCase() || 
-          e.numeroSerie?.toLowerCase() === codigo.toLowerCase()
-      );
-      
-      if (match) {
-        setScannedItem(match); // Abre a ficha do item na tela!
-      } else {
-        console.warn(`Código bípado [${codigo}] não encontrado no sistema.`);
-        // Opcional: Aqui poderíamos disparar um toast notificando "Patrimônio não encontrado".
-      }
+  const handleScan = React.useCallback((codigo: string) => {
+    // 1. Procurar no estoque inteiro (ativo, manutenção, transferido, etc)
+    const match = estoque.find(
+      (e) =>
+        `SD-${e.id.substring(0, 8).toUpperCase()}` === codigo.toUpperCase() ||
+        e.patrimonio?.toLowerCase() === codigo.toLowerCase() ||
+        e.numeroSerie?.toLowerCase() === codigo.toLowerCase()
+    );
+
+    if (match) {
+      setScannedItem(match); // Abre a ficha do item na tela!
+    } else {
+      console.warn(`Código bípado ou escaneado [${codigo}] não encontrado no sistema.`);
+      // Opcional: Aqui poderíamos disparar um toast
     }
-  });
+  }, [estoque]);
+
+  useBarcodeScanner({ onScan: handleScan });
 
   // Derived state para o grupo selecionado (atualiza reativamente)
   const grupoSelecionado = React.useMemo(() => {
@@ -106,7 +107,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
 
   const handleSalvarEquipamento = async (dados: Partial<EquipamentoEstoque>) => {
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
-    
+
     if (equipamentoEditando && equipamentoEditando.id) {
       await atualizarEquipamento(equipamentoEditando.id, {
         ...dados,
@@ -124,10 +125,10 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
       const novoItem: Omit<EquipamentoEstoque, 'id'> = {
         ...dados as Omit<EquipamentoEstoque, 'id' | 'historico' | 'dataEntrada' | 'usuarioCadastro' | 'usuarioCadastroId'>,
         historico: [{
-           acao: 'Cadastro inicial',
-           data: new Date().toISOString(),
-           usuarioId: usuario?.uid || '',
-           usuarioNome: nomeUser
+          acao: 'Cadastro inicial',
+          data: new Date().toISOString(),
+          usuarioId: usuario?.uid || '',
+          usuarioNome: nomeUser
         }],
         dataEntrada: new Date().toISOString(),
         usuarioCadastro: nomeUser,
@@ -145,7 +146,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
     const item = fluxoConfig.item;
     if (!item) return;
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
-    
+
     await atualizarEquipamento(item.id, {
       status: 'TRANSFERIDO',
       detalhes: {
@@ -198,60 +199,67 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   return (
     <div className="h-full overflow-y-auto pr-2 md:pr-4 relative flex flex-col">
       {/* Smart Header Section */}
-      <div className={`p-6 md:p-8 mb-8 rounded-3xl border backdrop-blur-md shadow-xl flex flex-col gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
-        
+      <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border backdrop-blur-md shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10">
           <div>
-            <h2 className={`text-4xl font-extrabold flex items-center gap-3 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl shadow-lg shadow-cyan-500/30">
-                <Package className="text-white" size={32} />
+            <h2 className={`text-2xl sm:text-4xl font-extrabold flex items-center gap-3 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl shadow-lg shadow-cyan-500/30">
+                <Package className="text-white" size={24} />
               </div>
               Controle de Bens e Ativos
             </h2>
-            <p className={`mt-2 text-lg font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`mt-1 sm:mt-2 text-base sm:text-lg font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               Gerenciamento dinâmico avançado do ciclo de vida dos ativos.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setIsCameraScannerOpen(true)}
+              className="group px-2 sm:px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              title="Escanear Código por Câmera"
+            >
+              <ScanLine size={16} className="group-hover:text-cyan-400 transition-colors shrink-0" />
+              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Escanear</span>
+            </button>
             <button
               onClick={() => setIsPrintingModalOpen(true)}
-              className="group px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white flex items-center gap-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="group px-2 sm:px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
               title="Gerar/Imprimir Etiquetas em Lote"
             >
-              <Printer size={20} className="group-hover:text-cyan-400 transition-colors" />
-              <span className="hidden sm:inline tracking-wide text-[15px] drop-shadow-sm">Etiquetas</span>
+              <Printer size={16} className="group-hover:text-cyan-400 transition-colors shrink-0" />
+              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Etiquetas</span>
             </button>
-            <button 
+            <button
               onClick={() => setIsMovimentacaoModalOpen(true)}
-              className="group px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white flex items-center gap-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="group px-2 sm:px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
             >
-              <Truck size={20} className="drop-shadow-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              <span className="tracking-wide text-[15px] drop-shadow-sm">Movimentação</span>
+              <Truck size={16} className="drop-shadow-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Movimentação</span>
             </button>
-            <button 
+            <button
               onClick={() => handleOpenFormModal()}
-              className="group px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center gap-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="group px-2 sm:px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
             >
-              <Package size={20} className="drop-shadow-sm group-hover:rotate-12 transition-transform" />
-              <span className="tracking-wide text-[15px] drop-shadow-sm">Nova Entrada</span>
+              <Package size={16} className="drop-shadow-sm group-hover:rotate-12 transition-transform shrink-0" />
+              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Nova Entrada</span>
             </button>
           </div>
         </div>
 
         {/* Estatísticas High-End */}
         <div className="z-10 mt-2">
-           <EstoqueStats estoque={estoque} theme={theme} onMovimentadosClick={() => setIsMovimentadosModalOpen(true)} />
+          <EstoqueStats estoque={estoque} theme={theme} onMovimentadosClick={() => setIsMovimentadosModalOpen(true)} />
         </div>
 
         {/* Global Search integrated in header */}
         <div className="z-10 w-full max-w-2xl relative">
-          <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all ${
-            isDark 
-              ? 'bg-slate-900/90 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20' 
-              : 'bg-white/90 border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
-          }`}>
+          <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all ${isDark
+            ? 'bg-slate-900/90 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
+            : 'bg-white/90 border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
+            }`}>
             <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
-            <input 
+            <input
               type="text"
               placeholder="Pesquisar em todo o inventário..."
               value={buscaGeral}
@@ -276,7 +284,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         </div>
       ) : (
         <div className="flex-1 pb-10">
-          <EstoqueGrid 
+          <EstoqueGrid
             estoque={estoqueAtivo}
             busca={buscaGeral}
             theme={theme}
@@ -286,18 +294,18 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
       )}
 
       {/* Paneis / Drawers (Antigos Modais reformulados) */}
-      
+
       <EstoqueDetailPanel
         grupo={grupoSelecionado}
         isOpen={grupoSelecionadoId !== null}
         onClose={() => setGrupoSelecionadoId(null)}
         theme={theme}
         onAdicionarUnidade={() => {
-           // Pré-preenche os dados comuns para adicionar unidade rapidamente neste grupo
-           setEquipamentoEditando({
-             id: '', tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '', status: '', dataEntrada: '', usuarioCadastro: '', historico: []
-           });
-           setIsFormModalOpen(true);
+          // Pré-preenche os dados comuns para adicionar unidade rapidamente neste grupo
+          setEquipamentoEditando({
+            id: '', tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '', status: '', dataEntrada: '', usuarioCadastro: '', historico: []
+          });
+          setIsFormModalOpen(true);
         }}
         onEditar={handleOpenFormModal}
         onTransferir={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); }}
@@ -324,7 +332,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onAbreGerenciarLocais={() => setIsLocaisModalOpen(true)}
       />
 
-      <GerenciarLocaisModal 
+      <GerenciarLocaisModal
         isOpen={isLocaisModalOpen}
         onClose={() => setIsLocaisModalOpen(false)}
         theme={theme}
@@ -335,7 +343,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onClose={() => setIsTiposModalOpen(false)}
         theme={theme}
       />
-      
+
       <GerenciarMarcasModal
         isOpen={isMarcasModalOpen}
         onClose={() => setIsMarcasModalOpen(false)}
@@ -366,7 +374,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         theme={theme}
       />
 
-      <EstoqueMovimentacaoModal 
+      <EstoqueMovimentacaoModal
         isOpen={isMovimentacaoModalOpen}
         onClose={() => { setIsMovimentacaoModalOpen(false); setMovimentacaoPreItem(null); }}
         estoqueAtivo={estoqueAtivo}
@@ -376,7 +384,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         preSelectedItem={movimentacaoPreItem}
       />
 
-      <EstoqueFluxoModal 
+      <EstoqueFluxoModal
         isOpen={fluxoConfig.isOpen}
         onClose={() => setFluxoConfig(prev => ({ ...prev, isOpen: false }))}
         item={fluxoConfig.item}
@@ -394,7 +402,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         theme={theme}
       />
       {/* Global Barcode Scanner View Modal */}
-      <EstoqueItemViewModal 
+      <EstoqueItemViewModal
         isOpen={scannedItem !== null}
         onClose={() => setScannedItem(null)}
         item={scannedItem}
@@ -403,6 +411,13 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onMovimentar={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); setScannedItem(null); }}
         onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
         onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
+      />
+
+      <CameraBarcodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleScan}
+        theme={theme}
       />
 
       <EstoquePrintingModal

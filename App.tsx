@@ -249,7 +249,7 @@ function App() {
       case 'dashboard':
         const estatisticas = obterEstatisticas();
         return (
-          <div className="h-full flex flex-col gap-8 pr-8 overflow-y-auto pb-8">
+          <div className="h-full flex flex-col gap-6 sm:gap-8 pr-0 sm:pr-8 overflow-y-auto pb-8">
             <Dashboard
               estatisticas={estatisticas}
               theme={theme}
@@ -258,7 +258,7 @@ function App() {
               onEncerramentoClick={handleEncerramentoClick}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
               {/* Lembretes Agendados */}
               <div className="lg:col-span-5 w-full flex flex-col gap-8">
 
@@ -283,7 +283,7 @@ function App() {
               </div>
 
               {/* ServiceDesk Tickets Ticker (Replaces Registros Recentes) */}
-              <div className="lg:col-span-7 flex flex-col">
+              <div className="lg:col-span-7 flex flex-col pb-8">
                 <DashboardTicketsTicker
                   theme={theme}
                   userName={userNome}
@@ -352,7 +352,7 @@ function App() {
 
       case 'historico':
         return (
-          <div className="flex flex-col gap-6 h-full overflow-hidden pr-8">
+          <div className="flex flex-col gap-6 h-full overflow-y-auto sm:overflow-hidden pr-0 sm:pr-8">
             <ListaRegistros
               registros={registros}
               customMaxHeight="100%"
@@ -385,7 +385,7 @@ function App() {
 
       case 'perfil':
         return (
-          <div className="h-full overflow-y-auto pr-8">
+          <div className="h-full overflow-y-auto pr-0 sm:pr-8">
             <ProfilePage usuario={usuario!} dadosUsuario={dadosUsuario} theme={theme} />
           </div>
         );
@@ -523,8 +523,8 @@ function App() {
             />
 
             <main className={`flex-1 overflow-y-auto wide:overflow-hidden ${paginaAtual === 'clima'
-              ? 'px-4 wide:px-4 py-2'
-              : 'px-8 wide:pl-8 wide:pr-0 pt-8 pb-[7px]'
+              ? 'px-3 sm:px-4 wide:px-4 py-2'
+              : 'px-3 sm:px-8 wide:pl-8 wide:pr-0 pt-4 sm:pt-8 pb-safe'
               }`}>
               {renderizarConteudo()}
             </main>

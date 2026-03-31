@@ -37,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className={`flex items-center justify-between border-b px-8 py-4 backdrop-blur-md z-20 transition-all duration-300 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white/80 shadow-sm'
+      className={`flex items-center justify-between border-b px-4 sm:px-8 py-3 sm:py-4 backdrop-blur-md z-20 transition-all duration-300 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white/80 shadow-sm'
         }`}
     >
       <div className={`flex items-center gap-4 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
@@ -64,10 +64,10 @@ const Header: React.FC<HeaderProps> = ({
 
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Session Timer */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Session Timer — only on desktop */}
         {timeLeft && (
-          <div className={`px-3 py-1.5 rounded-lg border font-mono text-xs font-bold mr-2 ${theme === 'dark'
+          <div className={`hidden sm:flex px-3 py-1.5 rounded-lg border font-mono text-xs font-bold mr-2 ${theme === 'dark'
             ? 'bg-slate-800 border-slate-700 shadow-[0_0_10px_-3px_rgba(254,85,85,0.2)]'
             : 'bg-white border-slate-200 shadow-sm'
             }`}
@@ -125,13 +125,13 @@ const Header: React.FC<HeaderProps> = ({
           }}
         />
 
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle Button — hidden on mobile */}
         {onToggleTheme && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleTheme}
-            className={`p-2 rounded-xl border transition-all duration-300 ${theme === 'dark'
+            className={`hidden sm:flex p-2 rounded-xl border transition-all duration-300 ${theme === 'dark'
               ? 'border-white/10 bg-white/5 text-yellow-400 hover:bg-yellow-400/10'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
               }`}
@@ -147,9 +147,10 @@ const Header: React.FC<HeaderProps> = ({
           </motion.button>
         )}
 
-        <div className={`flex items-center gap-3 pl-4 border-l ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
+        <div className={`flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'
           }`}>
-          <div className="text-right">
+          {/* Username + role — hidden on mobile */}
+          <div className="hidden sm:block text-right">
             <p className={`text-sm font-bold leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-800'
               }`}>{nomeUsuario}</p>
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
@@ -159,8 +160,8 @@ const Header: React.FC<HeaderProps> = ({
             whileHover={{ scale: 1.05 }}
             className="relative rounded-full p-0.5 bg-gradient-to-tr from-cyan-500 to-blue-600"
           >
-            <div className="size-10 rounded-full border-2 border-slate-900 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">
+            <div className="size-8 sm:size-10 rounded-full border-2 border-slate-900 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">
                 {nomeUsuario.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -171,14 +172,14 @@ const Header: React.FC<HeaderProps> = ({
           whileHover={{ scale: 1.05, backgroundColor: "rgba(239,68,68,0.1)" }}
           whileTap={{ scale: 0.95 }}
           onClick={onLogout}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors ${theme === 'dark'
+          className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-xl border transition-colors ${theme === 'dark'
             ? 'border-white/10 bg-transparent text-slate-400 hover:text-red-400 hover:border-red-500/30'
             : 'border-slate-200 bg-white text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 shadow-sm'
             }`}
           title="Sair"
         >
           <LogOut size={18} />
-          <span className="text-sm font-medium">Sair</span>
+          <span className="hidden sm:inline text-sm font-medium">Sair</span>
         </motion.button>
       </div>
     </motion.header>
