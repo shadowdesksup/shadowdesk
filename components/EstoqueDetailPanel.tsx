@@ -94,38 +94,100 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
               <div
                 key={item.id}
                 onClick={() => setViewingItem(item)}
-                className={`p-4 rounded-xl cursor-pointer border transition-all flex flex-col md:flex-row gap-4 items-start md:items-center justify-between group ${isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400'
+                className={`p-3 sm:p-4 rounded-xl cursor-pointer border transition-all flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group ${isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400'
                   }`}
               >
-                {/* Thumbnail */}
-                <div className="flex-shrink-0 relative"
-                  onMouseEnter={(e) => { if (item.imagemUrl) { setHoverImgId(item.id); } }}
-                  onMouseLeave={() => setHoverImgId(null)}
-                  onMouseMove={(e) => {
-                    if (item.imagemUrl) {
-                      const previewEl = document.getElementById(`preview-${item.id}`);
-                      if (previewEl) {
-                        previewEl.style.left = `${e.clientX + 20}px`;
-                        previewEl.style.top = `${Math.min(e.clientY - 100, window.innerHeight - 320)}px`;
+                <div className="flex flex-row items-start gap-4 w-full xl:w-auto flex-1 min-w-0">
+                  {/* Thumbnail */}
+                  <div className="flex-shrink-0 mt-0.5 relative"
+                    onMouseEnter={(e) => { if (item.imagemUrl) { setHoverImgId(item.id); } }}
+                    onMouseLeave={() => setHoverImgId(null)}
+                    onMouseMove={(e) => {
+                      if (item.imagemUrl) {
+                        const previewEl = document.getElementById(`preview-${item.id}`);
+                        if (previewEl) {
+                          previewEl.style.left = `${e.clientX + 20}px`;
+                          previewEl.style.top = `${Math.min(e.clientY - 100, window.innerHeight - 320)}px`;
+                        }
                       }
-                    }
-                  }}
-                >
-                  {item.imagemUrl ? (
-                    <div className={`w-16 h-16 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${item.isImagemPrincipal
-                        ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
-                        : (isDark ? 'border-slate-600' : 'border-slate-300')
-                      }`}>
-                      <img src={item.imagemUrl} alt="Foto" className="w-full h-full object-cover" />
+                    }}
+                  >
+                    {item.imagemUrl ? (
+                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${item.isImagemPrincipal
+                          ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
+                          : (isDark ? 'border-slate-600' : 'border-slate-300')
+                        }`}>
+                        <img src={item.imagemUrl} alt="Foto" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 border-dashed flex items-center justify-center ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
+                        }`}>
+                        <ImageIcon size={20} className="text-slate-500 opacity-40" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info Principal Compacta */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    {/* Top Row: IDs e Status */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {item.patrimonio ? (
+                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>PT: {item.patrimonio}</span>
+                      ) : item.numeroProcesso ? (
+                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'}`}>PR: {item.numeroProcesso}</span>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500'}`}>S/ ID</span>
+                      )}
+                      {item.numeroSerie && (
+                        <span className={`text-[11px] sm:text-xs font-mono font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>NS: {item.numeroSerie}</span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border ml-auto sm:ml-0 ${getStatusColor(item.status)}`}>
+                        {item.status.replace('_', ' ')}
+                      </span>
                     </div>
-                  ) : (
-                    <div className={`w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
-                      }`}>
-                      <ImageIcon size={20} className="text-slate-500 opacity-40" />
+
+                    {/* Localização */}
+                    <div className={`text-xs sm:text-sm font-semibold truncate flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] flex-shrink-0"></div>
+                      <span className="truncate">{item.bensAtivos?.alocadoEm || item.bensAtivos?.origem || 'Local não definido'}</span>
                     </div>
-                  )}
+
+                    {/* Meta Info (Responsável, Condição) lado a lado no mobile */}
+                    <div className={`grid grid-cols-2 gap-2 text-[10px] sm:text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                       <div className="truncate">
+                         <span className="opacity-70">Responsável:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'NR'}</span>
+                       </div>
+                       <div className="truncate">
+                         <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
+                       </div>
+                    </div>
+                  </div>
                 </div>
-                {/* Hover Preview - Fixed to viewport */}
+
+                {/* Actions Inline */}
+                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap gap-1 p-1 rounded-lg border mt-2 xl:mt-0 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[32px] sm:min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-200 text-slate-600'}`} title="Editar">
+                    <Edit size={16} />
+                  </button>
+                  {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
+                    <>
+                      <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
+                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-purple-900/50 text-purple-400' : 'hover:bg-purple-100 text-purple-600'}`} title="Transferir Local">
+                        <ArrowRightLeft size={16} />
+                      </button>
+                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-rose-900/50 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`} title="Descarte/Laudo">
+                        <PackageX size={16} />
+                      </button>
+                    </>
+                  )}
+                  {/* Delete Definitivo */}
+                  <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
+                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-red-900/50 text-red-500' : 'hover:bg-red-100 text-red-600'}`} title="Apagar Registro Físico (Perigoso)">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                {/* Hover Preview Tooltip Fixed */}
                 {hoverImgId === item.id && item.imagemUrl && (
                   <div
                     id={`preview-${item.id}`}
@@ -144,86 +206,6 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                     )}
                   </div>
                 )}
-
-                {/* Info Principal */}
-                <div className="flex-1 min-w-0">
-                  {/* Display no formato Lista Fina (Service Desk) */}
-                  <div className="flex flex-col xl:flex-row gap-4 xl:items-center">
-                    
-                    {/* Bloco 1: Identificadores (Fixo) */}
-                    <div className="flex flex-col justify-center gap-2 xl:w-[280px] flex-shrink-0">
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        {item.patrimonio ? (
-                          <span className={`px-2.5 py-1 rounded-md text-sm font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>PT: {item.patrimonio}</span>
-                        ) : item.numeroProcesso ? (
-                          <span className={`px-2.5 py-1 rounded-md text-sm font-mono font-bold ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'}`}>PR: {item.numeroProcesso}</span>
-                        ) : (
-                          <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500'}`}>S/ ID</span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${getStatusColor(item.status)}`}>
-                          {item.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      {item.numeroSerie && (
-                        <div className={`text-sm font-mono flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                          <span className="opacity-60 text-xs font-sans tracking-wide">SÉRIE:</span>
-                          <span className="font-semibold">{item.numeroSerie}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Divisor Desktop */}
-                    <div className={`hidden xl:block w-px h-10 ${isDark ? 'bg-slate-700/50' : 'bg-slate-200'}`} />
-
-                    {/* Bloco 2: Localização e Estado (Fixo) */}
-                    <div className="flex flex-col justify-center gap-2 xl:w-[300px] flex-shrink-0">
-                      <div className={`text-sm truncate flex items-center gap-2.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                        <span className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] flex-shrink-0"></span>
-                        <span className="font-semibold">{item.bensAtivos?.alocadoEm || item.bensAtivos?.origem || 'Local não definido'}</span>
-                      </div>
-                      <div className={`text-xs flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <span className="opacity-70">Condição atual:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
-                      </div>
-                    </div>
-
-                    {/* Divisor Desktop */}
-                    <div className={`hidden xl:block w-px h-10 ${isDark ? 'bg-slate-700/50' : 'bg-slate-200'}`} />
-
-                    {/* Bloco 3: Propriedade e Registro (Flex-1) */}
-                    <div className="flex flex-col justify-center gap-2 flex-1 min-w-0">
-                      <div className={`text-sm truncate ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                         <span className="opacity-60">Responsável:</span> <span className="font-medium">{item.bensAtivos?.solicitante || 'Não atribuído'}</span> {item.bensAtivos?.vinculo ? <span className="opacity-50 text-xs">({item.bensAtivos.vinculo})</span> : ''}
-                      </div>
-                      <div className={`text-xs truncate ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                         Registrado em {new Date(item.dataEntrada).toLocaleDateString()} por <span className="font-medium">{item.usuarioCadastro}</span>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* Actions Inline */}
-                <div className={`flex-shrink-0 flex items-center md:flex-nowrap gap-1 p-1 rounded-lg border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[32px] sm:min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-200 text-slate-600'}`} title="Editar">
-                    <Edit size={16} />
-                  </button>
-                  {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
-                    <>
-                      <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
-                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-purple-900/50 text-purple-400' : 'hover:bg-purple-100 text-purple-600'}`} title="Transferir Local">
-                        <ArrowRightLeft size={16} />
-                      </button>
-                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-rose-900/50 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`} title="Descarte/Laudo">
-                        <PackageX size={16} />
-                      </button>
-                    </>
-                  )}
-                  {/* Delete Definitivo (Optional, usually good for sysadmins) */}
-                  <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
-                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-red-900/50 text-red-500' : 'hover:bg-red-100 text-red-600'}`} title="Apagar Registro Físico (Perigoso)">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
               </div>
             ))
           )}

@@ -559,7 +559,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       </AnimatePresence>
 
       {/* LEFT COLUMN: FORM */}
-      <div className={`flex-1 flex flex-col gap-4 pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
+      <div className={`flex-1 flex flex-col gap-4 pr-0 wide:pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
 
         {/* Header Compacto */}
         <div

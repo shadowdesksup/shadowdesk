@@ -13,7 +13,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark', isOpen, onClose }) => {
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', pagina: 'dashboard' },
-    { icon: <Ticket size={20} />, label: 'ServiceDesk', pagina: 'servicedesk' },
+    // { icon: <Ticket size={20} />, label: 'ServiceDesk', pagina: 'servicedesk' }, // Desabilitado temporariamente (Workers offline)
     { icon: <Package size={20} />, label: 'Estoque', pagina: 'estoque' },
     { icon: <Wrench size={20} />, label: 'Manutenção', pagina: 'manutencoes' },
     { icon: <PlusCircle size={20} />, label: 'Novo Registro', pagina: 'novo' },

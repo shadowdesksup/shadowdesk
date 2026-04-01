@@ -58,7 +58,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
 
       {/* Top-Right Horizontal Action Bar */}
       {(onEditar || onMovimentar || onDescartar || onManutencao) && item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
-        <div className="absolute top-0 right-4 z-[100] no-print flex items-center gap-2">
+        <div className="absolute top-0 right-4 z-[100] no-print flex items-center min-h-[56px] gap-2">
           {/* Sliding buttons panel */}
           <AnimatePresence>
             {isMenuOpen && (
@@ -69,26 +69,27 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="overflow-hidden"
               >
-                <div className={`flex items-center gap-2 px-2 py-2 rounded-xl border shadow-xl backdrop-blur-xl mr-1 ${isDark ? 'bg-slate-900/95 border-slate-700/80' : 'bg-white/95 border-slate-200'}`}>
+                <div className={`flex flex-col md:flex-row items-stretch md:items-center gap-2 px-2 py-2 rounded-xl border shadow-xl backdrop-blur-xl mr-1 ${isDark ? 'bg-slate-900/95 border-slate-700/80' : 'bg-white/95 border-slate-200'}`}>
                   {onMovimentar && (
-                    <button onClick={() => { onMovimentar(item); setIsMenuOpen(false); }} className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 whitespace-nowrap">
+                    <button onClick={() => { onMovimentar(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 whitespace-nowrap">
                       <ArrowRightLeft size={16} /> Movimentar
                     </button>
                   )}
                   {onManutencao && (
-                    <button onClick={() => { onManutencao(item); setIsMenuOpen(false); }} className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 whitespace-nowrap">
+                    <button onClick={() => { onManutencao(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 whitespace-nowrap">
                       <Wrench size={16} /> Manutenção
                     </button>
                   )}
                   {onDescartar && (
-                    <button onClick={() => { onDescartar(item); setIsMenuOpen(false); }} className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+                    <button onClick={() => { onDescartar(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 whitespace-nowrap">
                       <PackageX size={16} /> Descartar
                     </button>
                   )}
                   {onEditar && (
                     <>
-                      <div className={`w-px h-7 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                      <button onClick={() => { onEditar(item); setIsMenuOpen(false); }} className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap ${isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}>
+                      <div className={`hidden md:block w-px h-7 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+                      <div className={`md:hidden w-full h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+                      <button onClick={() => { onEditar(item); setIsMenuOpen(false); }} className={`flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap ${isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}>
                         <Edit2 size={16} /> Editar
                       </button>
                     </>
@@ -237,28 +238,26 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
           )}
 
           {/* Block: Projeto */}
-          {item.temProjeto && (
-            <div className={`p-6 rounded-3xl border ${isDark ? 'bg-purple-900/10 border-purple-500/20 shadow-inner' : 'bg-purple-50 border-purple-200 shadow-sm'}`}>
-              <div className="flex items-center gap-3 mb-6">
-                <FileText className={isDark ? 'text-purple-400' : 'text-purple-600'} size={24} />
-                <h3 className={`text-xl font-bold tracking-tight ${isDark ? 'text-purple-400' : 'text-purple-700'}`}>Projeto de Pesquisa</h3>
+          <div className={`p-6 rounded-3xl border ${isDark ? 'bg-purple-900/10 border-purple-500/20 shadow-inner' : 'bg-purple-50 border-purple-200 shadow-sm'}`}>
+            <div className="flex items-center gap-3 mb-6">
+              <FileText className={isDark ? 'text-purple-400' : 'text-purple-600'} size={24} />
+              <h3 className={`text-xl font-bold tracking-tight ${isDark ? 'text-purple-400' : 'text-purple-700'}`}>Projeto de Pesquisa</h3>
+            </div>
+            <div className="flex flex-col gap-5">
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Agência Vinculada</p>
+                <p className={`font-medium mt-1 ${item.agenciaFomento ? (isDark ? 'text-slate-200' : 'text-slate-800') : (isDark ? 'text-slate-500' : 'text-slate-400')}`}>{item.agenciaFomento || '-'}</p>
               </div>
-              <div className="flex flex-col gap-5">
-                <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Agência Vinculada</p>
-                  <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.agenciaFomento}</p>
-                </div>
-                <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Número do Processo</p>
-                  <p className={`font-medium font-mono text-lg mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.numeroProcesso}</p>
-                </div>
-                <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Termo Administrativo</p>
-                  <p className={`font-medium font-mono mt-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.numeroTermo}</p>
-                </div>
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Número do Processo</p>
+                <p className={`font-medium font-mono text-lg mt-1 ${item.numeroProcesso ? (isDark ? 'text-slate-200' : 'text-slate-800') : (isDark ? 'text-slate-500' : 'text-slate-400')}`}>{item.numeroProcesso || '-'}</p>
+              </div>
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-purple-500/80' : 'text-purple-700/70'}`}>Termo Administrativo</p>
+                <p className={`font-medium font-mono mt-1 ${item.numeroTermo ? (isDark ? 'text-slate-300' : 'text-slate-700') : (isDark ? 'text-slate-500' : 'text-slate-400')}`}>{item.numeroTermo || '-'}</p>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Block: Manutenção */}
           {item.manutencaoAtual && (

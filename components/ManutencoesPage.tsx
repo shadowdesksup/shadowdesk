@@ -68,7 +68,7 @@ const ManutencoesPage: React.FC<ManutencoesPageProps> = ({ theme = 'dark' }) => 
   };
 
   return (
-    <div className="h-full overflow-y-auto pr-2 md:pr-4 relative flex flex-col">
+    <div className="h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col">
       {/* Header Central de Manutenções */}
       <div className={`p-6 md:p-8 mb-8 rounded-3xl border backdrop-blur-md shadow-xl flex flex-col gap-6 bg-cover bg-center ${isDark ? 'bg-orange-950/40 border-orange-500/20' : 'bg-orange-50 border-orange-500/10'}`}>
         

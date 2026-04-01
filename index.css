@@ -82,4 +82,10 @@ textarea,
   body {
     overflow: auto !important;
   }
+  
+  /* Retirar barra de rolagem no mobile para aproveitar 100% do espaço da tela */
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
 }

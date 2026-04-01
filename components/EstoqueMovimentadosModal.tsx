@@ -89,10 +89,10 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.02 }}
-                    className={`flex flex-col md:flex-row items-center cursor-pointer gap-4 py-3 px-4 rounded-xl border-b last:border-b-0 transition-all ${isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-200 hover:bg-slate-50'
+                    className={`flex flex-row items-start cursor-pointer gap-3 sm:gap-4 py-3 sm:py-4 px-3 sm:px-4 rounded-xl border-b last:border-b-0 transition-all ${isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-200 hover:bg-slate-50'
                       }`}
                   >
-                    <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-100'}`}>
+                    <div className={`w-10 h-10 mt-1 sm:mt-0 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-100'}`}>
                       {item.imagemUrl ? (
                         <img src={item.imagemUrl} alt="miniatura" className="w-full h-full object-cover" />
                       ) : (
@@ -100,49 +100,59 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-5 gap-4 items-center w-full">
-                      {/* Item Info */}
-                      <div className="md:col-span-1">
-                        <h4 className={`text-sm font-bold truncate flex items-center gap-2 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                          {item.marca} {item.modelo}
-                        </h4>
-                        <div className="flex flex-wrap gap-2 text-[10px] mt-0.5 font-mono items-center">
-                          {item.patrimonio && <span className={`text-cyan-500 font-medium`}>PT:{item.patrimonio}</span>}
-                          {item.numeroSerie && <span className={`text-indigo-400 font-medium`}>NS:{item.numeroSerie}</span>}
+                    <div className="flex-1 min-w-0 flex flex-col md:grid md:grid-cols-5 md:gap-4 w-full">
+                      {/* Item Info & Date (Mobile top row) */}
+                      <div className="md:col-span-1 flex justify-between items-start w-full">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h4 className={`text-sm font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                            {item.marca} {item.modelo}
+                          </h4>
+                          <div className="flex flex-wrap gap-1.5 text-[10px] sm:text-xs mt-0.5 font-mono items-center">
+                            {item.patrimonio && <span className={`text-cyan-500 font-medium`}>PT:{item.patrimonio}</span>}
+                            {item.numeroSerie && <span className={`text-indigo-400 font-medium`}>NS:{item.numeroSerie}</span>}
+                          </div>
+                        </div>
+                        {/* Mobile Date */}
+                        <div className="md:hidden flex-shrink-0">
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                            {item.detalhes?.dataSaidaTransferencia ? new Date(item.detalhes.dataSaidaTransferencia).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : '--/--'}
+                          </span>
                         </div>
                       </div>
 
                       {/* Trajeto (Origem -> Destino) */}
-                      <div className="md:col-span-1 flex flex-col gap-1">
-                        <div className={`text-[11px] font-medium flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <MapPin size={10} className="opacity-50" />
-                          <span className="truncate">De: {item.bensAtivos?.alocadoEm || 'DTI - Sala 12 - Suporte'}</span>
+                      <div className="md:col-span-1 flex flex-col gap-0.5 mt-2 md:mt-0 text-[10px] sm:text-xs">
+                        <div className={`font-medium flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <MapPin size={10} className="opacity-50 shrink-0" />
+                          <span className="truncate">De: {item.bensAtivos?.alocadoEm || 'Suporte'}</span>
                         </div>
-                        <div className={`text-xs font-semibold flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                          <MapPin size={12} className="text-purple-500 flex-shrink-0" />
+                        <div className={`font-semibold flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                          <MapPin size={10} className="text-purple-500 flex-shrink-0" />
                           <span className="truncate">Para: {item.detalhes?.localDestinoNome || 'Desconhecido'}</span>
                         </div>
                       </div>
 
-                      {/* Novo Recebedor */}
-                      <div className="md:col-span-1 flex flex-col justify-center min-w-0">
-                        <div className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Destinatário</div>
-                        <div className={`text-xs truncate ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                          <span className="font-semibold">{item.detalhes?.recebedorNome || 'Não informado'}</span>
-                          {item.detalhes?.vinculoDestino && <span className="opacity-70 text-[10px] ml-1">({item.detalhes.vinculoDestino})</span>}
+                      {/* Info Complementar: Destinatário e Operador */}
+                      <div className="grid grid-cols-2 md:col-span-2 gap-2 mt-2 md:mt-0 border-t border-dashed border-slate-700/50 md:border-none pt-2 md:pt-0">
+                        {/* Novo Recebedor */}
+                        <div className="flex flex-col min-w-0">
+                          <div className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Destinatário</div>
+                          <div className={`text-[11px] sm:text-xs truncate ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                            <span className="font-semibold">{item.detalhes?.recebedorNome || 'Não informado'}</span>
+                          </div>
+                        </div>
+
+                        {/* Movido por (Operador) */}
+                        <div className="flex flex-col min-w-0 border-l border-slate-700/50 md:border-none pl-2 md:pl-0">
+                          <div className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Movido por</div>
+                          <div className={`text-[11px] sm:text-xs truncate ${isDark ? 'text-cyan-400' : 'text-cyan-600'} font-medium`}>
+                            {item.detalhes?.usuarioTransferencia || (item.historico && item.historico.length > 0 ? item.historico[item.historico.length - 1].usuarioNome.split(' ')[0] : 'Sistema')}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Movido por (Operador) */}
-                      <div className="md:col-span-1 flex flex-col justify-center min-w-0">
-                        <div className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Movido por</div>
-                        <div className={`text-xs truncate ${isDark ? 'text-cyan-400' : 'text-cyan-600'} font-medium`}>
-                          {item.detalhes?.usuarioTransferencia || (item.historico && item.historico.length > 0 ? item.historico[item.historico.length - 1].usuarioNome : 'Sistema')}
-                        </div>
-                      </div>
-
-                      {/* Date */}
-                      <div className="md:col-span-1 md:text-right">
+                      {/* Desktop Date */}
+                      <div className="hidden md:flex md:col-span-1 justify-end items-center">
                         <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
                           {item.detalhes?.dataSaidaTransferencia ? new Date(item.detalhes.dataSaidaTransferencia).toLocaleDateString('pt-BR') : 'Data Indisponível'}
                         </span>

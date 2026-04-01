@@ -1203,11 +1203,11 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               ✅ {sucessoSalvar}
             </div>
           )}
-          <div className="flex justify-end items-center gap-3 w-full">
-            <div className={`mr-auto flex items-center gap-3 text-sm font-medium transition-colors select-none ${isDark ? 'text-slate-400' : 'text-slate-600'}`} title="Mantém os campos preenchidos após salvar (útil para adicionar várias unidades do mesmo tipo)">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 w-full">
+            <div className={`flex items-center gap-3 text-sm font-medium transition-colors select-none ${isDark ? 'text-slate-400' : 'text-slate-600'}`} title="Mantém os campos preenchidos após salvar (útil para adicionar várias unidades do mesmo tipo)">
               <button
                 type="button"
-                className={`w-12 h-6 rounded-full flex items-center p-1 transition-colors duration-300 focus:outline-none ${manterAberto ? 'bg-cyan-500' : (isDark ? 'bg-slate-700' : 'bg-slate-300')
+                className={`w-12 h-6 flex-shrink-0 rounded-full flex items-center p-1 transition-colors duration-300 focus:outline-none ${manterAberto ? 'bg-cyan-500' : (isDark ? 'bg-slate-700' : 'bg-slate-300')
                   }`}
                 onClick={() => setManterAberto(!manterAberto)}
               >
@@ -1218,23 +1218,26 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 Fixar dados formulário (Lote)
               </span>
             </div>
-            <button
-              type="button" onClick={onClose}
-              className={`px-5 py-2.5 rounded-xl font-medium transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit" disabled={carregando}
-              className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-xl font-bold transition-transform active:scale-95 shadow-lg shadow-cyan-500/30 flex items-center gap-2 disabled:opacity-70 disabled:scale-100"
-            >
-              {carregando ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Save size={20} />
-              )}
-              {carregando ? 'Salvando...' : 'Salvar Equipamento'}
-            </button>
+            
+            <div className="flex justify-end items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button" onClick={onClose}
+                className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-medium transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit" disabled={carregando}
+                className="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-xl font-bold transition-transform active:scale-95 shadow-lg shadow-cyan-500/30 flex justify-center items-center gap-2 disabled:opacity-70 disabled:scale-100"
+              >
+                {carregando ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Save size={20} />
+                )}
+                <span className="truncate">{carregando ? 'Salvando...' : 'Salvar Equipamento'}</span>
+              </button>
+            </div>
           </div>
         </div>
 

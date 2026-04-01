@@ -197,7 +197,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   };
 
   return (
-    <div className="h-full overflow-y-auto pr-2 md:pr-4 relative flex flex-col">
+    <div className="h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col">
       {/* Smart Header Section */}
       <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border backdrop-blur-md shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
 
@@ -213,36 +213,36 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
               Gerenciamento dinâmico avançado do ciclo de vida dos ativos.
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-2 gap-y-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
             <button
               onClick={() => setIsCameraScannerOpen(true)}
-              className="group px-2 sm:px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="sm:hidden order-3 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
               title="Escanear Código por Câmera"
             >
-              <ScanLine size={16} className="group-hover:text-cyan-400 transition-colors shrink-0" />
-              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Escanear</span>
+              <ScanLine className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
+              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Escanear</span>
             </button>
             <button
               onClick={() => setIsPrintingModalOpen(true)}
-              className="group px-2 sm:px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="order-4 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
               title="Gerar/Imprimir Etiquetas em Lote"
             >
-              <Printer size={16} className="group-hover:text-cyan-400 transition-colors shrink-0" />
-              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Etiquetas</span>
+              <Printer className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
+              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Etiquetas</span>
             </button>
             <button
               onClick={() => setIsMovimentacaoModalOpen(true)}
-              className="group px-2 sm:px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="order-1 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 sm:hover:from-purple-400 sm:hover:to-indigo-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
             >
-              <Truck size={16} className="drop-shadow-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
-              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Movimentação</span>
+              <Truck className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:translate-x-0.5 sm:group-hover:-translate-y-0.5 transition-transform shrink-0" />
+              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Movimentação</span>
             </button>
             <button
               onClick={() => handleOpenFormModal()}
-              className="group px-2 sm:px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="order-2 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 sm:hover:from-cyan-400 sm:hover:to-blue-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
             >
-              <Package size={16} className="drop-shadow-sm group-hover:rotate-12 transition-transform shrink-0" />
-              <span className="tracking-wide text-xs sm:text-sm drop-shadow-sm truncate">Nova Entrada</span>
+              <Package className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:rotate-12 transition-transform shrink-0" />
+              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Nova Entrada</span>
             </button>
           </div>
         </div>
