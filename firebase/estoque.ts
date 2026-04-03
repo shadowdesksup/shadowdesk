@@ -10,7 +10,8 @@ import {
   orderBy,
   arrayUnion,
   where,
-  limit
+  limit,
+  onSnapshot
 } from 'firebase/firestore';
 import { EquipamentoEstoque, EstoqueHistorico } from '../types';
 
@@ -25,6 +26,17 @@ export const listarEstoque = async (): Promise<EquipamentoEstoque[]> => {
     console.error('Erro ao listar estoque:', error);
     throw new Error('Não foi possível carregar o estoque');
   }
+};
+
+export const escutarEstoque = (onUpdate: (dados: EquipamentoEstoque[]) => void, onError?: (err: Error) => void) => {
+  const q = query(collection(db, COLLECTION_ESTOQUE), orderBy('dataEntrada', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const itens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EquipamentoEstoque));
+    onUpdate(itens);
+  }, (error) => {
+    console.error('Erro ao escutar estoque:', error);
+    if (onError) onError(new Error('Não foi possível carregar o estoque em tempo real'));
+  });
 };
 
 export const criarEquipamento = async (dados: Omit<EquipamentoEstoque, 'id'>): Promise<string> => {

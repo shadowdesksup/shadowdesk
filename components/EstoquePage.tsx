@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Package, MapPin, Search, Truck, Printer, ScanLine } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useEstoque } from '../hooks/useEstoque';
@@ -34,6 +35,42 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   const estoqueAtivo = React.useMemo(() => estoque.filter(e => e.status !== 'MANUTENCAO' && e.status !== 'TRANSFERIDO' && e.status !== 'DESCARTADO'), [estoque]);
 
   const [buscaGeral, setBuscaGeral] = useState('');
+
+  // Filtros em Cascata
+  const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [filtroMarca, setFiltroMarca] = useState<string>('');
+  const [filtroModelo, setFiltroModelo] = useState<string>('');
+
+  const opcoesTipo = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    estoqueAtivo.forEach(e => counts.set(e.tipo, (counts.get(e.tipo) || 0) + 1));
+    return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [estoqueAtivo]);
+
+  const opcoesMarca = React.useMemo(() => {
+    let base = estoqueAtivo;
+    if (filtroTipo) base = base.filter(e => e.tipo === filtroTipo);
+    const counts = new Map<string, number>();
+    base.forEach(e => counts.set(e.marca, (counts.get(e.marca) || 0) + 1));
+    return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [estoqueAtivo, filtroTipo]);
+
+  const opcoesModelo = React.useMemo(() => {
+    let base = estoqueAtivo;
+    if (filtroTipo) base = base.filter(e => e.tipo === filtroTipo);
+    if (filtroMarca) base = base.filter(e => e.marca === filtroMarca);
+    const counts = new Map<string, number>();
+    base.forEach(e => counts.set(e.modelo, (counts.get(e.modelo) || 0) + 1));
+    return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [estoqueAtivo, filtroTipo, filtroMarca]);
+
+  const estoqueFiltradoCascata = React.useMemo(() => {
+    let result = estoqueAtivo;
+    if (filtroTipo) result = result.filter(e => e.tipo === filtroTipo);
+    if (filtroMarca) result = result.filter(e => e.marca === filtroMarca);
+    if (filtroModelo) result = result.filter(e => e.modelo === filtroModelo);
+    return result;
+  }, [estoqueAtivo, filtroTipo, filtroMarca, filtroModelo]);
 
   // Gestão de Paineis
   const [grupoSelecionadoId, setGrupoSelecionadoId] = useState<string | null>(null);
@@ -253,20 +290,69 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
           <EstoqueStats estoque={estoque} theme={theme} onMovimentadosClick={() => setIsMovimentadosModalOpen(true)} />
         </div>
 
-        {/* Global Search integrated in header */}
-        <div className="z-10 w-full max-w-2xl relative">
-          <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all ${isDark
-            ? 'bg-slate-900/90 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
-            : 'bg-white/90 border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
-            }`}>
-            <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
-            <input
-              type="text"
-              placeholder="Pesquisar em todo o inventário..."
-              value={buscaGeral}
-              onChange={e => setBuscaGeral(e.target.value)}
-              className="bg-transparent border-none outline-none w-full text-lg placeholder-opacity-50"
-            />
+        {/* Global Search & Filters integrated in header */}
+        <div className="z-10 w-full flex flex-col lg:flex-row gap-3">
+          <div className="flex-1 min-w-0">
+            <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all h-[58px] ${isDark
+              ? 'bg-slate-900/90 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
+              : 'bg-white/90 border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
+              }`}>
+              <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
+              <input
+                type="text"
+                placeholder="Pesquisar no inventário..."
+                value={buscaGeral}
+                onChange={e => setBuscaGeral(e.target.value)}
+                className="bg-transparent border-none outline-none w-full text-lg placeholder-opacity-50"
+              />
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <AnimatePresence>
+              <motion.select
+                key="tipo"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                value={filtroTipo}
+                onChange={e => { setFiltroTipo(e.target.value); setFiltroMarca(''); setFiltroModelo(''); }}
+                className={`px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-[58px] ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-white hover:border-cyan-500/50' : 'bg-white/90 border-slate-300 text-slate-800 hover:border-cyan-500/50'}`}
+              >
+                <option value="">Todos os Tipos</option>
+                {opcoesTipo.map(([t, qtd]) => <option key={t} value={t}>{t} ({qtd})</option>)}
+              </motion.select>
+
+              {filtroTipo && (
+                <motion.select
+                  key="marca"
+                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                  value={filtroMarca}
+                  onChange={e => { setFiltroMarca(e.target.value); setFiltroModelo(''); }}
+                  className={`px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-[58px] ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50/90 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                >
+                  <option value="">Todas as Marcas</option>
+                  {opcoesMarca.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
+                </motion.select>
+              )}
+
+              {filtroMarca && (
+                <motion.select
+                  key="modelo"
+                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                  value={filtroModelo}
+                  onChange={e => setFiltroModelo(e.target.value)}
+                  className={`px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-[58px] ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50/90 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                >
+                  <option value="">Todos os Modelos</option>
+                  {opcoesModelo.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
+                </motion.select>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -286,7 +372,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
       ) : (
         <div className="flex-1 pb-10">
           <EstoqueGrid
-            estoque={estoqueAtivo}
+            estoque={estoqueFiltradoCascata}
             busca={buscaGeral}
             theme={theme}
             onSelectGroup={(grupo) => setGrupoSelecionadoId(grupo.id)}

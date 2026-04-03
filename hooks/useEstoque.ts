@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EquipamentoEstoque, EstoqueHistorico } from '../types';
 import {
-  listarEstoque,
+  escutarEstoque,
   criarEquipamento as apiCriarEquipamento,
   atualizarEquipamento as apiAtualizarEquipamento,
   adicionarHistoricoEstoque,
@@ -13,29 +13,26 @@ export const useEstoque = () => {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const carregarEstoque = useCallback(async () => {
-    try {
-      setCarregando(true);
-      const dados = await listarEstoque();
-      setEstoque(dados);
-      setErro(null);
-    } catch (err: any) {
-      console.error(err);
-      setErro(err.message || 'Erro ao carregar estoque');
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
   useEffect(() => {
-    carregarEstoque();
-  }, [carregarEstoque]);
+    setCarregando(true);
+    const unsubscribe = escutarEstoque((dados) => {
+      setEstoque(dados);
+      setCarregando(false);
+      setErro(null);
+    }, (err) => {
+      console.error(err);
+      setErro(err.message || 'Erro ao escutar estoque da Firebase');
+      setCarregando(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const criarEquipamento = async (dados: Omit<EquipamentoEstoque, 'id'>) => {
     try {
       setCarregando(true);
       const novoId = await apiCriarEquipamento(dados);
-      await carregarEstoque(); // Atualiza a lista após criar
+      // Removed carregarEstoque() because onSnapshot does it automatically
       return novoId;
     } catch (err: any) {
       setErro(err.message);
@@ -49,7 +46,6 @@ export const useEstoque = () => {
     try {
       setCarregando(true);
       await apiAtualizarEquipamento(id, dados);
-      await carregarEstoque(); // Re-fetch para refletir atualização na fila local
     } catch (err: any) {
       setErro(err.message);
       throw err;
@@ -62,7 +58,6 @@ export const useEstoque = () => {
     try {
       setCarregando(true);
       await apiDeletarEquipamento(id);
-      await carregarEstoque();
     } catch (err: any) {
       setErro(err.message);
       throw err;
@@ -84,7 +79,7 @@ export const useEstoque = () => {
     estoque,
     carregando,
     erro,
-    recarregar: carregarEstoque,
+    recarregar: () => {}, // mock para compatibilidade com botões que ainda chamam
     criarEquipamento,
     atualizarEquipamento,
     deletarEquipamento,

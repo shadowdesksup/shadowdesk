@@ -488,7 +488,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const isExactAgenciaMatch = agenciasBanco.some(m => m.nome.toLowerCase() === agenciaFomento.trim().toLowerCase());
   const agenciasToShow = isExactAgenciaMatch ? agenciasBanco : agenciasBanco.filter(m => m.nome.toLowerCase().includes(agenciaFomento.toLowerCase()));
 
-  const bloqueiaEdicaoGrupo = !!equipamentoEditando;
+  // Bloqueia edição de Tipo/Marca/Modelo quando editando OU quando adicionando unidade a grupo existente
+  const bloqueiaEdicaoGrupo = !!equipamentoEditando || !!grupoPreenchido;
   
   // Verifica se a tríade tipo+marca+modelo já está cadastrada no banco
   const isModeloCadastradoRaw = isExactTypeMatch && isExactMarcaMatch && isExactModeloMatch && tipo.trim() !== '' && marca.trim() !== '' && modelo.trim() !== '';
@@ -745,8 +746,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
                     {/* Utilizador/Proprietário */}
                     <div>
-                      <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        Utilizador <span className="text-[10px] font-normal">(Opcional)</span>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        UTILIZADOR/PROPRIETÁRIO <span className="text-[10px] lowercase font-normal">(Opcional)</span>
                       </label>
                       <input
                         type="text"
