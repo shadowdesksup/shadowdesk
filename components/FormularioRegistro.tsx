@@ -140,12 +140,12 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className={`flex flex-col wide:h-[calc(100vh-8rem)] rounded-2xl border shadow-2xl transition-colors duration-300 overflow-hidden ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/80 shadow-black/20'
-        : 'border-slate-200 bg-white shadow-slate-200/50'
+      className={`flex flex-col wide:h-[calc(100vh-8rem)] rounded-2xl transition-colors duration-300 overflow-hidden ${theme === 'dark'
+        ? 'bg-transparent'
+        : 'bg-transparent'
         }`}
     >
-      <div className={`flex justify-between items-center p-6 border-b ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
+      <div className={`flex justify-between items-center p-2 mb-2`}>
         <h3 className={`text-2xl font-bold tracking-tight flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           <span className="w-1.5 h-6 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]"></span>
           {registroInicial ? 'Editar Registro' : 'Novo Registro'}
@@ -334,8 +334,8 @@ const FormularioRegistro: React.FC<FormularioRegistroProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-end mt-auto pt-2">
-          <div className="sm:col-span-4 flex flex-col gap-1.5">
+        <div className="flex flex-col sm:grid sm:grid-cols-12 gap-4 sm:items-end mt-auto pt-2">
+          <div className="sm:col-span-4 flex flex-col gap-1.5 w-full">
             <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
               Status *
             </label>

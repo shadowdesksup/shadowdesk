@@ -152,13 +152,25 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                       <span className="truncate">{item.bensAtivos?.alocadoEm || item.bensAtivos?.origem || 'Local não definido'}</span>
                     </div>
 
-                    {/* Meta Info (Responsável, Condição) lado a lado no mobile */}
-                    <div className={`grid grid-cols-2 gap-2 text-[10px] sm:text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {/* Meta Info */}
+                    <div className={`grid grid-cols-2 lg:grid-cols-4 gap-y-2 gap-x-4 text-[10px] sm:text-xs mt-1 w-full ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                        <div className="truncate">
-                         <span className="opacity-70">Responsável:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'NR'}</span>
+                         <span className="opacity-70">Utilizado por:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'Não informado'}</span>
+                       </div>
+                       <div className="truncate">
+                         <span className="opacity-70">Vínculo:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.vinculo || 'Não informado'}</span>
                        </div>
                        <div className="truncate">
                          <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
+                       </div>
+                       <div className="truncate">
+                         <span className="opacity-70">Entrada:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                           {item.bensAtivos?.dataEntradaItem 
+                             ? (item.bensAtivos.dataEntradaItem.includes('/') 
+                               ? item.bensAtivos.dataEntradaItem 
+                               : item.bensAtivos.dataEntradaItem.substring(0, 10).split('-').reverse().join('/'))
+                             : 'Sem data'}
+                         </span>
                        </div>
                     </div>
                   </div>
@@ -198,7 +210,7 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                       top: 0, left: 0
                     }}
                   >
-                    <img src={item.imagemUrl} alt="Preview" className="max-w-[280px] max-h-[280px] w-auto h-auto object-contain rounded-xl" />
+                    <img src={item.imagemUrl} alt="Preview" className="max-w-[480px] max-h-[480px] w-auto h-auto object-contain rounded-xl" />
                     {item.isImagemPrincipal && (
                       <div className="absolute top-3 right-3 px-2 py-0.5 bg-cyan-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-lg">
                         Capa

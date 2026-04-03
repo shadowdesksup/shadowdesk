@@ -91,15 +91,15 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
   }, [registrosFiltrados, apenasServiceDesk]);
 
   return (
-    <div className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden p-2 pr-0 relative">
+    <div className="h-full flex flex-col wide:flex-row gap-6 sm:gap-8 overflow-y-auto wide:overflow-hidden relative w-full max-w-7xl mx-auto">
       {/* Left Column: Header + Filters */}
-      <div className={`flex-1 flex flex-col gap-4 pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
+      <div className={`flex-1 flex flex-col gap-6 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className={`flex flex-col gap-6 p-4 rounded-2xl border shadow-sm ${theme === 'dark' ? 'bg-slate-900/50 border-white/10' : 'bg-white border-slate-200'}`}
+          className={`flex flex-col gap-6 rounded-2xl transition-colors ${theme === 'dark' ? 'bg-transparent border-none' : 'bg-transparent border-none'}`}
         >
           <div>
             <h2 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
@@ -190,9 +190,9 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-6 rounded-2xl border ${theme === 'dark'
-            ? 'bg-white/5 border-white/10 backdrop-blur-sm'
-            : 'bg-white border-slate-200 shadow-lg'
+          className={`rounded-2xl flex flex-col gap-4 ${theme === 'dark'
+            ? 'bg-transparent border-none'
+            : 'bg-transparent border-none'
             }`}
         >
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

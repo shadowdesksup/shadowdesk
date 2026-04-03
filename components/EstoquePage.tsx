@@ -41,6 +41,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   // Painel de Formulário
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [equipamentoEditando, setEquipamentoEditando] = useState<EquipamentoEstoque | null>(null);
+  const [grupoPreenchido, setGrupoPreenchido] = useState<{ tipo: string; marca: string; modelo: string } | null>(null);
 
   // Painel de Locais e Dicionários
   const [isLocaisModalOpen, setIsLocaisModalOpen] = useState(false);
@@ -301,10 +302,8 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onClose={() => setGrupoSelecionadoId(null)}
         theme={theme}
         onAdicionarUnidade={() => {
-          // Pré-preenche os dados comuns para adicionar unidade rapidamente neste grupo
-          setEquipamentoEditando({
-            id: '', tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '', status: '', dataEntrada: '', usuarioCadastro: '', historico: []
-          });
+          setEquipamentoEditando(null);
+          setGrupoPreenchido({ tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '' });
           setIsFormModalOpen(true);
         }}
         onEditar={handleOpenFormModal}
@@ -317,10 +316,12 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         isOpen={isFormModalOpen}
         onClose={() => {
           setIsFormModalOpen(false);
-          setEquipamentoEditando(null); // Clear form on close
+          setEquipamentoEditando(null);
+          setGrupoPreenchido(null);
         }}
         onSalvar={handleSalvarEquipamento}
         equipamentoEditando={equipamentoEditando}
+        grupoPreenchido={grupoPreenchido}
         theme={theme}
         carregando={carregando}
         onAbreGerenciarTipos={() => setIsTiposModalOpen(true)}

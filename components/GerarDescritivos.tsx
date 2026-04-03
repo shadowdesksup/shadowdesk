@@ -457,9 +457,9 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
   const labelClass = `block text-xs font-bold uppercase tracking-wider mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`;
 
-  const cardClass = `p-6 rounded-2xl border shadow-lg transition-colors duration-300 ${isDark
-    ? 'border-white/10 bg-slate-900/80 shadow-black/20'
-    : 'border-slate-200 bg-white shadow-slate-200/50'
+  const cardClass = `flex flex-col gap-1 mb-6 rounded-2xl transition-colors duration-300 ${isDark
+    ? 'bg-transparent border-none shadow-none'
+    : 'bg-transparent border-none shadow-none'
     }`;
 
   return (
@@ -467,7 +467,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="h-full flex flex-col wide:flex-row gap-4 overflow-y-auto wide:overflow-hidden pt-2 px-2 pb-0 relative"
+      className="h-full flex flex-col wide:flex-row gap-6 sm:gap-8 overflow-y-auto wide:overflow-hidden relative w-full max-w-7xl mx-auto"
     >
 
       {/* MODAL */}
@@ -559,7 +559,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       </AnimatePresence>
 
       {/* LEFT COLUMN: FORM */}
-      <div className={`flex-1 flex flex-col gap-4 pr-0 wide:pr-2 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
+      <div className={`flex-1 flex flex-col gap-6 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
 
         {/* Header Compacto */}
         <div
@@ -628,7 +628,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className={labelClass}>Data</label>
               <input type="date" value={dataLaudo} onChange={e => setDataLaudo(e.target.value)} className={inputClass} />
@@ -639,7 +639,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className={labelClass}>Equipamento</label>
               <input value={equipamento} onChange={e => setEquipamento(e.target.value)} className={inputClass} />
@@ -650,7 +650,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div className="col-span-1">
               <label className={labelClass}>Modelo</label>
               <input value={modelo} onChange={e => setModelo(e.target.value)} className={inputClass} />
@@ -684,7 +684,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className={labelClass}>Agência</label>
                     <select
@@ -710,7 +710,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pb-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-1">
                   <div>
                     <label className={labelClass}>Processo</label>
                     <input

@@ -299,7 +299,7 @@ function App() {
 
       case 'novo':
         return (
-          <div className="flex flex-col wide:grid wide:grid-cols-12 gap-8 wide:h-full wide:overflow-hidden pr-8">
+          <div className="flex flex-col wide:grid wide:grid-cols-12 gap-8 wide:h-full wide:overflow-hidden sm:pr-8">
             <div className="wide:col-span-7 wide:h-full wide:overflow-hidden flex flex-col">
               <FormularioRegistro
                 onSalvar={async (dados) => {

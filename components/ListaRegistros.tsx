@@ -136,6 +136,19 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
     }
   };
 
+  const handleBulkUpdate = async () => {
+    if (onAtualizarStatus) {
+      try {
+        await Promise.all(selectedItems.map(id => onAtualizarStatus(id, 'Registrado')));
+        setSelectedItems([]);
+        setIsSelectionMode(false);
+      } catch (error) {
+        console.error("Failed to update items in bulk", error);
+      }
+    }
+  };
+
+
   // Filtragem combinada
   const registrosFiltrados = registros.filter(r => {
     const matchTexto = !termoBusca || (
@@ -230,19 +243,17 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className={`flex flex-col gap-0 rounded-2xl border p-8 transition-colors duration-300 ${theme === 'dark'
-        ? 'border-white/10 bg-slate-900/80 shadow-2xl shadow-black/20'
-        : 'border-slate-200 bg-white shadow-sm'
+      className={`flex flex-col gap-0 rounded-2xl transition-colors duration-300 w-full ${theme === 'dark'
+        ? 'bg-transparent'
+        : 'bg-transparent'
         }`}
       style={{
         maxHeight: customMaxHeight || '800px',
         minHeight: customMinHeight || '500px'
       }}
     >
-      <div className={`z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 -mx-8 px-8 pt-2 -mt-2 ${theme === 'dark'
-        ? 'border-white/5 backdrop-blur'
-        : 'border-slate-300 bg-white/95 backdrop-blur'
-        } relative`}> {/* Added relative for absolute positioning of bulk action */}
+      <div className={`z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 px-1 md:px-2 relative`}>
+
 
         {/* Floating Action Bar - Header Position */}
         <AnimatePresence>
@@ -481,8 +492,8 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                   } ${isSelectionMode && selectedItems.includes(registro.id)
                     ? theme === 'dark' ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-cyan-50 border-cyan-200'
                     : theme === 'dark'
-                      ? 'border-white/5 bg-white/5 hover:border-cyan-500/30 hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
-                      : 'border-slate-100 bg-white hover:border-cyan-500/30 hover:shadow-lg shadow-sm'
+                      ? 'border-white/5 bg-slate-900/40 backdrop-blur-sm hover:border-cyan-500/30 hover:bg-slate-800/60 hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]'
+                      : 'border-slate-200 bg-white hover:border-cyan-500/30 hover:shadow-xl shadow-sm'
                   }`}
                 onClick={() => !isRegistrado && isSelectionMode && toggleItemSelection(registro.id)}
               >
@@ -531,9 +542,9 @@ const ListaRegistros: React.FC<ListaRegistrosProps> = ({
                   </div>
                 </div>
 
-                <div className={`relative p-4 rounded-lg border ${theme === 'dark'
-                  ? 'bg-black/20 border-white/5'
-                  : 'bg-slate-50 border-slate-200/60'
+                <div className={`relative p-4 rounded-xl ${theme === 'dark'
+                  ? 'bg-white/[0.03] border-l-2 border-l-cyan-500'
+                  : 'bg-slate-50 border-l-2 border-l-cyan-500'
                   }`}>
                   <div className="flex gap-3">
                     <div className={`mt-0.5 shrink-0 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>

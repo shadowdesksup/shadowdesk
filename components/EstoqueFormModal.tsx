@@ -12,6 +12,7 @@ import { listarUsuarios, UserData } from '../firebase/auth';
 import { listarVinculosEquipamento, VinculoEquipamento } from '../firebase/vinculosEquipamento';
 import { listarOrigensEquipamento, OrigemEquipamento } from '../firebase/origensEquipamento';
 import { listarLocaisTransferencia } from '../firebase/locaisTransferencia';
+import { buscarCapaGrupo } from '../firebase/estoque';
 import { LocalTransferencia } from '../types';
 
 interface EstoqueFormModalProps {
@@ -19,6 +20,7 @@ interface EstoqueFormModalProps {
   onClose: () => void;
   onSalvar: (dados: Partial<EquipamentoEstoque>) => Promise<void>;
   equipamentoEditando?: EquipamentoEstoque | null;
+  grupoPreenchido?: { tipo: string; marca: string; modelo: string } | null;
   theme?: 'dark' | 'light';
   carregando?: boolean;
   onAbreGerenciarTipos: () => void;
@@ -31,7 +33,7 @@ interface EstoqueFormModalProps {
 }
 
 const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
-  isOpen, onClose, onSalvar, equipamentoEditando, theme = 'dark', carregando = false,
+  isOpen, onClose, onSalvar, equipamentoEditando, grupoPreenchido, theme = 'dark', carregando = false,
   onAbreGerenciarTipos, onAbreGerenciarMarcas, onAbreGerenciarModelos, onAbreGerenciarAgencias,
   onAbreGerenciarVinculos, onAbreGerenciarOrigens, onAbreGerenciarLocais
 }) => {
@@ -74,6 +76,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
   // Imagem & Status
   const [imagemUrl, setImagemUrl] = useState('');
+  const [capaGrupoUrl, setCapaGrupoUrl] = useState<string | null>(null);
   const [isImagemPrincipal, setIsImagemPrincipal] = useState(false);
   const [permitirSemImagem, setPermitirSemImagem] = useState(false);
   const [erroImagem, setErroImagem] = useState('');
@@ -210,6 +213,28 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
     }
   }, [isOpen]);
 
+  // Busca capa do grupo quando tipo/marca/modelo são exatos e não há imagem própria
+  useEffect(() => {
+    let cancelled = false;
+    const tipoStr = tipo.trim();
+    const marcaStr = marca.trim();
+    const modeloStr = modelo.trim();
+    const combinacaoExata =
+      tipoStr !== '' && marcaStr !== '' && modeloStr !== '' &&
+      tiposBanco.some(t => t.nome.toLowerCase() === tipoStr.toLowerCase()) &&
+      marcasBanco.some(m => m.nome.toLowerCase() === marcaStr.toLowerCase()) &&
+      modelosBanco.some(m => m.nome.toLowerCase() === modeloStr.toLowerCase());
+    if (!equipamentoEditando && combinacaoExata && !imagemUrl) {
+      buscarCapaGrupo(tipoStr, marcaStr, modeloStr).then(url => {
+        if (!cancelled) setCapaGrupoUrl(url);
+      });
+    } else {
+      setCapaGrupoUrl(null);
+    }
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipo, marca, modelo, isOpen, imagemUrl, tiposBanco, marcasBanco, modelosBanco]);
+
   useEffect(() => {
     if (equipamentoEditando) {
       setTipo(equipamentoEditando.tipo);
@@ -255,6 +280,21 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         setManutencaoTecnicoId('');
       }
 
+    } else if (grupoPreenchido) {
+      // Modo Adicionar Unidade: pré-preenche grupo mas não bloqueia como edição
+      setTipo(grupoPreenchido.tipo || '');
+      setMarca(grupoPreenchido.marca || '');
+      setModelo(grupoPreenchido.modelo || '');
+      setPatrimonio(''); setNumeroSerie(''); setSemRegistro(false);
+      setTemProjeto(false); setAgenciaFomento(''); setNumeroProcesso(''); setNumeroTermo('');
+      setImagemUrl(''); setIsImagemPrincipal(false); setStatus('');
+      setPermitirSemImagem(false);
+      setBaSolicitante(''); setBaVinculo(''); setBaDataEntrada(new Date().toISOString().split('T')[0]); setBaOrigem(''); setBaAlocadoEm('DTI - Sala 12 - Suporte'); setBaCondicao('Boa');
+      setErroImagem(''); setErroSalvar(''); setSucessoSalvar('');
+      setManutencaoSolicitante('');
+      setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
+      setManutencaoProblema('');
+      setManutencaoTecnicoId('');
     } else {
       setTipo(''); setMarca(''); setModelo(''); setPatrimonio(''); setNumeroSerie(''); setSemRegistro(false);
       setTemProjeto(false); setAgenciaFomento(''); setNumeroProcesso(''); setNumeroTermo('');
@@ -268,7 +308,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setManutencaoProblema('');
       setManutencaoTecnicoId('');
     }
-  }, [equipamentoEditando, isOpen]);
+  }, [equipamentoEditando, grupoPreenchido, isOpen]);
 
   const comprimirImagem = (file: File, maxDim: number = 1024, quality: number = 0.82): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -345,6 +385,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setErroImagem('A imagem é obrigatória. Faça upload, capture uma foto ou marque a opção "Usar imagem definida na capa".');
       return;
     }
+    const finalImagemUrl = imagemUrl || (permitirSemImagem && capaGrupoUrl ? capaGrupoUrl : '');
     setErroImagem('');
 
     const dadosSave: Partial<EquipamentoEstoque> = {
@@ -357,8 +398,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       agenciaFomento: temProjeto ? agenciaFomento : '',
       numeroProcesso: temProjeto ? numeroProcesso : '',
       numeroTermo: temProjeto ? numeroTermo : '',
-      imagemUrl,
-      isImagemPrincipal,
+      imagemUrl: finalImagemUrl,
+      isImagemPrincipal: imagemUrl ? isImagemPrincipal : false, // nunca marcar como capa se usando a capa do grupo
       status: status as StatusEquipamento
     };
 
@@ -448,10 +489,15 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const agenciasToShow = isExactAgenciaMatch ? agenciasBanco : agenciasBanco.filter(m => m.nome.toLowerCase().includes(agenciaFomento.toLowerCase()));
 
   const bloqueiaEdicaoGrupo = !!equipamentoEditando;
+  
+  // Verifica se a tríade tipo+marca+modelo já está cadastrada no banco
+  const isModeloCadastradoRaw = isExactTypeMatch && isExactMarcaMatch && isExactModeloMatch && tipo.trim() !== '' && marca.trim() !== '' && modelo.trim() !== '';
+  // Exibe o checkbox de capa somente se já existe uma capa para esse grupo
+  const mostrarCheckboxCapa = !imagemUrl && !!capaGrupoUrl;
 
   return (
     <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-16rem)] max-w-none">
-      <form onSubmit={handleSave} className="p-4 sm:p-8 pb-32 flex flex-col lg:flex-row items-start gap-8 sm:gap-12">
+      <form onSubmit={handleSave} className="p-4 sm:p-8 flex flex-col lg:flex-row items-start gap-8 sm:gap-12 relative">
 
         {/* Imagem */}
         <div className="flex-shrink-0 flex flex-col items-center justify-center pt-6 w-full lg:w-auto">
@@ -504,7 +550,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             </div>
           )}
 
-          {!imagemUrl && (
+          {mostrarCheckboxCapa && (
             <div className={`mt-4 flex items-start gap-3 w-full max-w-[18rem] p-3 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'} transition-all`}>
               <input
                 type="checkbox"
@@ -517,7 +563,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 className={`mt-0.5 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500 flex-shrink-0`}
               />
               <label htmlFor="permitirSemImagem" className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} cursor-pointer select-none leading-relaxed`}>
-                Usar imagem definida na capa (Não requer upload no momento)
+                Usar imagem definida na capa
               </label>
             </div>
           )}
@@ -530,6 +576,28 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
         {/* Campos Principais */}
         <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+
+          {/* Status (Entrada em) */}
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Entrada em: *</label>
+            <select
+              value={status} onChange={e => setStatus(e.target.value as StatusEquipamento | '')}
+              required
+              className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-bold ${status === 'MANUTENCAO'
+                  ? (isDark ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-orange-50 border-orange-400 text-orange-600')
+                  : status === 'BENS_ATIVOS'
+                    ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
+                    : status === 'DESCARTE'
+                      ? (isDark ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-rose-50 border-rose-400 text-rose-600')
+                      : (isDark ? 'bg-[#162033] border-slate-700 text-slate-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-500 focus:border-cyan-500')
+                } border`}
+            >
+              <option value="">Selecione uma opção</option>
+              <option value="BENS_ATIVOS">Bens Ativos</option>
+              <option value="MANUTENCAO">Manutenção</option>
+              <option value="DESCARTE">Descarte</option>
+            </select>
+          </div>
 
           {/* Tipo (Combobox Customizado com botão +) */}
           <div>
@@ -605,28 +673,6 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             </div>
           </div>
 
-          {/* Status */}
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Status Inicial *</label>
-            <select
-              value={status} onChange={e => setStatus(e.target.value as StatusEquipamento | '')}
-              required
-              className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-bold ${status === 'MANUTENCAO'
-                  ? (isDark ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-orange-50 border-orange-400 text-orange-600')
-                  : status === 'BENS_ATIVOS'
-                    ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
-                    : status === 'DESCARTE'
-                      ? (isDark ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-rose-50 border-rose-400 text-rose-600')
-                      : (isDark ? 'bg-[#162033] border-slate-700 text-slate-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-500 focus:border-cyan-500')
-                } border`}
-            >
-              <option value="">Selecione uma opção</option>
-              <option value="BENS_ATIVOS">Bens Ativos</option>
-              <option value="MANUTENCAO">Manutenção</option>
-              <option value="DESCARTE">Descarte</option>
-            </select>
-          </div>
-
           {/* Bloco Bens Ativos */}
           <AnimatePresence initial={false}>
             {status === 'BENS_ATIVOS' && (
@@ -649,10 +695,58 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    {/* Solicitante */}
+
+                    {/* Origem (combobox original) */}
                     <div>
                       <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        Proprietário <span className="text-[10px] font-normal lowercase">(Opcional)</span>
+                        Origem *
+                      </label>
+                      <div className="flex gap-3 relative">
+                        <div className="relative flex-1">
+                          <input
+                            type="text" required={status === 'BENS_ATIVOS'}
+                            value={baOrigem}
+                            onChange={e => { setBaOrigem(e.target.value); setShowOrigensDropdown(true); }}
+                            onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
+                            onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
+                            placeholder="Ex: DPTO - DEFITO"
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                          />
+                          {showOrigensDropdown && origensBanco.length > 0 && (
+                            <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
+                              {origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase())).map(o => (
+                                <div key={o.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                  onClick={() => { setBaOrigem(o.nome); setShowOrigensDropdown(false); }}>
+                                  {o.nome}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button type="button" onClick={onAbreGerenciarOrigens}
+                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          title="Gerenciar Origem de Aquisição">
+                          <Plus size={24} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Data de Entrada do Item */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Data de Entrada *
+                      </label>
+                      <input
+                        type="date" required={status === 'BENS_ATIVOS'}
+                        value={baDataEntrada} onChange={e => setBaDataEntrada(e.target.value)}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                      />
+                    </div>
+
+                    {/* Utilizador/Proprietário */}
+                    <div>
+                      <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Utilizador <span className="text-[10px] font-normal">(Opcional)</span>
                       </label>
                       <input
                         type="text"
@@ -697,53 +791,6 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Data de Entrada do Item */}
-                    <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        Data de Entrada *
-                      </label>
-                      <input
-                        type="date" required={status === 'BENS_ATIVOS'}
-                        value={baDataEntrada} onChange={e => setBaDataEntrada(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                      />
-                    </div>
-
-                    {/* Origem (combobox original) */}
-                    <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        Origem *
-                      </label>
-                      <div className="flex gap-3 relative">
-                        <div className="relative flex-1">
-                          <input
-                            type="text" required={status === 'BENS_ATIVOS'}
-                            value={baOrigem}
-                            onChange={e => { setBaOrigem(e.target.value); setShowOrigensDropdown(true); }}
-                            onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
-                            onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
-                            placeholder="Ex: DPTO - DEFITO"
-                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                          />
-                          {showOrigensDropdown && origensBanco.length > 0 && (
-                            <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
-                              {origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase())).map(o => (
-                                <div key={o.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
-                                  onClick={() => { setBaOrigem(o.nome); setShowOrigensDropdown(false); }}>
-                                  {o.nome}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button type="button" onClick={onAbreGerenciarOrigens}
-                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
-                          title="Gerenciar Origem de Aquisição">
-                          <Plus size={24} />
-                        </button>
-                      </div>
-                    </div>
-
                     {/* Alocar Em e Condição na mesma linha */}
                     <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
                       <div className="flex-1">
@@ -758,14 +805,15 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       </div>
                       <div className="w-full md:w-1/3">
                         <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                          Condição *
+                          Condição do bem:
                         </label>
                         <select
                           value={baCondicao}
-                          onChange={(e) => setBaCondicao(e.target.value as 'Boa' | 'Ruim')}
+                          onChange={(e) => setBaCondicao(e.target.value as 'Boa' | 'Regular' | 'Ruim')}
                           className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border appearance-none cursor-pointer`}
                         >
                           <option value="Boa">Boa</option>
+                          <option value="Regular">Regular</option>
                           <option value="Ruim">Ruim</option>
                         </select>
                       </div>
@@ -1063,7 +1111,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 </label>
               </div>
               <span className={`text-xs sm:ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                (Marque se o item for antigo ou não possuir nenhum número de identificação)
+                (Marque se o item não possuir nenhum número de identificação)
               </span>
             </div>
           </div>
@@ -1188,6 +1236,9 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               )}
             </AnimatePresence>
           </div>
+
+          {/* Spacer exato para o footer fixo (evita ser ignorado pelo browser) */}
+          <div className="col-span-1 md:col-span-2 h-24 pointer-events-none" />
         </div>
 
         {/* Floating Action footer */}
@@ -1215,7 +1266,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   }`} />
               </button>
               <span className="cursor-pointer hover:text-cyan-500 transition-colors" onClick={() => setManterAberto(!manterAberto)}>
-                Fixar dados formulário (Lote)
+                Fixar dados do formulário
               </span>
             </div>
             

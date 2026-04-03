@@ -83,3 +83,25 @@ export const verificarUsoEmEstoque = async (campo: string, valor: string): Promi
     throw new Error('Não foi possível verificar se o item está em uso');
   }
 };
+
+export const buscarCapaGrupo = async (tipo: string, marca: string, modelo: string): Promise<string | null> => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_ESTOQUE),
+      where('tipo', '==', tipo),
+      where('marca', '==', marca),
+      where('modelo', '==', modelo),
+      where('isImagemPrincipal', '==', true),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const data = snapshot.docs[0].data() as EquipamentoEstoque;
+      return data.imagemUrl || null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Erro ao buscar capa do grupo:', error);
+    return null;
+  }
+};
