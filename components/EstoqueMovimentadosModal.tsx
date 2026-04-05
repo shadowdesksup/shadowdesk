@@ -10,14 +10,17 @@ interface EstoqueMovimentadosModalProps {
   onClose: () => void;
   estoque: EquipamentoEstoque[];
   theme?: 'dark' | 'light';
+  onRealocar?: (item: EquipamentoEstoque) => void;
+  highlightItemId?: string | null;
 }
 
 const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
-  isOpen, onClose, estoque, theme = 'dark'
+  isOpen, onClose, estoque, theme = 'dark', onRealocar, highlightItemId
 }) => {
   const isDark = theme === 'dark';
   const [busca, setBusca] = useState('');
   const [itemSelecionado, setItemSelecionado] = useState<EquipamentoEstoque | null>(null);
+  const [clearedIds, setClearedIds] = useState<Set<string>>(new Set());
 
   const movimentados = useMemo(() => {
     return estoque.filter(e => e.status === 'TRANSFERIDO');
@@ -59,8 +62,8 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
             </div>
 
             <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-sm transition-all w-full md:w-80 ${isDark
-                ? 'bg-slate-900/90 border-slate-700 focus-within:border-purple-500 focus-within:shadow-purple-500/20'
-                : 'bg-white border-slate-300 focus-within:border-purple-500 focus-within:shadow-purple-500/10'
+              ? 'bg-slate-900/90 border-slate-700 focus-within:border-purple-500 focus-within:shadow-purple-500/20'
+              : 'bg-white border-slate-300 focus-within:border-purple-500 focus-within:shadow-purple-500/10'
               }`}>
               <Search size={18} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
               <input
@@ -82,16 +85,29 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                   <p>Nenhuma movimentação encontrada.</p>
                 </motion.div>
               ) : (
-                filtrados.map((item, index) => (
+                filtrados.map((item, index) => {
+                  const isHighlighted = item.id === highlightItemId && !clearedIds.has(item.id);
+                  return (
                   <motion.div
                     key={item.id}
-                    onClick={() => setItemSelecionado(item)}
+                    onClick={() => {
+                      setItemSelecionado(item);
+                      if (isHighlighted) {
+                        setClearedIds(prev => new Set(prev).add(item.id));
+                      }
+                    }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.02 }}
-                    className={`flex flex-row items-start cursor-pointer gap-3 sm:gap-4 py-3 sm:py-4 px-3 sm:px-4 rounded-xl border-b last:border-b-0 transition-all ${isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-200 hover:bg-slate-50'
-                      }`}
+                    className={`relative flex flex-row items-start cursor-pointer gap-3 sm:gap-4 py-3 sm:py-4 px-3 sm:px-4 rounded-xl border-b last:border-b-0 transition-all overflow-hidden ${
+                      isHighlighted
+                      ? (isDark ? 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-700/50' : 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-200/50')
+                      : (isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-200 hover:bg-slate-50')
+                    }`}
                   >
+                    {isHighlighted && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] z-10 animate-pulse"></div>
+                    )}
                     <div className={`w-10 h-10 mt-1 sm:mt-0 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-100'}`}>
                       {item.imagemUrl ? (
                         <img src={item.imagemUrl} alt="miniatura" className="w-full h-full object-cover" />
@@ -115,7 +131,7 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                         {/* Mobile Date */}
                         <div className="md:hidden flex-shrink-0">
                           <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                            {item.detalhes?.dataSaidaTransferencia ? new Date(item.detalhes.dataSaidaTransferencia).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : '--/--'}
+                            {item.detalhes?.dataSaidaTransferencia ? new Date(item.detalhes.dataSaidaTransferencia).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                           </span>
                         </div>
                       </div>
@@ -159,7 +175,8 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                       </div>
                     </div>
                   </motion.div>
-                ))
+                 );
+                })
               )}
             </AnimatePresence>
           </div>
@@ -172,6 +189,12 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
         onClose={() => setItemSelecionado(null)}
         item={itemSelecionado}
         theme={theme}
+        onRealocar={(item) => {
+          if (onRealocar) {
+            onRealocar(item);
+            setItemSelecionado(null);
+          }
+        }}
       />
     </>
   );

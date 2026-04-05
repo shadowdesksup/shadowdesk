@@ -78,6 +78,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   // Painel de Formulário
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [equipamentoEditando, setEquipamentoEditando] = useState<EquipamentoEstoque | null>(null);
+  const realocandoItemRef = React.useRef<EquipamentoEstoque | null>(null);
   const [grupoPreenchido, setGrupoPreenchido] = useState<{ tipo: string; marca: string; modelo: string } | null>(null);
 
   // Painel de Locais e Dicionários
@@ -99,11 +100,13 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
     isOpen: false, modo: null, item: null
   });
 
+  const [highlightItemId, setHighlightItemId] = useState<string | null>(null);
+
   // Global Scanned Item Modal (Leitura por Pistola Bipe)
   const [scannedItem, setScannedItem] = useState<EquipamentoEstoque | null>(null);
 
   // Escutador Global do Barcode Scanner
-  const handleScan = React.useCallback((codigo: string) => {
+  const handleScan = React.useCallback(async (codigo: string) => {
     // 1. Procurar no estoque inteiro (ativo, manutenção, transferido, etc)
     const match = estoque.find(
       (e) =>
@@ -113,12 +116,29 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
     );
 
     if (match) {
+      // Registrar consulta no histórico (apenas via scanner/leitor)
+      const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
+      try {
+        await atualizarEquipamento(match.id, {
+          historico: [
+            ...(match.historico || []),
+            {
+              acao: 'Consultado via Scanner / Leitor',
+              data: new Date().toISOString(),
+              usuarioId: usuario?.uid || '',
+              usuarioNome: nomeUser
+            }
+          ]
+        });
+      } catch (err) {
+        console.error("Erro ao registrar consulta no histórico:", err);
+      }
+
       setScannedItem(match); // Abre a ficha do item na tela!
     } else {
       console.warn(`Código bípado ou escaneado [${codigo}] não encontrado no sistema.`);
-      // Opcional: Aqui poderíamos disparar um toast
     }
-  }, [estoque]);
+  }, [estoque, atualizarEquipamento, usuario, dadosUsuario]);
 
   useBarcodeScanner({ onScan: handleScan });
 
@@ -140,6 +160,9 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
 
   const handleOpenFormModal = (item?: EquipamentoEstoque) => {
     setEquipamentoEditando(item || null);
+    if (!item) {
+      realocandoItemRef.current = null;
+    }
     setIsFormModalOpen(true);
   };
 
@@ -147,18 +170,32 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
 
     if (equipamentoEditando && equipamentoEditando.id) {
+      const isRealocando = realocandoItemRef.current?.id === equipamentoEditando.id;
+      let acaoHistorico = 'Dados atualizados';
+      
+      if (isRealocando) {
+        const vindoDe = realocandoItemRef.current?.detalhes?.localDestinoNome || 'Último destino';
+        acaoHistorico = `Item realocado no estoque\n(Vindo de: ${vindoDe})`;
+      }
+
       await atualizarEquipamento(equipamentoEditando.id, {
         ...dados,
+        ...(isRealocando ? { detalhes: null } : {}),
         historico: [
           ...(equipamentoEditando.historico || []),
           {
-            acao: 'Dados atualizados',
+            acao: acaoHistorico,
             data: new Date().toISOString(),
             usuarioId: usuario?.uid || '',
             usuarioNome: nomeUser
           }
         ]
       });
+      if (isRealocando) {
+        setIsMovimentadosModalOpen(false); // Fecha histórico de saídas
+        setGrupoSelecionadoId(`${dados.tipo}|${dados.marca}|${dados.modelo}`); // Abre o item na lista de ativos
+        setHighlightItemId(equipamentoEditando.id);
+      }
     } else {
       const novoItem: Omit<EquipamentoEstoque, 'id'> = {
         ...dados as Omit<EquipamentoEstoque, 'id' | 'historico' | 'dataEntrada' | 'usuarioCadastro' | 'usuarioCadastroId'>,
@@ -172,7 +209,11 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         usuarioCadastro: nomeUser,
         usuarioCadastroId: usuario?.uid,
       };
-      await criarEquipamento(novoItem);
+      const novoId = await criarEquipamento(novoItem);
+      if (novoId) {
+        setHighlightItemId(novoId);
+        setGrupoSelecionadoId(`${novoItem.tipo}|${novoItem.marca}|${novoItem.modelo}`);
+      }
     }
   };
 
@@ -196,7 +237,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
       historico: [
         ...(item.historico || []),
         {
-          acao: `Transferido para ${localNome} (Resp: ${recebedor})`,
+          acao: `Transferido para ${localNome} (Resp: ${recebedor})\nMotivo: Transferência de Fluxo`,
           data: new Date().toISOString(),
           usuarioId: usuario?.uid || '',
           usuarioNome: nomeUser
@@ -219,13 +260,37 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
       historico: [
         ...(item.historico || []),
         {
-          acao: `Descartado. Motivo técnico (Laudo): ${motivo}`,
+          acao: `Descartado.\nMotivo técnico (Laudo): ${motivo}`,
           data: new Date().toISOString(),
           usuarioId: usuario?.uid || '',
           usuarioNome: nomeUser
         }
       ]
     });
+  };
+
+  const handleRealocar = (item: EquipamentoEstoque) => {
+    // Ao invés de atualizar no banco de imediato, passamos o item para o formulário
+    realocandoItemRef.current = item;
+    
+    // Limpamos integralmente todos os resquícios da movimentação ou alocação anterior,
+    // transformando-o num ativo novo e forçando o status para BENS_ATIVOS
+    const itemPreRealocacao: EquipamentoEstoque = { 
+       ...item,
+       status: 'BENS_ATIVOS',
+       bensAtivos: {
+           dataEntradaItem: new Date().toISOString(),
+           solicitante: '',
+           origem: item.bensAtivos?.origem || '',
+           alocadoEm: '',
+           vinculo: '',
+           condicao: 'Boa'
+       },
+       // Wipe qualquer rastro de transferência antiga
+       detalhes: undefined
+    };
+
+    handleOpenFormModal(itemPreRealocacao);
   };
 
   const handleDelete = (id: string) => {
@@ -307,7 +372,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <AnimatePresence>
               <motion.select
@@ -396,6 +461,8 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onTransferir={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); }}
         onDescartar={(item) => openFluxo(item, 'DESCARTE')}
         onDeletar={handleDelete}
+        highlightItemId={highlightItemId}
+        onClearHighlight={() => setHighlightItemId(null)}
       />
 
       <EstoqueFormModal
@@ -466,6 +533,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onClose={() => { setIsMovimentacaoModalOpen(false); setMovimentacaoPreItem(null); }}
         estoqueAtivo={estoqueAtivo}
         theme={theme}
+        onSuccess={(id) => { setHighlightItemId(id); setIsMovimentadosModalOpen(true); }}
         onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
         onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
         preSelectedItem={movimentacaoPreItem}
@@ -487,6 +555,8 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onClose={() => setIsMovimentadosModalOpen(false)}
         estoque={estoque}
         theme={theme}
+        onRealocar={handleRealocar}
+        highlightItemId={highlightItemId}
       />
       {/* Global Barcode Scanner View Modal */}
       <EstoqueItemViewModal
@@ -498,6 +568,28 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onMovimentar={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); setScannedItem(null); }}
         onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
         onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
+        onRealocar={handleRealocar}
+      />
+
+      <EstoqueFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setEquipamentoEditando(null);
+          setGrupoPreenchido(null);
+        }}
+        onSalvar={handleSalvarEquipamento}
+        equipamentoEditando={equipamentoEditando}
+        grupoPreenchido={grupoPreenchido}
+        theme={theme}
+        carregando={carregando}
+        onAbreGerenciarTipos={() => setIsTiposModalOpen(true)}
+        onAbreGerenciarMarcas={() => setIsMarcasModalOpen(true)}
+        onAbreGerenciarModelos={() => setIsModelosModalOpen(true)}
+        onAbreGerenciarAgencias={() => setIsAgenciasModalOpen(true)}
+        onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
+        onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
+        onAbreGerenciarLocais={() => setIsLocaisModalOpen(true)}
       />
 
       <CameraBarcodeScannerModal

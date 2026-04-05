@@ -15,6 +15,8 @@ interface EstoqueDetailPanelProps {
   onTransferir: (item: EquipamentoEstoque) => void;
   onDescartar: (item: EquipamentoEstoque) => void;
   onDeletar: (id: string) => void;
+  highlightItemId?: string | null;
+  onClearHighlight?: () => void;
 }
 
 const getStatusColor = (status: StatusEquipamento) => {
@@ -32,12 +34,14 @@ const getStatusColor = (status: StatusEquipamento) => {
 
 const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
   grupo, isOpen, onClose, theme = 'dark',
-  onAdicionarUnidade, onEditar, onTransferir, onDescartar, onDeletar
+  onAdicionarUnidade, onEditar, onTransferir, onDescartar, onDeletar,
+  highlightItemId, onClearHighlight
 }) => {
   const isDark = theme === 'dark';
   const [busca, setBusca] = useState('');
   const [hoverImgId, setHoverImgId] = useState<string | null>(null);
   const [viewingItem, setViewingItem] = useState<EquipamentoEstoque | null>(null);
+  const [clearedDetailIds, setClearedDetailIds] = useState<Set<string>>(new Set());
 
   if (!grupo) return null;
 
@@ -90,13 +94,27 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
               Nenhuma unidade encontrada.
             </div>
           ) : (
-            filtroObj.map(item => (
+            filtroObj.map(item => {
+              const isHighlighted = item.id === highlightItemId && !clearedDetailIds.has(item.id);
+              return (
               <div
                 key={item.id}
-                onClick={() => setViewingItem(item)}
-                className={`p-3 sm:p-4 rounded-xl cursor-pointer border transition-all flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group ${isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400'
-                  }`}
+                onClick={() => {
+                  setViewingItem(item);
+                  if (isHighlighted) {
+                    setClearedDetailIds(prev => new Set(prev).add(item.id));
+                    onClearHighlight?.();
+                  }
+                }}
+                className={`relative p-3 sm:p-4 rounded-xl cursor-pointer border transition-all flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group overflow-hidden ${
+                  isHighlighted
+                    ? (isDark ? 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-700/50' : 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-200')
+                    : (isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400')
+                }`}
               >
+                {isHighlighted && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] z-10 animate-pulse"></div>
+                )}
                 <div className="flex flex-row items-start gap-4 w-full xl:w-auto flex-1 min-w-0">
                   {/* Thumbnail */}
                   <div className="flex-shrink-0 mt-0.5 relative"
@@ -114,8 +132,8 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                   >
                     {item.imagemUrl ? (
                       <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${item.isImagemPrincipal
-                          ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
-                          : (isDark ? 'border-slate-600' : 'border-slate-300')
+                        ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
+                        : (isDark ? 'border-slate-600' : 'border-slate-300')
                         }`}>
                         <img src={item.imagemUrl} alt="Foto" className="w-full h-full object-cover" />
                       </div>
@@ -154,24 +172,24 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
 
                     {/* Meta Info */}
                     <div className={`grid grid-cols-2 lg:grid-cols-4 gap-y-2 gap-x-4 text-[10px] sm:text-xs mt-1 w-full ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                       <div className="truncate">
-                         <span className="opacity-70">Utilizado por:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'Não informado'}</span>
-                       </div>
-                       <div className="truncate">
-                         <span className="opacity-70">Vínculo:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.vinculo || 'Não informado'}</span>
-                       </div>
-                       <div className="truncate">
-                         <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
-                       </div>
-                       <div className="truncate">
-                         <span className="opacity-70">Entrada:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                           {item.bensAtivos?.dataEntradaItem 
-                             ? (item.bensAtivos.dataEntradaItem.includes('/') 
-                               ? item.bensAtivos.dataEntradaItem 
-                               : item.bensAtivos.dataEntradaItem.substring(0, 10).split('-').reverse().join('/'))
-                             : 'Sem data'}
-                         </span>
-                       </div>
+                      <div className="truncate">
+                        <span className="opacity-70">Utilizado por:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'Não informado'}</span>
+                      </div>
+                      <div className="truncate">
+                        <span className="opacity-70">Vínculo:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.vinculo || 'Não informado'}</span>
+                      </div>
+                      <div className="truncate">
+                        <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
+                      </div>
+                      <div className="truncate">
+                        <span className="opacity-70">Entrada:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {item.bensAtivos?.dataEntradaItem
+                            ? (item.bensAtivos.dataEntradaItem.includes('/')
+                              ? item.bensAtivos.dataEntradaItem
+                              : item.bensAtivos.dataEntradaItem.substring(0, 10).split('-').reverse().join('/'))
+                            : 'Sem data'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -219,7 +237,8 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                   </div>
                 )}
               </div>
-            ))
+             );
+            })
           )}
         </div>
       </div>

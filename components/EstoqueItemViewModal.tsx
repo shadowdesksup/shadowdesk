@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, ShieldCheck, FileText, Wrench, Clock, Image as ImageIcon, Printer, ChevronLeft, ArrowRightLeft, PackageX, Edit2 } from 'lucide-react';
+import { Package, ShieldCheck, FileText, Wrench, Clock, Image as ImageIcon, Printer, ChevronLeft, ArrowRightLeft, PackageX, Edit2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Barcode from 'react-barcode';
 import { EquipamentoEstoque, StatusEquipamento } from '../types';
@@ -14,6 +14,7 @@ interface EstoqueItemViewModalProps {
   onMovimentar?: (item: EquipamentoEstoque) => void;
   onDescartar?: (item: EquipamentoEstoque) => void;
   onManutencao?: (item: EquipamentoEstoque) => void;
+  onRealocar?: (item: EquipamentoEstoque) => void;
 }
 
 const getStatusColor = (status: StatusEquipamento) => {
@@ -31,7 +32,7 @@ const getStatusColor = (status: StatusEquipamento) => {
 
 const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
   isOpen, onClose, item, theme = 'dark',
-  onEditar, onMovimentar, onDescartar, onManutencao
+  onEditar, onMovimentar, onDescartar, onManutencao, onRealocar
 }) => {
   const isDark = theme === 'dark';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,7 +58,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
       <div className={`absolute top-0 left-0 right-0 h-64 opacity-20 pointer-events-none rounded-t-3xl ${isDark ? 'bg-gradient-to-b from-cyan-900/50 to-transparent' : 'bg-gradient-to-b from-cyan-200 to-transparent'}`} />
 
       {/* Top-Right Horizontal Action Bar */}
-      {(onEditar || onMovimentar || onDescartar || onManutencao) && item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
+      {((onEditar || onMovimentar || onDescartar || onManutencao) && item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' || (onRealocar && item.status === 'TRANSFERIDO')) && (
         <div className="absolute top-0 right-4 z-[100] no-print flex items-center min-h-[56px] gap-2">
           {/* Sliding buttons panel */}
           <AnimatePresence>
@@ -70,22 +71,27 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
                 className="overflow-hidden"
               >
                 <div className={`flex flex-col md:flex-row items-stretch md:items-center gap-2 px-2 py-2 rounded-xl border shadow-xl backdrop-blur-xl mr-1 ${isDark ? 'bg-slate-900/95 border-slate-700/80' : 'bg-white/95 border-slate-200'}`}>
-                  {onMovimentar && (
+                  {item.status === 'TRANSFERIDO' && onRealocar && (
+                    <button onClick={() => { onRealocar(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                      <RefreshCw size={16} /> Realocar no estoque
+                    </button>
+                  )}
+                  {item.status !== 'TRANSFERIDO' && onMovimentar && (
                     <button onClick={() => { onMovimentar(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 whitespace-nowrap">
                       <ArrowRightLeft size={16} /> Movimentar
                     </button>
-                  )}
-                  {onManutencao && (
+                   )}
+                  {item.status !== 'TRANSFERIDO' && onManutencao && (
                     <button onClick={() => { onManutencao(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 whitespace-nowrap">
                       <Wrench size={16} /> Manutenção
                     </button>
                   )}
-                  {onDescartar && (
+                  {item.status !== 'TRANSFERIDO' && onDescartar && (
                     <button onClick={() => { onDescartar(item); setIsMenuOpen(false); }} className="flex md:justify-center justify-start items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 whitespace-nowrap">
                       <PackageX size={16} /> Descartar
                     </button>
                   )}
-                  {onEditar && (
+                  {item.status !== 'TRANSFERIDO' && onEditar && (
                     <>
                       <div className={`hidden md:block w-px h-7 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
                       <div className={`md:hidden w-full h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -288,11 +294,53 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
           )}
         </div>
 
+          {/* Block: Dados de Transferência */}
+          {item.status === 'TRANSFERIDO' && item.detalhes && (
+            <div className={`mt-6 p-6 rounded-3xl border ${isDark ? 'bg-emerald-900/10 border-emerald-500/20 shadow-inner' : 'bg-emerald-50 border-emerald-200 shadow-sm'}`}>
+              <div className="flex items-center gap-3 mb-6">
+                <ArrowRightLeft className={isDark ? 'text-emerald-400' : 'text-emerald-600'} size={24} />
+                <h3 className={`text-xl font-bold tracking-tight ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Dados da Movimentação</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8">
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Destino</p>
+                  <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.detalhes.localDestinoNome || 'Não informado'}</p>
+                </div>
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Destinatário / Responsável</p>
+                  <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.detalhes.recebedorNome || 'Não informado'}</p>
+                </div>
+                {item.detalhes.vinculoDestino && (
+                  <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Vínculo</p>
+                    <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.detalhes.vinculoDestino}</p>
+                  </div>
+                )}
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Data de Saída</p>
+                  <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                    {item.detalhes.dataSaidaTransferencia
+                      ? new Date(item.detalhes.dataSaidaTransferencia).toLocaleString('pt-BR')
+                      : item.dataSaida
+                        ? new Date(item.dataSaida).toLocaleString('pt-BR')
+                        : 'Não registrada'}
+                  </p>
+                </div>
+                {item.detalhes.motivoTransferencia && (
+                  <div className="sm:col-span-2">
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Motivo da Transferência</p>
+                    <p className={`font-medium mt-1 p-3 rounded-xl whitespace-pre-wrap ${isDark ? 'bg-slate-900/50 text-slate-300' : 'bg-white/50 text-slate-700'}`}>{item.detalhes.motivoTransferencia}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         {/* Historico */}
         <div className={`mt-8 rounded-[2rem] border overflow-hidden backdrop-blur-md ${isDark ? 'bg-slate-800/40 border-slate-700/50 shadow-inner' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className={`p-6 flex items-center gap-3 border-b ${isDark ? 'border-slate-700/50 bg-slate-800/60' : 'border-slate-100 bg-slate-50'}`}>
             <Clock size={20} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
-            <h3 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Trilha Histórica</h3>
+            <h3 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Histórico</h3>
           </div>
           <div className="p-4 md:p-6 max-h-80 overflow-y-auto custom-scrollbar relative">
             {item.historico && item.historico.length > 0 ? (
@@ -317,7 +365,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
                         <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                           {new Date(hist.data).toLocaleString()}
                         </div>
-                        <p className={`font-medium text-[13px] leading-relaxed mb-3 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                        <p className={`font-medium text-[13px] leading-relaxed mb-3 whitespace-pre-wrap ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                           {hist.acao}
                         </p>
                         <div className="flex items-center gap-2">

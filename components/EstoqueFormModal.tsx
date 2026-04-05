@@ -38,6 +38,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   onAbreGerenciarVinculos, onAbreGerenciarOrigens, onAbreGerenciarLocais
 }) => {
   const isDark = theme === 'dark';
+  const isEditando = !!equipamentoEditando;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [tiposBanco, setTiposBanco] = useState<TipoEquipamento[]>([]);
@@ -224,7 +225,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       tiposBanco.some(t => t.nome.toLowerCase() === tipoStr.toLowerCase()) &&
       marcasBanco.some(m => m.nome.toLowerCase() === marcaStr.toLowerCase()) &&
       modelosBanco.some(m => m.nome.toLowerCase() === modeloStr.toLowerCase());
-    if (!equipamentoEditando && combinacaoExata && !imagemUrl) {
+    if (combinacaoExata && !imagemUrl) {
       buscarCapaGrupo(tipoStr, marcaStr, modeloStr).then(url => {
         if (!cancelled) setCapaGrupoUrl(url);
       });
@@ -707,13 +708,14 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           <input
                             type="text" required={status === 'BENS_ATIVOS'}
                             value={baOrigem}
+                            readOnly={isEditando}
                             onChange={e => { setBaOrigem(e.target.value); setShowOrigensDropdown(true); }}
-                            onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
+                            onFocus={() => { if (!isEditando) { carregarOrigens(); setShowOrigensDropdown(true); } }}
                             onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
                             placeholder="Ex: DPTO - DEFITO"
-                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500')} border`}
                           />
-                          {showOrigensDropdown && origensBanco.length > 0 && (
+                          {!isEditando && showOrigensDropdown && origensBanco.length > 0 && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
                               {origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase())).map(o => (
                                 <div key={o.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
@@ -724,11 +726,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             </div>
                           )}
                         </div>
-                        <button type="button" onClick={onAbreGerenciarOrigens}
-                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
-                          title="Gerenciar Origem de Aquisição">
-                          <Plus size={24} />
-                        </button>
+                        {!isEditando && (
+                          <button type="button" onClick={onAbreGerenciarOrigens}
+                            className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                            title="Gerenciar Origem de Aquisição">
+                            <Plus size={24} />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1127,7 +1131,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               </h3>
               <button
                 type="button"
-                className={`w-14 h-8 rounded-full flex items-center p-1 transition-colors duration-300 focus:outline-none ${temProjeto ? 'bg-cyan-500' : (isDark ? 'bg-slate-700' : 'bg-slate-300')
+                disabled={isEditando}
+                className={`w-14 h-8 rounded-full flex items-center p-1 transition-colors duration-300 focus:outline-none ${isEditando ? 'opacity-50 cursor-not-allowed' : ''} ${temProjeto ? 'bg-cyan-500' : (isDark ? 'bg-slate-700' : 'bg-slate-300')
                   }`}
                 onClick={() => setTemProjeto(!temProjeto)}
               >
@@ -1154,27 +1159,32 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         <input
                           type="text" required={temProjeto}
                           value={agenciaFomento}
+                          readOnly={isEditando}
                           onChange={e => {
                             setAgenciaFomento(e.target.value);
                             setShowAgenciasDropdown(true);
                             setFocusedAgenciaIndex(-1);
                           }}
                           onFocus={() => {
-                            carregarAgencias();
-                            setShowAgenciasDropdown(true);
+                            if (!isEditando) {
+                              carregarAgencias();
+                              setShowAgenciasDropdown(true);
+                            }
                           }}
                           onClick={() => {
-                            carregarAgencias();
-                            setShowAgenciasDropdown(true);
+                            if (!isEditando) {
+                              carregarAgencias();
+                              setShowAgenciasDropdown(true);
+                            }
                           }}
-                          onKeyDown={e => handleComboboxKeyDown(e, showAgenciasDropdown, setShowAgenciasDropdown, focusedAgenciaIndex, setFocusedAgenciaIndex, agenciasToShow, setAgenciaFomento)}
+                          onKeyDown={e => { if (!isEditando) handleComboboxKeyDown(e, showAgenciasDropdown, setShowAgenciasDropdown, focusedAgenciaIndex, setFocusedAgenciaIndex, agenciasToShow, setAgenciaFomento); }}
                           onBlur={() => setTimeout(() => setShowAgenciasDropdown(false), 200)}
                           placeholder="Ex: CNPq, FAPESP"
-                          className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500'} border`}
+                          className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500')} border`}
                         />
 
                         {/* Custom Dropdown */}
-                        {showAgenciasDropdown && (agenciasBanco.length > 0 || agenciaFomento.length > 0) && (
+                        {!isEditando && showAgenciasDropdown && (agenciasBanco.length > 0 || agenciaFomento.length > 0) && (
                           <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[77] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
                             {agenciasToShow.length === 0 ? (
                               <div className={`px-4 py-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -1197,14 +1207,16 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={onAbreGerenciarAgencias}
-                        className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
-                        title="Nova Agência Padrão"
-                      >
-                        <Plus size={24} />
-                      </button>
+                      {!isEditando && (
+                        <button
+                          type="button"
+                          onClick={onAbreGerenciarAgencias}
+                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          title="Nova Agência Padrão"
+                        >
+                          <Plus size={24} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1216,7 +1228,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     <input
                       type="text" required={temProjeto}
                       value={numeroProcesso} onChange={e => setNumeroProcesso(e.target.value)}
-                      className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${isDark ? 'bg-slate-900 border-slate-700 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-600 focus:border-cyan-500'} border`}
+                      readOnly={isEditando}
+                      className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-slate-700 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-600 focus:border-cyan-500')} border`}
                       placeholder="Ex: 312345/2021-0"
                     />
                   </div>
@@ -1229,7 +1242,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     <input
                       type="text" required={temProjeto}
                       value={numeroTermo} onChange={e => setNumeroTermo(e.target.value)}
-                      className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${isDark ? 'bg-slate-900 border-slate-700 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-600 focus:border-cyan-500'} border`}
+                      readOnly={isEditando}
+                      className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-slate-700 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-600 focus:border-cyan-500')} border`}
                       placeholder="Ex: 123/2022"
                     />
                   </div>
