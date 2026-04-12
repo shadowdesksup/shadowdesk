@@ -457,9 +457,9 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
   const labelClass = `block text-xs font-bold uppercase tracking-wider mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`;
 
-  const cardClass = `flex flex-col gap-1 mb-6 rounded-2xl transition-colors duration-300 ${isDark
-    ? 'bg-transparent border-none shadow-none'
-    : 'bg-transparent border-none shadow-none'
+  const cardClass = `flex flex-col gap-1 mb-6 p-4 sm:p-6 rounded-2xl border transition-colors duration-300 ${isDark
+    ? 'bg-slate-900/40 border-slate-800/50 shadow-sm'
+    : 'bg-white border-slate-200 shadow-sm'
     }`;
 
   return (
@@ -467,7 +467,7 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="h-full flex flex-col wide:flex-row gap-6 sm:gap-8 overflow-y-auto wide:overflow-hidden relative w-full max-w-7xl mx-auto"
+      className="h-full flex flex-col lg:flex-row gap-6 sm:gap-8 overflow-y-auto lg:overflow-hidden relative w-full mx-auto"
     >
 
       {/* MODAL */}
@@ -559,25 +559,26 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
       </AnimatePresence>
 
       {/* LEFT COLUMN: FORM */}
-      <div className={`flex-1 flex flex-col gap-6 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
+      <div className={`flex-1 flex flex-col gap-4 w-full ${showPreview ? 'lg:max-w-[45%]' : ''} lg:overflow-y-auto`} style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style dangerouslySetInnerHTML={{__html: `div::-webkit-scrollbar { display: none; }`}} />
 
         {/* Header Compacto */}
         <div
           className={cardClass}
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className={`text-xl font-bold tracking-tight flex items-center gap-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <h2 className={`text-xl font-bold tracking-tight flex items-center gap-3 w-full md:w-auto ${isDark ? 'text-white' : 'text-slate-900'}`}>
               <span className="w-1.5 h-6 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]"></span>
               Dados do Laudo
             </h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 border-t md:border-none pt-4 md:pt-0 w-full md:w-auto border-slate-200 dark:border-slate-800">
               {/* Dropdown de Modelos */}
-              <div className="relative flex items-center gap-2">
-                <div className="relative">
+              <div className="relative flex items-center gap-2 flex-grow sm:flex-grow-0">
+                <div className="relative w-full sm:w-auto">
                   <select
                     value={modeloSelecionado}
                     onChange={(e) => carregarModelo(e.target.value)}
-                    className={`appearance-none py-2 pl-9 pr-8 rounded-lg text-sm font-medium border cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all ${isDark
+                    className={`appearance-none py-2 pl-9 pr-8 w-full rounded-lg text-sm font-medium border cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all ${isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
                       : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
                       }`}
@@ -891,10 +892,10 @@ const GerarDescritivos: React.FC<GerarDescritivosProps> = ({ theme = 'dark', usu
 
       </div>
 
-      {/* RIGHT COLUMN: PREVIEW - Hidden on mobile (<768px), visible and stacked on tablet (768-1089px), side-by-side on wide (≥1090px) */}
+      {/* RIGHT COLUMN: PREVIEW - Hidden on mobile (<768px), visible and stacked on tablet (768-1024px), side-by-side on lg (≥1024px) */}
       {
         showPreview && (
-          <div className="hidden md:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full">
+          <div className="hidden md:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] lg:h-full">
             <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true}>
               <DescritivoDocument descritivo={dadosAtuais} />
             </PDFViewer>

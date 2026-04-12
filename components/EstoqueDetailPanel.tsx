@@ -160,7 +160,7 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                         <span className={`text-[11px] sm:text-xs font-mono font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>NS: {item.numeroSerie}</span>
                       )}
                       <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border ml-auto sm:ml-0 ${getStatusColor(item.status)}`}>
-                        {item.status.replace('_', ' ')}
+                        {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status.replace('_', ' ')}
                       </span>
                     </div>
 

@@ -230,8 +230,17 @@ export interface EstoqueHistorico {
   detalhes?: string;
 }
 
+export type TipoManutencao = 'INCORPORAR_ESTOQUE' | 'REPARO_COMUM';
+
 export interface RegistroManutencao {
+  ticketId: string; // ID visual do ticket (ex: #MNT-00042)
+  tipoManutencao: TipoManutencao; // Se incorpora ao estoque ou é reparo temporário
   solicitante: string;
+  vinculo?: string;
+  origem?: string;
+  email?: string;
+  celular?: string;
+  condicaoBem?: string;
   dataInicio: string; // ISO 8601
   problema: string;
   tecnicoResponsavelId: string;

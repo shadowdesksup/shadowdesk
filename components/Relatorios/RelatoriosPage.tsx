@@ -91,9 +91,9 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
   }, [registrosFiltrados, apenasServiceDesk]);
 
   return (
-    <div className="h-full flex flex-col wide:flex-row gap-6 sm:gap-8 overflow-y-auto wide:overflow-hidden relative w-full max-w-7xl mx-auto">
+    <div className="h-full flex flex-col lg:flex-row gap-6 sm:gap-8 overflow-y-auto lg:overflow-hidden relative w-full mx-auto">
       {/* Left Column: Header + Filters */}
-      <div className={`flex-1 flex flex-col gap-6 w-full ${showPreview ? 'wide:max-w-[50%]' : ''} wide:overflow-y-auto custom-scrollbar`}>
+      <div className={`flex-1 flex flex-col gap-6 w-full ${showPreview ? 'lg:max-w-[45%]' : ''} lg:overflow-y-auto custom-scrollbar lg:pr-4`}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -170,11 +170,11 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
               Email
             </button>
 
-            <div className={`hidden wide:block w-px h-8 mx-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
+            <div className={`hidden lg:block w-px h-8 mx-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
 
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className={`hidden wide:flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
+              className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold shadow-lg text-sm ${theme === 'dark'
                 ? 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border border-slate-500/20'
                 : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
                 } ${!showPreview ? 'opacity-50' : ''}`}
@@ -190,9 +190,9 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-2xl flex flex-col gap-4 ${theme === 'dark'
-            ? 'bg-transparent border-none'
-            : 'bg-transparent border-none'
+          className={`rounded-2xl flex flex-col gap-4 p-6 border ${theme === 'dark'
+            ? 'bg-slate-900/40 border-slate-700/80 shadow-md'
+            : 'bg-white border-slate-200 shadow-md'
             }`}
         >
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -451,9 +451,9 @@ const RelatoriosPage: React.FC<RelatoriosPageProps> = ({ registros, theme = 'dar
       </div>
 
       {/* PDF Viewer - Conditionally hidden/shown */}
-      {/* Right Column: PDF Preview (Hidden < 1090px) */}
+      {/* Right Column: PDF Preview (Hidden < 1024px) */}
       {showPreview && (
-        <div className={`hidden wide:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] wide:h-full`}>
+        <div className={`hidden lg:flex flex-1 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-zinc-900 min-h-[600px] lg:h-full`}>
           <PDFViewer style={{ width: '100%', height: '100%' }} showToolbar={true} className="border-none">
             <LaudoDocument registros={registrosProcessados} usuario={usuario} />
           </PDFViewer>

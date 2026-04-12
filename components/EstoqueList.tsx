@@ -206,7 +206,7 @@ const EstoqueList: React.FC<EstoqueListProps> = ({ estoque, theme = 'dark', onEd
                                 <td className="py-3">
                                   <div className="flex flex-col gap-0.5">
                                     <span className={`px-2.5 py-1 w-max rounded-full text-xs font-semibold border ${getStatusColor(item.status)}`}>
-                                      {item.status.replace('_', ' ')}
+                                      {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status.replace('_', ' ')}
                                     </span>
                                     {item.status === 'BENS_ATIVOS' && item.bensAtivos && (
                                       <span className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} title={`Origem/Local: ${item.bensAtivos.origem || 'N/A'}`}>

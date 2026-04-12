@@ -138,7 +138,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
           <div className="flex-1 flex flex-col gap-5 w-full">
             <div className="flex flex-col items-start gap-2">
               <div className={`inline-flex px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border shadow-sm ${getStatusColor(item.status)}`}>
-                {item.status.replace('_', ' ')}
+                {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status.replace('_', ' ')}
               </div>
               <h1 className={`text-3xl md:text-5xl font-extrabold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {item.marca} {item.modelo}
@@ -303,7 +303,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8">
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Destino</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-500/80' : 'text-emerald-700/70'}`}>Novo Destino</p>
                   <p className={`font-medium mt-1 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{item.detalhes.localDestinoNome || 'Não informado'}</p>
                 </div>
                 <div>

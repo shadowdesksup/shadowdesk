@@ -281,7 +281,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
        bensAtivos: {
            dataEntradaItem: new Date().toISOString(),
            solicitante: '',
-           origem: item.bensAtivos?.origem || '',
+           origem: item.detalhes?.localDestinoNome || item.bensAtivos?.origem || '',
            alocadoEm: '',
            vinculo: '',
            condicao: 'Boa'

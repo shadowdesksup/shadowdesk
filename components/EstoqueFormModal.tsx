@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Package, Save, Plus, Image as ImageIcon, Wrench, ShieldCheck, Server, Camera } from 'lucide-react';
-import { EquipamentoEstoque, StatusEquipamento, TipoEquipamento, MarcaEquipamento, ModeloEquipamento, AgenciaProjeto } from '../types';
+import { EquipamentoEstoque, StatusEquipamento, TipoEquipamento, MarcaEquipamento, ModeloEquipamento, AgenciaProjeto, TipoManutencao, RegistroManutencao } from '../types';
+import ManutencaoPreviewModal from './ManutencaoPreviewModal';
+import { gerarProximoTicketId } from '../firebase/manutencao';
 import EstoqueSidePanel from './EstoqueSidePanel';
 import WebcamCaptureModal from './WebcamCaptureModal';
 import { listarTiposEquipamento, criarTipoEquipamento } from '../firebase/tiposEquipamento';
@@ -135,9 +137,20 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
   // Manutenção Fields
   const [manutencaoSolicitante, setManutencaoSolicitante] = useState('');
+  const [manutencaoVinculo, setManutencaoVinculo] = useState('');
+  const [manutencaoOrigem, setManutencaoOrigem] = useState('');
+  const [manutencaoEmail, setManutencaoEmail] = useState('');
+  const [manutencaoCelular, setManutencaoCelular] = useState('');
+  const [manutencaoCondicao, setManutencaoCondicao] = useState<'Boa' | 'Regular' | 'Ruim'>('Regular');
   const [manutencaoDataInicio, setManutencaoDataInicio] = useState(new Date().toISOString().split('T')[0]);
   const [manutencaoProblema, setManutencaoProblema] = useState('');
   const [manutencaoTecnicoId, setManutencaoTecnicoId] = useState('');
+  const [manutencaoTipoManutencao, setManutencaoTipoManutencao] = useState<TipoManutencao>('REPARO_COMUM');
+
+  // Preview Modal state
+  const [previewModalAberto, setPreviewModalAberto] = useState(false);
+  const [dadosPreview, setDadosPreview] = useState<{ equip: Partial<EquipamentoEstoque>; manut: RegistroManutencao; salvarFn: () => Promise<void> } | null>(null);
+  const [ticketIdGerado, setTicketIdGerado] = useState<string | null>(null);
 
   const carregarTipos = async () => {
     try {
@@ -233,7 +246,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setCapaGrupoUrl(null);
     }
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo, marca, modelo, isOpen, imagemUrl, tiposBanco, marcasBanco, modelosBanco]);
 
   useEffect(() => {
@@ -241,7 +254,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setTipo(equipamentoEditando.tipo);
       setMarca(equipamentoEditando.marca);
       setModelo(equipamentoEditando.modelo);
-      
+
       const isSemRegistro = equipamentoEditando.patrimonio === 'Sem informação' && equipamentoEditando.numeroSerie === 'Sem informação';
       setSemRegistro(isSemRegistro);
       setPatrimonio(isSemRegistro ? '' : (equipamentoEditando.patrimonio || ''));
@@ -271,11 +284,21 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
       if (equipamentoEditando.manutencaoAtual) {
         setManutencaoSolicitante(equipamentoEditando.manutencaoAtual.solicitante);
+        setManutencaoVinculo(equipamentoEditando.manutencaoAtual.vinculo || '');
+        setManutencaoOrigem(equipamentoEditando.manutencaoAtual.origem || '');
+        setManutencaoEmail(equipamentoEditando.manutencaoAtual.email || '');
+        setManutencaoCelular(equipamentoEditando.manutencaoAtual.celular || '');
+        setManutencaoCondicao((equipamentoEditando.manutencaoAtual.condicaoBem as 'Boa'|'Regular'|'Ruim') || 'Regular');
         setManutencaoDataInicio(equipamentoEditando.manutencaoAtual.dataInicio.split('T')[0]);
         setManutencaoProblema(equipamentoEditando.manutencaoAtual.problema);
         setManutencaoTecnicoId(equipamentoEditando.manutencaoAtual.tecnicoResponsavelId);
       } else {
         setManutencaoSolicitante('');
+        setManutencaoVinculo('');
+        setManutencaoOrigem('');
+        setManutencaoEmail('');
+        setManutencaoCelular('');
+        setManutencaoCondicao('Regular');
         setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
         setManutencaoProblema('');
         setManutencaoTecnicoId('');
@@ -293,9 +316,18 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setBaSolicitante(''); setBaVinculo(''); setBaDataEntrada(new Date().toISOString().split('T')[0]); setBaOrigem(''); setBaAlocadoEm('DTI - Sala 12 - Suporte'); setBaCondicao('Boa');
       setErroImagem(''); setErroSalvar(''); setSucessoSalvar('');
       setManutencaoSolicitante('');
+      setManutencaoVinculo('');
+      setManutencaoOrigem('');
+      setManutencaoEmail('');
+      setManutencaoCelular('');
+      setManutencaoCondicao('Regular');
       setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
       setManutencaoProblema('');
       setManutencaoTecnicoId('');
+      setManutencaoTipoManutencao('REPARO_COMUM');
+      setPreviewModalAberto(false);
+      setDadosPreview(null);
+      setTicketIdGerado(null);
     } else {
       setTipo(''); setMarca(''); setModelo(''); setPatrimonio(''); setNumeroSerie(''); setSemRegistro(false);
       setTemProjeto(false); setAgenciaFomento(''); setNumeroProcesso(''); setNumeroTermo('');
@@ -305,6 +337,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setErroImagem(''); setErroSalvar(''); setSucessoSalvar('');
 
       setManutencaoSolicitante('');
+      setManutencaoVinculo('');
+      setManutencaoOrigem('');
       setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
       setManutencaoProblema('');
       setManutencaoTecnicoId('');
@@ -417,13 +451,53 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
     if (status === 'MANUTENCAO') {
       const tecNome = tecnicosBanco.find(t => t.uid === manutencaoTecnicoId)?.nomeCompleto || 'Técnico';
-      dadosSave.manutencaoAtual = {
-        solicitante: manutencaoSolicitante,
-        dataInicio: new Date(manutencaoDataInicio).toISOString(),
-        problema: manutencaoProblema,
-        tecnicoResponsavelId: manutencaoTecnicoId,
-        tecnicoResponsavelNome: tecNome
-      };
+
+      // Gera ticketId apenas se ainda não existir
+      try {
+        const ticketId = ticketIdGerado || await gerarProximoTicketId();
+        if (!ticketIdGerado) setTicketIdGerado(ticketId);
+        const manutData: RegistroManutencao = {
+          ticketId,
+          tipoManutencao: manutencaoTipoManutencao,
+          solicitante: manutencaoSolicitante,
+          vinculo: manutencaoVinculo,
+          origem: manutencaoOrigem,
+          email: manutencaoEmail,
+          celular: manutencaoCelular,
+          condicaoBem: manutencaoCondicao,
+          dataInicio: new Date(manutencaoDataInicio).toISOString(),
+          problema: manutencaoProblema,
+          tecnicoResponsavelId: manutencaoTecnicoId,
+          tecnicoResponsavelNome: tecNome
+        };
+        dadosSave.manutencaoAtual = manutData;
+
+        // Prepara o preview e intercepta o fluxo
+        const tipoExiste = tiposBanco.some(t => t.nome.toLowerCase() === tipo.trim().toLowerCase());
+        const executarSave = async () => {
+          if (!tipoExiste && tipo.trim()) {
+            await criarTipoEquipamento(tipo.trim());
+            carregarTipos();
+          }
+          await onSalvar(dadosSave);
+          if (manterAberto) {
+            setPatrimonio('');
+            setNumeroSerie('');
+            setSucessoSalvar(`Manutenção ${ticketId} registrada com sucesso!`);
+            setTimeout(() => setSucessoSalvar(''), 4000);
+          } else {
+            onClose();
+          }
+          setTicketIdGerado(null); // reseta após salvar com sucesso
+        };
+
+        setDadosPreview({ equip: dadosSave, manut: manutData, salvarFn: executarSave });
+        setPreviewModalAberto(true);
+        return; // Intercepta: NÃO continua para o salvarFinal abaixo
+      } catch (err: any) {
+        setErroSalvar(`Erro ao gerar ticket de manutenção: ${err?.message || ''}`);
+        return;
+      }
     }
 
     const salvarFinal = async (criarTipo: boolean) => {
@@ -491,7 +565,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
   // Bloqueia edição de Tipo/Marca/Modelo quando editando OU quando adicionando unidade a grupo existente
   const bloqueiaEdicaoGrupo = !!equipamentoEditando || !!grupoPreenchido;
-  
+
   // Verifica se a tríade tipo+marca+modelo já está cadastrada no banco
   const isModeloCadastradoRaw = isExactTypeMatch && isExactMarcaMatch && isExactModeloMatch && tipo.trim() !== '' && marca.trim() !== '' && modelo.trim() !== '';
   // Exibe o checkbox de capa somente se já existe uma capa para esse grupo
@@ -530,7 +604,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 </div>
                 <button type="button" onClick={() => setShowCameraModal(true)} className={`flex flex-col items-center gap-2 p-4 w-[80%] rounded-2xl border border-transparent transition-all hover:scale-105 shadow-md ${isDark ? 'bg-cyan-900/30 hover:bg-cyan-800/50 text-cyan-400 border-cyan-500/30 hover:border-cyan-400' : 'bg-cyan-50 hover:bg-cyan-100 text-cyan-600 border-cyan-200'}`}>
                   <Camera size={24} />
-                  <span className="text-xs font-bold text-center">Tirar Foto (Webcam)</span>
+                  <span className="text-xs font-bold text-center">Tirar Foto</span>
                 </button>
               </div>
             )}
@@ -586,18 +660,18 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               value={status} onChange={e => setStatus(e.target.value as StatusEquipamento | '')}
               required
               className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-bold ${status === 'MANUTENCAO'
-                  ? (isDark ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-orange-50 border-orange-400 text-orange-600')
-                  : status === 'BENS_ATIVOS'
-                    ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
-                    : status === 'DESCARTE'
-                      ? (isDark ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-rose-50 border-rose-400 text-rose-600')
-                      : (isDark ? 'bg-[#162033] border-slate-700 text-slate-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-500 focus:border-cyan-500')
+                ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
+                : status === 'BENS_ATIVOS'
+                  ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
+                  : status === 'DESCARTE'
+                    ? (isDark ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-rose-50 border-rose-400 text-rose-600')
+                    : (isDark ? 'bg-[#162033] border-slate-700 text-slate-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-500 focus:border-cyan-500')
                 } border`}
             >
-              <option value="">Selecione uma opção</option>
-              <option value="BENS_ATIVOS">Bens Ativos</option>
-              <option value="MANUTENCAO">Manutenção</option>
-              <option value="DESCARTE">Descarte</option>
+              <option value="" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Selecione uma opção</option>
+              <option value="BENS_ATIVOS" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Bens Ativos</option>
+              <option value="MANUTENCAO" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Manutenção</option>
+              <option value="DESCARTE" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Descarte</option>
             </select>
           </div>
 
@@ -631,11 +705,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   onKeyDown={e => handleComboboxKeyDown(e, showTiposDropdown, setShowTiposDropdown, focusedTipoIndex, setFocusedTipoIndex, tiposToShow, setTipo)}
                   onBlur={() => setTimeout(() => setShowTiposDropdown(false), 200)}
                   placeholder="Ex: Computador, Notebook"
-                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
-                    bloqueiaEdicaoGrupo 
-                      ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
-                      : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
-                  } border`}
+                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
+                    ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
+                    : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
+                    } border`}
                 />
 
                 {/* Custom Dropdown */}
@@ -837,71 +910,218 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 initial={{ opacity: 0, height: 0, scaleY: 0.9 }}
                 animate={{ opacity: 1, height: 'auto', scaleY: 1 }}
                 exit={{ opacity: 0, height: 0, scaleY: 0.9 }}
-                className={`col-span-1 md:col-span-2 overflow-hidden rounded-2xl border-2 ${isDark ? 'bg-orange-950/30 border-orange-500/30' : 'bg-orange-50/50 border-orange-200'}`}
+                className={`col-span-1 md:col-span-2 overflow-hidden rounded-2xl border-2 ${isDark ? 'bg-cyan-950/20 border-cyan-500/20' : 'bg-cyan-50/50 border-cyan-200'}`}
               >
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className={`p-2 rounded-xl ${isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-500 text-white'}`}>
+                    <div className={`p-2 rounded-xl ${isDark ? 'bg-cyan-500/10 text-cyan-500' : 'bg-cyan-500 text-white'}`}>
                       <Wrench size={24} className={isDark ? '' : 'text-white'} />
                     </div>
                     <div>
-                      <h3 className={`text-lg font-bold ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>Registro de Manutenção</h3>
-                      <p className={`text-sm ${isDark ? 'text-orange-500/70' : 'text-orange-600/70'}`}>Preencha os dados abaixo para acompanhamento e geração do laudo de serviço.</p>
+                      <h3 className={`text-lg font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>Registro de Manutenção</h3>
+                      <p className={`text-sm ${isDark ? 'text-cyan-500/70' : 'text-cyan-600/70'}`}>Preencha os dados abaixo. Ao salvar, um preview das fichas será exibido antes da confirmação.</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    {/* Tipo de Manutenção */}
+                    <div className="col-span-1 md:col-span-2">
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Tipo de Manutenção *
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setManutencaoTipoManutencao('REPARO_COMUM')}
+                          className={`py-3 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 ${
+                            manutencaoTipoManutencao === 'REPARO_COMUM'
+                              ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-500 text-cyan-600')
+                              : (isDark ? 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-500 hover:border-slate-400')
+                          }`}
+                        >
+                          <Wrench size={16} /> Reparo Comum
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setManutencaoTipoManutencao('INCORPORAR_ESTOQUE')}
+                          className={`py-3 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 ${
+                            manutencaoTipoManutencao === 'INCORPORAR_ESTOQUE'
+                              ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-500 text-cyan-600')
+                              : (isDark ? 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-500 hover:border-slate-400')
+                          }`}
+                        >
+                          <Package size={16} /> Incorporar ao Estoque
+                        </button>
+                      </div>
+                      <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {manutencaoTipoManutencao === 'REPARO_COMUM'
+                          ? 'O solicitante recolherá o equipamento após o reparo.'
+                          : 'Após o reparo, o equipamento será incorporado ao estoque de Bens Ativos.'}
+                      </p>
+                    </div>
+
                     {/* Solicitante */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>
-                        Solicitante (Técnico Residente ou Usuário) *
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Solicitante *
                       </label>
                       <input
                         type="text" required={status === 'MANUTENCAO'}
                         value={manutencaoSolicitante} onChange={e => setManutencaoSolicitante(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-orange-500/50 text-white focus:border-orange-500 focus:shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-white border-orange-300 text-slate-900 focus:border-orange-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                         placeholder="Ex: Prof. Roberto"
+                      />
+                    </div>
+
+                    {/* Vínculo */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Vínculo *
+                      </label>
+                      <div className="flex gap-3 relative">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={manutencaoVinculo}
+                            onChange={e => { setManutencaoVinculo(e.target.value); setShowVinculosDropdown(true); }}
+                            onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
+                            onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                            placeholder="Ex: Aluno, Professor"
+                          />
+                          {showVinculosDropdown && vinculosBanco.length > 0 && (
+                            <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
+                              {vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase())).map(v => (
+                                <div key={v.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                  onClick={() => { setManutencaoVinculo(v.nome); setShowVinculosDropdown(false); }}>
+                                  {v.nome}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button type="button" onClick={onAbreGerenciarVinculos}
+                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          title="Gerenciar Vínculos">
+                          <Plus size={24} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Local */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Local *
+                      </label>
+                      <div className="flex gap-3 relative">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={manutencaoOrigem}
+                            onChange={e => { setManutencaoOrigem(e.target.value); setShowOrigensDropdown(true); }}
+                            onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
+                            onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                            placeholder="Ex: Laboratório 1, Sala dos Professores"
+                          />
+                          {showOrigensDropdown && origensBanco.length > 0 && (
+                            <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
+                              {origensBanco.filter(l => l.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase())).map(l => (
+                                <div key={l.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                  onClick={() => { setManutencaoOrigem(l.nome); setShowOrigensDropdown(false); }}>
+                                  {l.nome}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button type="button" onClick={onAbreGerenciarOrigens}
+                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          title="Gerenciar Locais (Origem)">
+                          <Plus size={24} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={manutencaoEmail} onChange={e => setManutencaoEmail(e.target.value)}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        placeholder="Ex: paulo@unesp.br"
+                      />
+                    </div>
+
+                    {/* Celular / Ramal */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Celular / Ramal
+                      </label>
+                      <input
+                        type="tel"
+                        value={manutencaoCelular} onChange={e => setManutencaoCelular(e.target.value)}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        placeholder="Ex: (00) 00000-0000"
                       />
                     </div>
 
                     {/* Data de Início */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
                         Data Inicial *
                       </label>
                       <input
                         type="date" required={status === 'MANUTENCAO'}
                         value={manutencaoDataInicio} onChange={e => setManutencaoDataInicio(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-orange-500/50 text-white focus:border-orange-500 focus:shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-white border-orange-300 text-slate-900 focus:border-orange-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                       />
                     </div>
 
+                    {/* Condição do Bem */}
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Condição do Bem
+                      </label>
+                      <select
+                        value={manutencaoCondicao} onChange={e => setManutencaoCondicao(e.target.value as any)}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border appearance-none cursor-pointer`}
+                      >
+                        <option value="Boa">Boa</option>
+                        <option value="Regular">Regular</option>
+                        <option value="Ruim">Ruim</option>
+                      </select>
+                    </div>
+
                     {/* Técnico Responsável */}
-                    <div className="col-span-1 md:col-span-2">
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>
-                        Técnico Designado (Responsável pelo Reparo) *
+                    <div>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                        Técnico Responsável *
                       </label>
                       <select
                         required={status === 'MANUTENCAO'}
                         value={manutencaoTecnicoId} onChange={e => setManutencaoTecnicoId(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-orange-500/50 text-white focus:border-orange-500 focus:shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-white border-orange-300 text-slate-900 focus:border-orange-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                       >
-                        <option value="">Selecione um técnico da base...</option>
+                        <option value="" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Selecione um técnico da base...</option>
                         {tecnicosBanco.map(tec => (
-                          <option key={tec.uid} value={tec.uid}>{tec.nomeCompleto}</option>
+                          <option key={tec.uid} value={tec.uid} className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>{tec.nomeCompleto}</option>
                         ))}
                       </select>
                     </div>
 
                     {/* Problema Reportado */}
                     <div className="col-span-1 md:col-span-2">
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
                         Descrição do Problema Reportado *
                       </label>
                       <textarea
                         required={status === 'MANUTENCAO'}
                         value={manutencaoProblema} onChange={e => setManutencaoProblema(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 min-h-[100px] outline-none transition-all ${isDark ? 'bg-slate-900 border-orange-500/50 text-white focus:border-orange-500 focus:shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-white border-orange-300 text-slate-900 focus:border-orange-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 min-h-[100px] outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                         placeholder="Descreva detalhadamente o defeito relatado para a manutenção..."
                       />
                     </div>
@@ -941,11 +1161,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   onKeyDown={e => handleComboboxKeyDown(e, showMarcasDropdown, setShowMarcasDropdown, focusedMarcaIndex, setFocusedMarcaIndex, marcasToShow, setMarca)}
                   onBlur={() => setTimeout(() => setShowMarcasDropdown(false), 200)}
                   placeholder="Ex: Dell, HP, Lenovo"
-                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
-                    bloqueiaEdicaoGrupo 
-                      ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
-                      : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
-                  } border`}
+                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
+                    ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
+                    : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
+                    } border`}
                 />
 
                 {/* Custom Dropdown */}
@@ -1015,11 +1234,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   onKeyDown={e => handleComboboxKeyDown(e, showModelosDropdown, setShowModelosDropdown, focusedModeloIndex, setFocusedModeloIndex, modelosToShow, setModelo)}
                   onBlur={() => setTimeout(() => setShowModelosDropdown(false), 200)}
                   placeholder="Ex: Optiplex 3020"
-                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${
-                    bloqueiaEdicaoGrupo 
-                      ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
-                      : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
-                  } border`}
+                  className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
+                    ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
+                    : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
+                    } border`}
                 />
 
                 {/* Custom Dropdown */}
@@ -1070,13 +1288,12 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               <input
                 type="text"
                 disabled={semRegistro}
-                value={semRegistro ? 'Sem informação' : patrimonio} 
+                value={semRegistro ? 'Sem informação' : patrimonio}
                 onChange={e => setPatrimonio(e.target.value)}
-                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${
-                  semRegistro 
-                    ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
-                    : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
-                } border`}
+                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${semRegistro
+                  ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
+                  : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
+                  } border`}
                 placeholder="Ex: 027442"
               />
             </div>
@@ -1090,17 +1307,16 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               <input
                 type="text"
                 disabled={semRegistro}
-                value={semRegistro ? 'Sem informação' : numeroSerie} 
+                value={semRegistro ? 'Sem informação' : numeroSerie}
                 onChange={e => setNumeroSerie(e.target.value)}
-                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${
-                  semRegistro 
-                    ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
-                    : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
-                } border`}
+                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${semRegistro
+                  ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
+                  : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
+                  } border`}
                 placeholder="Ex: 5CG81234F"
               />
             </div>
-            
+
             {/* Checkbox Sem Registro */}
             <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-2 bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
               <div className="flex items-center gap-3">
@@ -1123,7 +1339,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
           {/* Projeto Section */}
           <div className={`col-span-1 md:col-span-2 rounded-2xl border p-6 transition-colors ${isDark ? (temProjeto ? 'bg-slate-800/80 border-cyan-500/30' : 'bg-slate-800/30 border-slate-700')
-              : (temProjeto ? 'bg-cyan-50/50 border-cyan-200' : 'bg-slate-50 border-slate-200')
+            : (temProjeto ? 'bg-cyan-50/50 border-cyan-200' : 'bg-slate-50 border-slate-200')
             }`}>
             <div className="flex items-center justify-between">
               <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -1284,7 +1500,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 Fixar dados do formulário
               </span>
             </div>
-            
+
             <div className="flex justify-end items-center gap-3 w-full sm:w-auto">
               <button
                 type="button" onClick={onClose}
@@ -1301,7 +1517,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 ) : (
                   <Save size={20} />
                 )}
-                <span className="truncate">{carregando ? 'Salvando...' : 'Salvar Equipamento'}</span>
+                <span className="truncate">{carregando ? 'Salvando...' : (status === 'MANUTENCAO' ? 'Salvar Requisição' : 'Salvar Equipamento')}</span>
               </button>
             </div>
           </div>
@@ -1313,23 +1529,23 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirmacaoNovoTipo(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
               <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                 className={`relative w-full max-w-sm p-8 rounded-3xl shadow-2xl border flex flex-col items-center text-center ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+                className={`relative w-full max-w-sm p-8 rounded-3xl shadow-2xl border flex flex-col items-center text-center ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
               >
-                 <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-6 text-cyan-500 border border-cyan-500/20 shadow-inner">
-                    <Server size={32} />
-                 </div>
-                 <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>Novo Tipo Detectado</h3>
-                 <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                   O tipo de equipamento <strong className="text-cyan-500">{confirmacaoNovoTipo.tipo}</strong> ainda não existe no banco de sistemas. Clique em OK para adicioná-lo e concluir o cadastro do item.
-                 </p>
-                 <div className="flex gap-3 w-full">
-                   <button type="button" onClick={() => setConfirmacaoNovoTipo(null)} className={`flex-1 p-3 rounded-xl transition-colors font-bold text-sm ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                     Cancelar
-                   </button>
-                   <button type="button" onClick={confirmacaoNovoTipo.prosseguir} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all font-bold text-sm shadow-lg shadow-cyan-500/30">
-                     OK, Cadastrar
-                   </button>
-                 </div>
+                <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-6 text-cyan-500 border border-cyan-500/20 shadow-inner">
+                  <Server size={32} />
+                </div>
+                <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>Novo Tipo Detectado</h3>
+                <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  O tipo de equipamento <strong className="text-cyan-500">{confirmacaoNovoTipo.tipo}</strong> ainda não existe no banco de sistemas. Clique em OK para adicioná-lo e concluir o cadastro do item.
+                </p>
+                <div className="flex gap-3 w-full">
+                  <button type="button" onClick={() => setConfirmacaoNovoTipo(null)} className={`flex-1 p-3 rounded-xl transition-colors font-bold text-sm ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    Cancelar
+                  </button>
+                  <button type="button" onClick={confirmacaoNovoTipo.prosseguir} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all font-bold text-sm shadow-lg shadow-cyan-500/30">
+                    OK, Cadastrar
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}
@@ -1345,6 +1561,22 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             setShowCameraModal(false);
           }}
         />
+
+        {/* Preview Modal de Manutenção */}
+        {dadosPreview && (
+          <ManutencaoPreviewModal
+            isOpen={previewModalAberto}
+            onClose={() => { setPreviewModalAberto(false); setDadosPreview(null); }}
+            onConfirmar={async () => {
+              await dadosPreview.salvarFn();
+              setPreviewModalAberto(false);
+              setDadosPreview(null);
+            }}
+            dadosEquipamento={dadosPreview.equip}
+            dadosManutencao={dadosPreview.manut}
+            theme={theme}
+          />
+        )}
       </form>
     </EstoqueSidePanel>
   );
