@@ -88,6 +88,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const [manterAberto, setManterAberto] = useState(false);
   const [sucessoSalvar, setSucessoSalvar] = useState('');
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [showImagemObrigatoriaModal, setShowImagemObrigatoriaModal] = useState(false);
 
   const [focusedTipoIndex, setFocusedTipoIndex] = useState(-1);
   const [focusedMarcaIndex, setFocusedMarcaIndex] = useState(-1);
@@ -417,7 +418,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
     }
 
     if (!imagemUrl && !permitirSemImagem) {
-      setErroImagem('A imagem é obrigatória. Faça upload, capture uma foto ou marque a opção "Usar imagem definida na capa".');
+      setShowImagemObrigatoriaModal(true);
       return;
     }
     const finalImagemUrl = imagemUrl || (permitirSemImagem && capaGrupoUrl ? capaGrupoUrl : '');
@@ -621,7 +622,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 className={`mt-0.5 rounded cursor-pointer w-4 h-4 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} text-cyan-500 focus:ring-cyan-500 flex-shrink-0`}
               />
               <label htmlFor="isImagemPrincipal" className={`text-xs font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-700'} cursor-pointer select-none leading-relaxed`}>
-                Definir esta foto como capa padrão do modelo ({tipo} {marca})
+                Definir esta foto como capa padrão do modelo ({tipo} {marca} {modelo})
               </label>
             </div>
           )}
@@ -660,7 +661,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               value={status} onChange={e => setStatus(e.target.value as StatusEquipamento | '')}
               required
               className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-bold ${status === 'MANUTENCAO'
-                ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
+                ? (isDark ? 'bg-[#835B1A]/20 border-[#835B1A] text-[#FBBF24]' : 'bg-[#835B1A]/10 border-[#835B1A] text-[#FBBF24]')
                 : status === 'BENS_ATIVOS'
                   ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-400 text-cyan-600')
                   : status === 'DESCARTE'
@@ -704,7 +705,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   }}
                   onKeyDown={e => handleComboboxKeyDown(e, showTiposDropdown, setShowTiposDropdown, focusedTipoIndex, setFocusedTipoIndex, tiposToShow, setTipo)}
                   onBlur={() => setTimeout(() => setShowTiposDropdown(false), 200)}
-                  placeholder="Ex: Computador, Notebook"
+                  placeholder="Ex: Computador"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
                     ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
                     : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
@@ -830,7 +831,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         type="text"
                         value={baSolicitante} onChange={e => setBaSolicitante(e.target.value)}
                         className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                        placeholder="Ex: Paulo Cunha"
+                        placeholder="Ex: Ubirajara"
                       />
                     </div>
 
@@ -847,7 +848,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             onChange={e => { setBaVinculo(e.target.value); setShowVinculosDropdown(true); }}
                             onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
                             onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
-                            placeholder="Ex: Docente, Servidor"
+                            placeholder="Ex: Docente"
                             className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                           />
                           {showVinculosDropdown && vinculosBanco.length > 0 && (
@@ -910,72 +911,36 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 initial={{ opacity: 0, height: 0, scaleY: 0.9 }}
                 animate={{ opacity: 1, height: 'auto', scaleY: 1 }}
                 exit={{ opacity: 0, height: 0, scaleY: 0.9 }}
-                className={`col-span-1 md:col-span-2 overflow-hidden rounded-2xl border-2 ${isDark ? 'bg-cyan-950/20 border-cyan-500/20' : 'bg-cyan-50/50 border-cyan-200'}`}
+                className={`col-span-1 md:col-span-2 overflow-hidden rounded-2xl border-2 ${isDark ? 'bg-[#835B1A]/20 border-[#835B1A]/30' : 'bg-[#835B1A]/10 border-[#835B1A]/30'}`}
               >
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className={`p-2 rounded-xl ${isDark ? 'bg-cyan-500/10 text-cyan-500' : 'bg-cyan-500 text-white'}`}>
+                    <div className={`p-2 rounded-xl ${isDark ? 'bg-[#835B1A]/20 text-[#FBBF24]' : 'bg-[#835B1A] text-white'}`}>
                       <Wrench size={24} className={isDark ? '' : 'text-white'} />
                     </div>
                     <div>
-                      <h3 className={`text-lg font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>Registro de Manutenção</h3>
-                      <p className={`text-sm ${isDark ? 'text-cyan-500/70' : 'text-cyan-600/70'}`}>Preencha os dados abaixo. Ao salvar, um preview das fichas será exibido antes da confirmação.</p>
+                      <h3 className={`text-lg font-bold ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>Registro de Manutenção</h3>
+                      <p className={`text-sm ${isDark ? 'text-[#FBBF24]/70' : 'text-[#FBBF24]/70'}`}>Preencha os dados abaixo. Ao salvar, um preview das fichas será exibido antes da confirmação.</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    {/* Tipo de Manutenção */}
-                    <div className="col-span-1 md:col-span-2">
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        Tipo de Manutenção *
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setManutencaoTipoManutencao('REPARO_COMUM')}
-                          className={`py-3 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 ${
-                            manutencaoTipoManutencao === 'REPARO_COMUM'
-                              ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-500 text-cyan-600')
-                              : (isDark ? 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-500 hover:border-slate-400')
-                          }`}
-                        >
-                          <Wrench size={16} /> Reparo Comum
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setManutencaoTipoManutencao('INCORPORAR_ESTOQUE')}
-                          className={`py-3 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 ${
-                            manutencaoTipoManutencao === 'INCORPORAR_ESTOQUE'
-                              ? (isDark ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-cyan-50 border-cyan-500 text-cyan-600')
-                              : (isDark ? 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-500 hover:border-slate-400')
-                          }`}
-                        >
-                          <Package size={16} /> Incorporar ao Estoque
-                        </button>
-                      </div>
-                      <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {manutencaoTipoManutencao === 'REPARO_COMUM'
-                          ? 'O solicitante recolherá o equipamento após o reparo.'
-                          : 'Após o reparo, o equipamento será incorporado ao estoque de Bens Ativos.'}
-                      </p>
-                    </div>
-
                     {/* Solicitante */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Solicitante *
                       </label>
                       <input
                         type="text" required={status === 'MANUTENCAO'}
                         value={manutencaoSolicitante} onChange={e => setManutencaoSolicitante(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                        placeholder="Ex: Prof. Roberto"
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
+                        placeholder="Ex: Ubirajara"
                       />
                     </div>
 
                     {/* Vínculo */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Vínculo *
                       </label>
                       <div className="flex gap-3 relative">
@@ -986,13 +951,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             onChange={e => { setManutencaoVinculo(e.target.value); setShowVinculosDropdown(true); }}
                             onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
                             onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
-                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                            placeholder="Ex: Aluno, Professor"
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
+                            placeholder="Ex: Docente"
                           />
                           {showVinculosDropdown && vinculosBanco.length > 0 && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
                               {vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase())).map(v => (
-                                <div key={v.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                <div key={v.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700'}`}
                                   onClick={() => { setManutencaoVinculo(v.nome); setShowVinculosDropdown(false); }}>
                                   {v.nome}
                                 </div>
@@ -1001,7 +966,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           )}
                         </div>
                         <button type="button" onClick={onAbreGerenciarVinculos}
-                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          className="flex-shrink-0 bg-[#835B1A] hover:bg-[#835B1A]/90 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#835B1A]/30"
                           title="Gerenciar Vínculos">
                           <Plus size={24} />
                         </button>
@@ -1010,7 +975,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
                     {/* Local */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Local *
                       </label>
                       <div className="flex gap-3 relative">
@@ -1021,13 +986,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             onChange={e => { setManutencaoOrigem(e.target.value); setShowOrigensDropdown(true); }}
                             onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
                             onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
-                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                            placeholder="Ex: Laboratório 1, Sala dos Professores"
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
+                            placeholder="Ex: Biblioteca"
                           />
                           {showOrigensDropdown && origensBanco.length > 0 && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
                               {origensBanco.filter(l => l.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase())).map(l => (
-                                <div key={l.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
+                                <div key={l.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700'}`}
                                   onClick={() => { setManutencaoOrigem(l.nome); setShowOrigensDropdown(false); }}>
                                   {l.nome}
                                 </div>
@@ -1036,7 +1001,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           )}
                         </div>
                         <button type="button" onClick={onAbreGerenciarOrigens}
-                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                          className="flex-shrink-0 bg-[#835B1A] hover:bg-[#835B1A]/90 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#835B1A]/30"
                           title="Gerenciar Locais (Origem)">
                           <Plus size={24} />
                         </button>
@@ -1045,50 +1010,50 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
                     {/* Email */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Email
                       </label>
                       <input
                         type="email"
                         value={manutencaoEmail} onChange={e => setManutencaoEmail(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                         placeholder="Ex: paulo@unesp.br"
                       />
                     </div>
 
                     {/* Celular / Ramal */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Celular / Ramal
                       </label>
                       <input
                         type="tel"
                         value={manutencaoCelular} onChange={e => setManutencaoCelular(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
-                        placeholder="Ex: (00) 00000-0000"
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
+                        placeholder="Ex: (14) 91234-5678"
                       />
                     </div>
 
                     {/* Data de Início */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Data Inicial *
                       </label>
                       <input
                         type="date" required={status === 'MANUTENCAO'}
                         value={manutencaoDataInicio} onChange={e => setManutencaoDataInicio(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                       />
                     </div>
 
                     {/* Condição do Bem */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Condição do Bem
                       </label>
                       <select
                         value={manutencaoCondicao} onChange={e => setManutencaoCondicao(e.target.value as any)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border appearance-none cursor-pointer`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border appearance-none cursor-pointer`}
                       >
                         <option value="Boa">Boa</option>
                         <option value="Regular">Regular</option>
@@ -1098,13 +1063,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
                     {/* Técnico Responsável */}
                     <div>
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Técnico Responsável *
                       </label>
                       <select
                         required={status === 'MANUTENCAO'}
                         value={manutencaoTecnicoId} onChange={e => setManutencaoTecnicoId(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                       >
                         <option value="" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Selecione um técnico da base...</option>
                         {tecnicosBanco.map(tec => (
@@ -1115,13 +1080,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
 
                     {/* Problema Reportado */}
                     <div className="col-span-1 md:col-span-2">
-                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#FBBF24]' : 'text-[#FBBF24]'}`}>
                         Descrição do Problema Reportado *
                       </label>
                       <textarea
                         required={status === 'MANUTENCAO'}
                         value={manutencaoProblema} onChange={e => setManutencaoProblema(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 min-h-[100px] outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        className={`w-full rounded-xl px-4 py-3 min-h-[100px] outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                         placeholder="Descreva detalhadamente o defeito relatado para a manutenção..."
                       />
                     </div>
@@ -1160,7 +1125,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   }}
                   onKeyDown={e => handleComboboxKeyDown(e, showMarcasDropdown, setShowMarcasDropdown, focusedMarcaIndex, setFocusedMarcaIndex, marcasToShow, setMarca)}
                   onBlur={() => setTimeout(() => setShowMarcasDropdown(false), 200)}
-                  placeholder="Ex: Dell, HP, Lenovo"
+                  placeholder="Ex: Lenovo"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
                     ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
                     : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
@@ -1233,7 +1198,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   }}
                   onKeyDown={e => handleComboboxKeyDown(e, showModelosDropdown, setShowModelosDropdown, focusedModeloIndex, setFocusedModeloIndex, modelosToShow, setModelo)}
                   onBlur={() => setTimeout(() => setShowModelosDropdown(false), 200)}
-                  placeholder="Ex: Optiplex 3020"
+                  placeholder="Ex: ThinkCentre M75q"
                   className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${bloqueiaEdicaoGrupo
                     ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed')
                     : (isDark ? 'bg-[#162033] border-slate-500 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)]')
@@ -1294,7 +1259,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                   ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
                   : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
                   } border`}
-                placeholder="Ex: 027442"
+                placeholder="Ex: 27442"
               />
             </div>
 
@@ -1395,7 +1360,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           }}
                           onKeyDown={e => { if (!isEditando) handleComboboxKeyDown(e, showAgenciasDropdown, setShowAgenciasDropdown, focusedAgenciaIndex, setFocusedAgenciaIndex, agenciasToShow, setAgenciaFomento); }}
                           onBlur={() => setTimeout(() => setShowAgenciasDropdown(false), 200)}
-                          placeholder="Ex: CNPq, FAPESP"
+                          placeholder="Ex: FAPESP"
                           className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500')} border`}
                         />
 
@@ -1546,6 +1511,39 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                     OK, Cadastrar
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal Imagem Obrigatória */}
+        <AnimatePresence>
+          {showImagemObrigatoriaModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowImagemObrigatoriaModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className={`relative w-full max-w-sm p-8 rounded-3xl shadow-2xl border flex flex-col items-center text-center ${isDark ? 'bg-slate-900 border-rose-500/30' : 'bg-white border-rose-200'}`}
+              >
+                <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-6 text-rose-500 border border-rose-500/20 shadow-inner">
+                  <ImageIcon size={32} />
+                </div>
+                <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>Imagem Obrigatória</h3>
+                <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {mostrarCheckboxCapa 
+                    ? 'A imagem é obrigatória. Faça upload, capture uma foto ou marque a opção "Usar imagem definida na capa".'
+                    : 'A imagem é obrigatória. Faça upload ou capture uma foto do equipamento para registrar.'}
+                </p>
+                <div className="flex gap-3 w-full">
+                  <button type="button" onClick={() => { setShowImagemObrigatoriaModal(false); fileInputRef.current?.click(); }} className={`flex-1 p-3 rounded-xl transition-all font-bold text-sm flex items-center justify-center gap-2 ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                    <Upload size={18} /> Upload
+                  </button>
+                  <button type="button" onClick={() => { setShowImagemObrigatoriaModal(false); setShowCameraModal(true); }} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all font-bold text-sm shadow-lg shadow-cyan-500/30 flex items-center justify-center gap-2">
+                    <Camera size={18} /> Câmera
+                  </button>
+                </div>
+                <button type="button" onClick={() => setShowImagemObrigatoriaModal(false)} className={`mt-4 w-full p-2 rounded-xl transition-colors font-bold text-xs ${isDark ? 'text-slate-500 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}>
+                  Cancelar
+                </button>
               </motion.div>
             </div>
           )}

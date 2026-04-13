@@ -11,8 +11,16 @@ interface ManutencaoPreviewModalProps {
   theme?: 'dark' | 'light';
 }
 
+export const formatarTelefone = (tel: string | undefined) => {
+  if (!tel) return '-';
+  const clean = tel.replace(/\D/g, '');
+  if (clean.length === 11) return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+  if (clean.length === 10) return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+  return tel;
+};
+
 // Gera o HTML da Ficha de Manutenção (dados técnicos + equipamento)
-const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: RegistroManutencao): string => {
+export const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: RegistroManutencao): string => {
   return `
     <html>
       <head>
@@ -35,33 +43,28 @@ const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: Registr
           .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
           .badge-temp { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
           .badge-estoque { background: #d1ecf1; color: #0c5460; border: 1px solid #17a2b8; }
+          .footer { margin-top: auto; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-family: 'Arial', sans-serif; margin-bottom: 20px; }
+          .cut-line { width: 100%; border-bottom: 1px dashed #666; position: absolute; bottom: 0; left: 0; }
+          .cut-line::after { content: "✂--------------------------------------------------------------------------------------------------------------------------------------"; position: absolute; bottom: -8px; left: 0; font-size: 14px; color: #666; letter-spacing: 2px; overflow: hidden; white-space: nowrap; width: 100%; }
+          @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { padding: 10mm !important; }
+            .ficha-container { min-height: 135mm; } 
+          }
+          .ficha-container { display: flex; flex-direction: column; position: relative; max-width: 210mm; min-height: 135mm; margin: 0 auto; box-sizing: border-box; padding-bottom: 30px; }
+          .etiqueta-box { border: 2px solid #000; padding: 25px; flex-grow: 1; display: flex; flex-direction: column; background: #fff; }
         </style>
       </head>
       <body>
-        <div class="header">
-          <img src="/header_unesp_new.png" alt="UNESP" />
+        <div class="ficha-container">
+          <div class="etiqueta-box">
+          <div class="header">
+            <img src="/header_unesp_new.png" alt="UNESP" />
           <div class="title">
             <h1>FICHA DE MANUTENÇÃO</h1>
-            <p class="subtitle">Controle de Ativos - DTI</p>
+            <p class="subtitle">Controle de Ativos</p>
             <p class="ticket-id">${m.ticketId}</p>
           </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Dados do Solicitante</div>
-          <table>
-            <tr>
-              <td class="label">NOME / SETOR:</td><td class="value" colspan="3">${m.solicitante}</td>
-            </tr>
-            <tr>
-              <td class="label">VÍNCULO:</td><td class="value">${m.vinculo || 'Não informado'}</td>
-              <td class="label">CELULAR / RAMAL:</td><td class="value">${m.celular || '-'}</td>
-            </tr>
-            <tr>
-              <td class="label">LOCAL:</td><td class="value">${m.origem || '-'}</td>
-              <td class="label">E-MAIL:</td><td class="value">${m.email || '-'}</td>
-            </tr>
-          </table>
         </div>
 
         <div class="section">
@@ -79,13 +82,22 @@ const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: Registr
               <td class="label">CONDIÇÃO RECEBIDA:</td><td class="value">${m.condicaoBem || 'Não informada'}</td>
               <td class="label">DATA DE ENTRADA:</td><td class="value">${new Date(m.dataInicio).toLocaleDateString('pt-BR')}</td>
             </tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Dados do Proprietário</div>
+          <table>
             <tr>
-              <td class="label">TIPO MANUTENÇÃO:</td>
-              <td class="value" colspan="3">
-                <span class="badge ${m.tipoManutencao === 'REPARO_COMUM' ? 'badge-temp' : 'badge-estoque'}">
-                  ${m.tipoManutencao === 'REPARO_COMUM' ? 'Reparo Comum (Devolução ao Solicitante)' : 'Incorporar ao Estoque'}
-                </span>
-              </td>
+              <td class="label">NOME:</td><td class="value">${m.solicitante}</td>
+              <td class="label">VÍNCULO:</td><td class="value">${m.vinculo || 'Não informado'}</td>
+            </tr>
+            <tr>
+              <td class="label">CELULAR / RAMAL:</td><td class="value">${formatarTelefone(m.celular)}</td>
+              <td class="label">E-MAIL:</td><td class="value">${m.email || '-'}</td>
+            </tr>
+            <tr>
+              <td class="label">LOCAL:</td><td class="value" colspan="3">${m.origem || '-'}</td>
             </tr>
           </table>
         </div>
@@ -96,19 +108,16 @@ const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: Registr
             ${(m.problema || 'Sem descrição.').replace(/\n/g, '<br />')}
           </div>
         </div>
-
-        <div style="position: fixed; bottom: 0; left: 0; right: 0; border-top: 1px solid #ccc; padding: 10px 30px 8px; background: #fff; text-align: center; font-family: 'Arial', sans-serif;">
-          <div style="font-size: 14px; font-weight: 600; color: #000;">Diretoria Técnica de Informática</div>
-          <div style="font-size: 11px; color: #333; margin-top: 2px;">UNESP – Campus de Marília Faculdade de Filosofia e Ciências</div>
-          <div style="margin-top: 4px; font-size: 9px; color: #999;">Gerado por ShadowDesk • ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
-        </div>
+        </div> <!-- FECHA ETIQUETA BOX -->
+        <div class="cut-line"></div>
+      </div>
       </body>
     </html>
   `;
 };
 
 // Gera o HTML do Termo de Recebimento (ficha que o solicitante assina)
-const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroManutencao): string => {
+export const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroManutencao): string => {
   return `
     <html>
       <head>
@@ -151,6 +160,10 @@ const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroManutenca
               <td class="label">VÍNCULO:</td><td class="value">${m.vinculo || '-'}</td>
             </tr>
             <tr>
+              <td class="label">E-MAIL:</td><td class="value">${m.email || '-'}</td>
+              <td class="label">CEL/RAMAL:</td><td class="value">${formatarTelefone(m.celular)}</td>
+            </tr>
+            <tr>
               <td class="label">LOCAL:</td><td class="value">${m.origem || '-'}</td>
               <td class="label">DATA ENTRADA:</td><td class="value">${new Date(m.dataInicio).toLocaleDateString('pt-BR')}</td>
             </tr>
@@ -171,7 +184,7 @@ const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroManutenca
         <div class="termo">
           <strong style="font-size: 12px; color: #000; text-transform: uppercase;">Serviço de Avaliação e Manutenção Técnica de Equipamento</strong><br/><br/>
           Declaramos o recebimento do equipamento listado acima para fins de avaliação técnica e manutenção pela Diretoria Técnica de Informática (DTI) - UNESP Câmpus de Marília. O diagnóstico preliminar e a conclusão do serviço possuem prazos variáveis de acordo com a disponibilidade de componentes e fila de atendimento.<br/><br/>
-          O equipamento aqui depositado que permanecer além de <strong>30 (trinta) dias</strong> a partir da notificação de conclusão do serviço sem sua devida retirada por parte do solicitante caracterizará estado de <strong>abandono</strong> e poderá ser devolvido de forma iminente ao local originário. A retirada do bem por terceiros, somente se dará mediante apresentação de documento ou aprovação via registro formal do solicitante.<br/><br/>
+          Considerando que a área do suporte não possui grande capacidade para armazenamento. Todo equipamento aqui depositado que permanecer além de <strong>30 (trinta) dias</strong> a partir da notificação de conclusão do serviço sem sua devida retirada por parte do solicitante caracterizará estado de <strong>abandono</strong> e poderá ser devolvido de forma iminente à unidade de lotação do responsável. A retirada do bem por terceiros, somente se dará mediante apresentação de documento ou aprovação via registro formal (envio de email) do solicitante.<br/><br/>
           <div style="display: flex; gap: 0; font-size: 11px; color: #333; margin-top: 8px; border-top: 1px solid #ccc; padding-top: 10px;">
             <div style="flex: 1; padding-right: 15px; border-right: 1px solid #ddd;">
               <div style="font-weight: 700; font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 4px;">✉ E-mail</div>
@@ -212,13 +225,34 @@ const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroManutenca
   `;
 };
 
-// Imprime um HTML em nova janela
-const imprimirHtml = (html: string) => {
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => win.print(), 500);
+// Imprime um HTML na mesma janela usando um iframe oculto
+export const imprimirHtml = (html: string) => {
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (doc) {
+    doc.open();
+    doc.write(html);
+    doc.close();
+    
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      
+      // Limpeza do iframe após a impressão
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }, 500);
   }
 };
 
@@ -243,7 +277,8 @@ const ManutencaoPreviewModal: React.FC<ManutencaoPreviewModalProps> = ({
         doc.close();
       }
     }
-  }, [abaAtiva, isOpen, htmlFicha, htmlTermo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abaAtiva, isOpen]);
 
   const handleConfirmar = async () => {
     setSalvando(true);
