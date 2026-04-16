@@ -436,39 +436,7 @@ function App() {
 
   return (
     <>
-      {/* Global Scrollbar Styles */}
-      <style>{`
-        /* Webkit browsers (Chrome, Safari, Edge) */
-        @media (min-width: 768px) {
-          ::-webkit-scrollbar {
-            width: 12px;
-          }
-          ::-webkit-scrollbar-track {
-            background: ${isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(226, 232, 240, 0.5)'};
-          }
-          ::-webkit-scrollbar-thumb {
-            background: rgb(34, 211, 238);
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.3);
-          }
-          ::-webkit-scrollbar-thumb:hover {
-            background: rgb(6, 182, 212);
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.7), 0 0 30px rgba(34, 211, 238, 0.5);
-          }
-        }
-        @media (max-width: 767px) {
-          ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
-          }
-        }
-        /* Firefox */
-        * {
-          scrollbar-width: thin;
-          scrollbar-color: rgb(34, 211, 238) ${isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(226, 232, 240, 0.5)'};
-        }
-      `}</style>
-      <div className={`relative min-h-screen w-full font-sans transition-colors duration-300 ${isDark
+      <div className={`${isDark ? 'theme-dark' : 'theme-light'} relative min-h-screen w-full font-sans transition-colors duration-300 ${isDark
         ? 'bg-slate-950 selection:bg-cyan-500/30 selection:text-cyan-200'
         : 'bg-slate-100 selection:bg-cyan-200 selection:text-cyan-900'
         }`}>

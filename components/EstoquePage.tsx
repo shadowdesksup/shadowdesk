@@ -537,6 +537,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
         onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
         preSelectedItem={movimentacaoPreItem}
+        onAtualizarEquipamento={atualizarEquipamento}
       />
 
       <EstoqueFluxoModal
@@ -569,27 +570,6 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
         onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
         onRealocar={handleRealocar}
-      />
-
-      <EstoqueFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setEquipamentoEditando(null);
-          setGrupoPreenchido(null);
-        }}
-        onSalvar={handleSalvarEquipamento}
-        equipamentoEditando={equipamentoEditando}
-        grupoPreenchido={grupoPreenchido}
-        theme={theme}
-        carregando={carregando}
-        onAbreGerenciarTipos={() => setIsTiposModalOpen(true)}
-        onAbreGerenciarMarcas={() => setIsMarcasModalOpen(true)}
-        onAbreGerenciarModelos={() => setIsModelosModalOpen(true)}
-        onAbreGerenciarAgencias={() => setIsAgenciasModalOpen(true)}
-        onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
-        onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
-        onAbreGerenciarLocais={() => setIsLocaisModalOpen(true)}
       />
 
       <CameraBarcodeScannerModal

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Lembrete, CorLembrete, SomNotificacao } from '../types';
 import {
   criarLembrete,
@@ -227,41 +227,48 @@ export const useReminders = (userId: string, userNome: string): UseRemindersRetu
 
 
 
-  // Filtros computados
-  const agora = new Date();
-  const hojeStart = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-  const hojeEnd = new Date(hojeStart.getTime() + 24 * 60 * 60 * 1000);
+  // Filtros computados (memoizados para evitar recálculo desnecessário)
+  const pendentes = useMemo(() => lembretes.filter(l => l.status === 'pendente'), [lembretes]);
 
-  const pendentes = lembretes.filter(l => l.status === 'pendente');
+  const expirados = useMemo(() => {
+    const agora = new Date();
+    return lembretes.filter(l => {
+      const dataLembrete = new Date(l.dataHora);
+      return l.status === 'pendente' && dataLembrete < agora;
+    });
+  }, [lembretes]);
 
-  const expirados = lembretes.filter(l => {
-    const dataLembrete = new Date(l.dataHora);
-    return l.status === 'pendente' && dataLembrete < agora;
-  });
+  const hoje = useMemo(() => {
+    const agora = new Date();
+    const hojeStart = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const hojeEnd = new Date(hojeStart.getTime() + 24 * 60 * 60 * 1000);
+    return lembretes.filter(l => {
+      const dataLembrete = new Date(l.dataHora);
+      return dataLembrete >= hojeStart && dataLembrete < hojeEnd;
+    });
+  }, [lembretes]);
 
-  const hoje = lembretes.filter(l => {
-    const dataLembrete = new Date(l.dataHora);
-    return dataLembrete >= hojeStart && dataLembrete < hojeEnd;
-  });
-
-  const finalizados = lembretes.filter(l => l.status === 'finalizado');
+  const finalizados = useMemo(() => lembretes.filter(l => l.status === 'finalizado'), [lembretes]);
 
   // Próximo lembrete (pendente e futuro) - Filtro especial para Encerramento
-  const proximoLembrete = pendentes
-    .filter(l => {
-      const dataLembrete = new Date(l.dataHora);
-      if (dataLembrete <= agora) return false;
+  const proximoLembrete = useMemo(() => {
+    const agora = new Date();
+    return pendentes
+      .filter(l => {
+        const dataLembrete = new Date(l.dataHora);
+        if (dataLembrete <= agora) return false;
 
-      // Filtro especial: Encerramento só aparece se <= 7 dias
-      if (l.titulo === 'Encerramento de Chamados') {
-        const diffMs = dataLembrete.getTime() - agora.getTime();
-        const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-        return diffDias <= 7;
-      }
+        // Filtro especial: Encerramento só aparece se <= 7 dias
+        if (l.titulo === 'Encerramento de Chamados') {
+          const diffMs = dataLembrete.getTime() - agora.getTime();
+          const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          return diffDias <= 7;
+        }
 
-      return true;
-    })
-    .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())[0] || null;
+        return true;
+      })
+      .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())[0] || null;
+  }, [pendentes]);
 
   return {
     lembretes,

@@ -7,7 +7,6 @@ import { listarTiposEquipamento } from '../firebase/tiposEquipamento';
 import { listarOrigensEquipamento, OrigemEquipamento } from '../firebase/origensEquipamento';
 import { listarVinculosEquipamento, VinculoEquipamento } from '../firebase/vinculosEquipamento';
 import { useAuth } from '../hooks/useAuth';
-import { useEstoque } from '../hooks/useEstoque';
 
 interface EstoqueMovimentacaoModalProps {
   isOpen: boolean;
@@ -18,14 +17,14 @@ interface EstoqueMovimentacaoModalProps {
   onAbreGerenciarVinculos?: () => void;
   preSelectedItem?: EquipamentoEstoque | null;
   onSuccess?: (id: string) => void;
+  onAtualizarEquipamento: (id: string, dados: Partial<EquipamentoEstoque>) => Promise<void>;
 }
 
 const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
-  isOpen, onClose, estoqueAtivo, theme = 'dark', onAbreGerenciarOrigens, onAbreGerenciarVinculos, preSelectedItem, onSuccess
+  isOpen, onClose, estoqueAtivo, theme = 'dark', onAbreGerenciarOrigens, onAbreGerenciarVinculos, preSelectedItem, onSuccess, onAtualizarEquipamento
 }) => {
   const isDark = theme === 'dark';
   const { usuario, dadosUsuario } = useAuth();
-  const { atualizarEquipamento } = useEstoque();
 
   // Pickers and lists
   const [tiposBanco, setTiposBanco] = useState<TipoEquipamento[]>([]);
@@ -177,7 +176,7 @@ const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
       const vinculoObj = vinculosBanco.find(v => v.nome.toLowerCase() === vinculoDestinoNome.trim().toLowerCase());
       const vinculoNome = vinculoObj?.nome || vinculoDestinoNome.trim();
 
-      await atualizarEquipamento(itemSelecionado.id, {
+      await onAtualizarEquipamento(itemSelecionado.id, {
         status: 'TRANSFERIDO',
         dataSaida: new Date(dataSaida).toISOString(),
         detalhes: {
