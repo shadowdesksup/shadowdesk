@@ -124,8 +124,12 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
                             {item.marca} {item.modelo}
                           </h4>
                           <div className="flex flex-wrap gap-1.5 text-[10px] sm:text-xs mt-0.5 font-mono items-center">
-                            {item.patrimonio && <span className={`text-cyan-500 font-medium`}>PT:{item.patrimonio}</span>}
-                            {item.numeroSerie && <span className={`text-indigo-400 font-medium`}>NS:{item.numeroSerie}</span>}
+                            {item.patrimonio && item.patrimonio !== 'Sem informação'
+                              ? <span className={`text-cyan-500 font-medium`}>Patrimônio: {item.patrimonio}</span>
+                              : item.numeroSerie && item.numeroSerie !== 'Sem informação'
+                                ? <span className={`text-indigo-400 font-medium`}>Nº de Série: {item.numeroSerie}</span>
+                                : null
+                            }
                           </div>
                         </div>
                         {/* Mobile Date */}

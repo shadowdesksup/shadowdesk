@@ -23,8 +23,10 @@ const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, ti
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }} // Faster fade avoids locking main thread for too long
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            style={{ willChange: 'opacity' }}
           />
 
           {/* Panel */}
@@ -33,6 +35,7 @@ const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, ti
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            style={{ willChange: 'transform, opacity' }}
             className={`fixed top-0 right-0 bottom-0 z-50 w-full ${width} shadow-2xl flex flex-col ${
               isDark ? 'bg-slate-900 border-l border-slate-800' : 'bg-white border-l border-slate-200'
             }`}

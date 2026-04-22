@@ -270,6 +270,8 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
   };
 
   const handleRealocar = (item: EquipamentoEstoque) => {
+    setIsMovimentadosModalOpen(false);
+
     // Ao invés de atualizar no banco de imediato, passamos o item para o formulário
     realocandoItemRef.current = item;
     
@@ -280,17 +282,19 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
        status: 'BENS_ATIVOS',
        bensAtivos: {
            dataEntradaItem: new Date().toISOString(),
-           solicitante: '',
+           solicitante: item.detalhes?.recebedorNome || item.bensAtivos?.solicitante || '',
            origem: item.detalhes?.localDestinoNome || item.bensAtivos?.origem || '',
-           alocadoEm: '',
-           vinculo: '',
+           alocadoEm: item.detalhes?.localDestinoNome || '',
+           vinculo: item.detalhes?.vinculoDestino || item.bensAtivos?.vinculo || '',
            condicao: 'Boa'
        },
        // Wipe qualquer rastro de transferência antiga
        detalhes: undefined
     };
 
-    handleOpenFormModal(itemPreRealocacao);
+    setTimeout(() => {
+      handleOpenFormModal(itemPreRealocacao);
+    }, 150);
   };
 
   const handleDelete = (id: string) => {
@@ -477,6 +481,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark' }) => {
         grupoPreenchido={grupoPreenchido}
         theme={theme}
         carregando={carregando}
+        isRealocando={!!realocandoItemRef.current}
         onAbreGerenciarTipos={() => setIsTiposModalOpen(true)}
         onAbreGerenciarMarcas={() => setIsMarcasModalOpen(true)}
         onAbreGerenciarModelos={() => setIsModelosModalOpen(true)}

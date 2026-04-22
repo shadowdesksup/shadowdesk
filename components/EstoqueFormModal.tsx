@@ -25,6 +25,7 @@ interface EstoqueFormModalProps {
   grupoPreenchido?: { tipo: string; marca: string; modelo: string } | null;
   theme?: 'dark' | 'light';
   carregando?: boolean;
+  isRealocando?: boolean;
   onAbreGerenciarTipos: () => void;
   onAbreGerenciarMarcas: () => void;
   onAbreGerenciarModelos: () => void;
@@ -36,6 +37,7 @@ interface EstoqueFormModalProps {
 
 const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   isOpen, onClose, onSalvar, equipamentoEditando, grupoPreenchido, theme = 'dark', carregando = false,
+  isRealocando = false,
   onAbreGerenciarTipos, onAbreGerenciarMarcas, onAbreGerenciarModelos, onAbreGerenciarAgencias,
   onAbreGerenciarVinculos, onAbreGerenciarOrigens, onAbreGerenciarLocais
 }) => {
@@ -550,7 +552,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const titleNode = (
     <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
       <Package className="text-cyan-500" />
-      {equipamentoEditando?.id ? 'Editar Equipamento' : 'Novo Equipamento'}
+      {isRealocando ? 'Realocar Equipamento' : equipamentoEditando?.id ? 'Editar Equipamento' : 'Novo Equipamento'}
     </h2>
   );
 
@@ -886,8 +888,9 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={baSolicitante} onChange={e => setBaSolicitante(e.target.value)}
-                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                        readOnly={isRealocando}
+                        value={baSolicitante} onChange={e => { if (!isRealocando) setBaSolicitante(e.target.value); }}
+                        className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isRealocando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500')} border`}
                         placeholder="Ex: Ubirajara"
                       />
                     </div>
@@ -902,17 +905,19 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           <input
                             type="text"
                             value={baVinculo}
+                            readOnly={isRealocando}
                             onChange={e => {
+                              if (isRealocando) return;
                               setBaVinculo(e.target.value);
                               setShowVinculosDropdown(true);
                               setFocusedVinculoIndex(-1);
                             }}
-                            onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
-                            onClick={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
-                            onKeyDown={e => handleComboboxKeyDown(e, showVinculosDropdown, setShowVinculosDropdown, focusedVinculoIndex, setFocusedVinculoIndex, baVinculosToShow, setBaVinculo)}
+                            onFocus={() => { if (!isRealocando) { carregarVinculos(); setShowVinculosDropdown(true); } }}
+                            onClick={() => { if (!isRealocando) { carregarVinculos(); setShowVinculosDropdown(true); } }}
+                            onKeyDown={e => { if (!isRealocando) handleComboboxKeyDown(e, showVinculosDropdown, setShowVinculosDropdown, focusedVinculoIndex, setFocusedVinculoIndex, baVinculosToShow, setBaVinculo); }}
                             onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
                             placeholder="Ex: Docente"
-                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
+                            className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isRealocando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500')} border`}
                           />
                           {showVinculosDropdown && (vinculosBanco.length > 0 || baVinculo.length > 0) && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
@@ -932,11 +937,13 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             </div>
                           )}
                         </div>
-                        <button type="button" onClick={onAbreGerenciarVinculos}
-                          className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
-                          title="Gerenciar Vínculos">
-                          <Plus size={24} />
-                        </button>
+                        {!isRealocando && (
+                          <button type="button" onClick={onAbreGerenciarVinculos}
+                            className="flex-shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30"
+                            title="Gerenciar Vínculos">
+                            <Plus size={24} />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1348,10 +1355,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               </label>
               <input
                 type="text"
-                disabled={semRegistro}
+                disabled={semRegistro || isRealocando}
                 value={semRegistro ? 'Sem informação' : patrimonio}
                 onChange={e => setPatrimonio(e.target.value)}
-                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${semRegistro
+                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${(semRegistro || isRealocando)
                   ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
                   : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
                   } border`}
@@ -1367,10 +1374,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
               </label>
               <input
                 type="text"
-                disabled={semRegistro}
+                disabled={semRegistro || isRealocando}
                 value={semRegistro ? 'Sem informação' : numeroSerie}
                 onChange={e => setNumeroSerie(e.target.value)}
-                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${semRegistro
+                className={`w-full rounded-xl px-4 py-3 outline-none transition-all font-mono ${(semRegistro || isRealocando)
                   ? (isDark ? 'bg-transparent border-slate-700/50 text-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed')
                   : (isDark ? 'bg-[#162033] border-slate-600 text-cyan-400 focus:border-cyan-500' : 'bg-white border-slate-300 text-cyan-700 focus:border-cyan-500')
                   } border`}
@@ -1578,7 +1585,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 ) : (
                   <Save size={20} />
                 )}
-                <span className="truncate">{carregando ? 'Salvando...' : (status === 'MANUTENCAO' ? 'Salvar Requisição' : 'Salvar Equipamento')}</span>
+                <span className="truncate">{carregando ? 'Salvando...' : isRealocando ? 'Realocar Item' : (status === 'MANUTENCAO' ? 'Salvar Requisição' : 'Salvar Equipamento')}</span>
               </button>
             </div>
           </div>
