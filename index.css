@@ -146,3 +146,17 @@ textarea,
   backface-visibility: hidden;
   perspective: 1000px;
 }
+
+/* 
+ * CRITICAL PERFORMANCE FIX FOR HOVER LAG (GLASSMORPHISM)
+ * Browsers choke when interpolating 'backdrop-filter' or 'filter' on high-res displays 
+ * across hundreds of elements holding 'transition-all' or 'transition'. 
+ * We explicitly override these to exclude filter recalculations from animations.
+ */
+.transition-all {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, height, width, padding, margin, max-height, max-width, right, left, top, bottom, grid-template-columns, grid-template-rows !important;
+}
+
+.transition {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform !important;
+}
