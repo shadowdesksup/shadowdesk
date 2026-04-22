@@ -128,3 +128,21 @@ textarea,
   scrollbar-width: thin;
   scrollbar-color: rgb(34, 211, 238) rgba(226, 232, 240, 0.5);
 }
+
+/* ==========================================
+   PERFORMANCE OPTIMIZATIONS
+   Project-wide fix for Lagging Modals and Blurs
+========================================== */
+.fixed.inset-0[class*="backdrop-blur"],
+.absolute.inset-0[class*="backdrop-blur"],
+.fixed.inset-y-0.left-0[class*="backdrop-blur"],
+.fixed.top-0.right-0.bottom-0[class*="backdrop-blur"],
+.z-50[class*="backdrop-blur"],
+.z-40[class*="backdrop-blur"],
+.z-\[60\][class*="backdrop-blur"] {
+  will-change: transform, opacity !important;
+  transform: translateZ(0); /* Força a camada no hardware (GPU) */
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
