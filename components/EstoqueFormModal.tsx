@@ -554,33 +554,57 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
     </h2>
   );
 
-  const isExactTypeMatch = tiposBanco.some(t => t.nome.toLowerCase() === tipo.trim().toLowerCase());
-  const tiposToShow = isExactTypeMatch ? tiposBanco : tiposBanco.filter(t => t.nome.toLowerCase().includes(tipo.toLowerCase()));
+  const [isExactTypeMatch, tiposToShow] = React.useMemo(() => {
+    const isExact = tiposBanco.some(t => t.nome.toLowerCase() === tipo.trim().toLowerCase());
+    const toShow = isExact ? tiposBanco : tiposBanco.filter(t => t.nome.toLowerCase().includes(tipo.toLowerCase()));
+    return [isExact, toShow];
+  }, [tiposBanco, tipo]);
 
-  const isExactMarcaMatch = marcasBanco.some(m => m.nome.toLowerCase() === marca.trim().toLowerCase());
-  const marcasToShow = isExactMarcaMatch ? marcasBanco : marcasBanco.filter(m => m.nome.toLowerCase().includes(marca.toLowerCase()));
+  const [isExactMarcaMatch, marcasToShow] = React.useMemo(() => {
+    const isExact = marcasBanco.some(m => m.nome.toLowerCase() === marca.trim().toLowerCase());
+    const toShow = isExact ? marcasBanco : marcasBanco.filter(m => m.nome.toLowerCase().includes(marca.toLowerCase()));
+    return [isExact, toShow];
+  }, [marcasBanco, marca]);
 
-  const isExactModeloMatch = modelosBanco.some(m => m.nome.toLowerCase() === modelo.trim().toLowerCase());
-  const modelosToShow = isExactModeloMatch ? modelosBanco : modelosBanco.filter(m => m.nome.toLowerCase().includes(modelo.toLowerCase()));
+  const [isExactModeloMatch, modelosToShow] = React.useMemo(() => {
+    const isExact = modelosBanco.some(m => m.nome.toLowerCase() === modelo.trim().toLowerCase());
+    const toShow = isExact ? modelosBanco : modelosBanco.filter(m => m.nome.toLowerCase().includes(modelo.toLowerCase()));
+    return [isExact, toShow];
+  }, [modelosBanco, modelo]);
 
-  const isExactAgenciaMatch = agenciasBanco.some(m => m.nome.toLowerCase() === agenciaFomento.trim().toLowerCase());
-  const agenciasToShow = isExactAgenciaMatch ? agenciasBanco : agenciasBanco.filter(m => m.nome.toLowerCase().includes(agenciaFomento.toLowerCase()));
+  const [isExactAgenciaMatch, agenciasToShow] = React.useMemo(() => {
+    const isExact = agenciasBanco.some(m => m.nome.toLowerCase() === agenciaFomento.trim().toLowerCase());
+    const toShow = isExact ? agenciasBanco : agenciasBanco.filter(m => m.nome.toLowerCase().includes(agenciaFomento.toLowerCase()));
+    return [isExact, toShow];
+  }, [agenciasBanco, agenciaFomento]);
 
   // Origens - Bens Ativos
-  const isExactBaOrigemMatch = origensBanco.some(o => o.nome.toLowerCase() === baOrigem.trim().toLowerCase());
-  const baOrigensToShow = isExactBaOrigemMatch ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase()));
+  const [isExactBaOrigemMatch, baOrigensToShow] = React.useMemo(() => {
+    const isExact = origensBanco.some(o => o.nome.toLowerCase() === baOrigem.trim().toLowerCase());
+    const toShow = isExact ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase()));
+    return [isExact, toShow];
+  }, [origensBanco, baOrigem]);
 
   // Vínculos - Bens Ativos
-  const isExactBaVinculoMatch = vinculosBanco.some(v => v.nome.toLowerCase() === baVinculo.trim().toLowerCase());
-  const baVinculosToShow = isExactBaVinculoMatch ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(baVinculo.toLowerCase()));
+  const [isExactBaVinculoMatch, baVinculosToShow] = React.useMemo(() => {
+    const isExact = vinculosBanco.some(v => v.nome.toLowerCase() === baVinculo.trim().toLowerCase());
+    const toShow = isExact ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(baVinculo.toLowerCase()));
+    return [isExact, toShow];
+  }, [vinculosBanco, baVinculo]);
 
   // Vínculos - Manutenção
-  const isExactManutVinculoMatch = vinculosBanco.some(v => v.nome.toLowerCase() === manutencaoVinculo.trim().toLowerCase());
-  const manutVinculosToShow = isExactManutVinculoMatch ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase()));
+  const [isExactManutVinculoMatch, manutVinculosToShow] = React.useMemo(() => {
+    const isExact = vinculosBanco.some(v => v.nome.toLowerCase() === manutencaoVinculo.trim().toLowerCase());
+    const toShow = isExact ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase()));
+    return [isExact, toShow];
+  }, [vinculosBanco, manutencaoVinculo]);
 
   // Origens - Manutenção
-  const isExactManutOrigemMatch = origensBanco.some(o => o.nome.toLowerCase() === manutencaoOrigem.trim().toLowerCase());
-  const manutOrigensToShow = isExactManutOrigemMatch ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase()));
+  const [isExactManutOrigemMatch, manutOrigensToShow] = React.useMemo(() => {
+    const isExact = origensBanco.some(o => o.nome.toLowerCase() === manutencaoOrigem.trim().toLowerCase());
+    const toShow = isExact ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase()));
+    return [isExact, toShow];
+  }, [origensBanco, manutencaoOrigem]);
 
   // Bloqueia edição de Tipo/Marca/Modelo quando editando OU quando adicionando unidade a grupo existente
   const bloqueiaEdicaoGrupo = !!equipamentoEditando || !!grupoPreenchido;
