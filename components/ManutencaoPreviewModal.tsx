@@ -182,9 +182,9 @@ export const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroMa
         </div>
 
         <div class="termo">
-          <strong style="font-size: 12px; color: #000; text-transform: uppercase;">Serviço de Avaliação e Manutenção Técnica de Equipamento</strong><br/><br/>
+          <strong style="font-size: 12px; color: #000; text-transform: uppercase;">Serviço de Avaliação e Manutenção Técnica</strong><br/><br/>
           Declaramos o recebimento do equipamento listado acima para fins de avaliação técnica e manutenção pela Diretoria Técnica de Informática (DTI) - UNESP Câmpus de Marília. O diagnóstico preliminar e a conclusão do serviço possuem prazos variáveis de acordo com a disponibilidade de componentes e fila de atendimento.<br/><br/>
-          Considerando que a área do suporte não possui grande capacidade para armazenamento. Todo equipamento aqui depositado que permanecer além de <strong>30 (trinta) dias</strong> a partir da notificação de conclusão do serviço sem sua devida retirada por parte do solicitante caracterizará estado de <strong>abandono</strong> e poderá ser devolvido de forma iminente à unidade de lotação do responsável. A retirada do bem por terceiros, somente se dará mediante apresentação de documento ou aprovação via registro formal (envio de email) do solicitante.<br/><br/>
+          Considerando a baixa capacidade para armazenamento de equipamentos de informática na área do suporte. Todo equipamento aqui depositado que permanecer além de <strong>30 (trinta) dias</strong> a partir da notificação de conclusão do serviço sem sua devida retirada por parte do solicitante caracterizará estado de <strong>abandono</strong> e poderá ser devolvido de forma iminente à unidade de lotação do responsável. A retirada do bem por terceiros, somente se dará mediante apresentação de documento ou aprovação via registro formal (envio de email) do solicitante.<br/><br/>
           <div style="display: flex; gap: 0; font-size: 11px; color: #333; margin-top: 8px; border-top: 1px solid #ccc; padding-top: 10px;">
             <div style="flex: 1; padding-right: 15px; border-right: 1px solid #ddd;">
               <div style="font-weight: 700; font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 4px;">✉ E-mail</div>

@@ -21,7 +21,7 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
   const isDark = theme === 'dark';
   
   const itensDisponiveis = useMemo(() => 
-    estoque.filter(e => e.status !== 'DESCARTADO' && e.status !== 'TRANSFERIDO'), 
+    estoque.filter(e => e.status !== 'DESCARTADO' && e.status !== 'TRANSFERIDO' && e.status !== 'MANUTENCAO'), 
   [estoque]);
 
   const [busca, setBusca] = useState('');

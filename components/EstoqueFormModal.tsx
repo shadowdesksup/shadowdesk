@@ -94,6 +94,8 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const [focusedMarcaIndex, setFocusedMarcaIndex] = useState(-1);
   const [focusedModeloIndex, setFocusedModeloIndex] = useState(-1);
   const [focusedAgenciaIndex, setFocusedAgenciaIndex] = useState(-1);
+  const [focusedOrigemIndex, setFocusedOrigemIndex] = useState(-1);
+  const [focusedVinculoIndex, setFocusedVinculoIndex] = useState(-1);
 
   const handleComboboxKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -564,6 +566,22 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const isExactAgenciaMatch = agenciasBanco.some(m => m.nome.toLowerCase() === agenciaFomento.trim().toLowerCase());
   const agenciasToShow = isExactAgenciaMatch ? agenciasBanco : agenciasBanco.filter(m => m.nome.toLowerCase().includes(agenciaFomento.toLowerCase()));
 
+  // Origens - Bens Ativos
+  const isExactBaOrigemMatch = origensBanco.some(o => o.nome.toLowerCase() === baOrigem.trim().toLowerCase());
+  const baOrigensToShow = isExactBaOrigemMatch ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase()));
+
+  // Vínculos - Bens Ativos
+  const isExactBaVinculoMatch = vinculosBanco.some(v => v.nome.toLowerCase() === baVinculo.trim().toLowerCase());
+  const baVinculosToShow = isExactBaVinculoMatch ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(baVinculo.toLowerCase()));
+
+  // Vínculos - Manutenção
+  const isExactManutVinculoMatch = vinculosBanco.some(v => v.nome.toLowerCase() === manutencaoVinculo.trim().toLowerCase());
+  const manutVinculosToShow = isExactManutVinculoMatch ? vinculosBanco : vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase()));
+
+  // Origens - Manutenção
+  const isExactManutOrigemMatch = origensBanco.some(o => o.nome.toLowerCase() === manutencaoOrigem.trim().toLowerCase());
+  const manutOrigensToShow = isExactManutOrigemMatch ? origensBanco : origensBanco.filter(o => o.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase()));
+
   // Bloqueia edição de Tipo/Marca/Modelo quando editando OU quando adicionando unidade a grupo existente
   const bloqueiaEdicaoGrupo = !!equipamentoEditando || !!grupoPreenchido;
 
@@ -783,20 +801,35 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                             type="text" required={status === 'BENS_ATIVOS'}
                             value={baOrigem}
                             readOnly={isEditando}
-                            onChange={e => { setBaOrigem(e.target.value); setShowOrigensDropdown(true); }}
+                            onChange={e => {
+                              if (isEditando) return;
+                              setBaOrigem(e.target.value);
+                              setShowOrigensDropdown(true);
+                              setFocusedOrigemIndex(-1);
+                            }}
                             onFocus={() => { if (!isEditando) { carregarOrigens(); setShowOrigensDropdown(true); } }}
+                            onClick={() => { if (!isEditando) { carregarOrigens(); setShowOrigensDropdown(true); } }}
+                            onKeyDown={e => { if (!isEditando) handleComboboxKeyDown(e, showOrigensDropdown, setShowOrigensDropdown, focusedOrigemIndex, setFocusedOrigemIndex, baOrigensToShow, setBaOrigem); }}
                             onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
                             placeholder="Ex: DPTO - DEFITO"
                             className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isEditando ? (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed') : (isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500')} border`}
                           />
-                          {!isEditando && showOrigensDropdown && origensBanco.length > 0 && (
+
+                          {!isEditando && showOrigensDropdown && (origensBanco.length > 0 || baOrigem.length > 0) && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
-                              {origensBanco.filter(o => o.nome.toLowerCase().includes(baOrigem.toLowerCase())).map(o => (
-                                <div key={o.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
-                                  onClick={() => { setBaOrigem(o.nome); setShowOrigensDropdown(false); }}>
-                                  {o.nome}
+                              {baOrigensToShow.length === 0 ? (
+                                <div className={`px-4 py-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  Nenhuma sugestão para "{baOrigem}". Apenas salve para registrar.
                                 </div>
-                              ))}
+                              ) : (
+                                baOrigensToShow.map((o, idx) => (
+                                  <div key={o.id}
+                                    className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedOrigemIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
+                                    onClick={() => { setBaOrigem(o.nome); setShowOrigensDropdown(false); }}>
+                                    {o.nome}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
@@ -845,20 +878,33 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           <input
                             type="text"
                             value={baVinculo}
-                            onChange={e => { setBaVinculo(e.target.value); setShowVinculosDropdown(true); }}
+                            onChange={e => {
+                              setBaVinculo(e.target.value);
+                              setShowVinculosDropdown(true);
+                              setFocusedVinculoIndex(-1);
+                            }}
                             onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
+                            onClick={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
+                            onKeyDown={e => handleComboboxKeyDown(e, showVinculosDropdown, setShowVinculosDropdown, focusedVinculoIndex, setFocusedVinculoIndex, baVinculosToShow, setBaVinculo)}
                             onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
                             placeholder="Ex: Docente"
                             className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border`}
                           />
-                          {showVinculosDropdown && vinculosBanco.length > 0 && (
+                          {showVinculosDropdown && (vinculosBanco.length > 0 || baVinculo.length > 0) && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
-                              {vinculosBanco.filter(v => v.nome.toLowerCase().includes(baVinculo.toLowerCase())).map(v => (
-                                <div key={v.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700'}`}
-                                  onClick={() => { setBaVinculo(v.nome); setShowVinculosDropdown(false); }}>
-                                  {v.nome}
+                              {baVinculosToShow.length === 0 ? (
+                                <div className={`px-4 py-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  Nenhuma sugestão para "{baVinculo}". Apenas salve para registrar.
                                 </div>
-                              ))}
+                              ) : (
+                                baVinculosToShow.map((v, idx) => (
+                                  <div key={v.id}
+                                    className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedVinculoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
+                                    onClick={() => { setBaVinculo(v.nome); setShowVinculosDropdown(false); }}>
+                                    {v.nome}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
@@ -948,20 +994,33 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           <input
                             type="text"
                             value={manutencaoVinculo}
-                            onChange={e => { setManutencaoVinculo(e.target.value); setShowVinculosDropdown(true); }}
+                            onChange={e => {
+                              setManutencaoVinculo(e.target.value);
+                              setShowVinculosDropdown(true);
+                              setFocusedVinculoIndex(-1);
+                            }}
                             onFocus={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
+                            onClick={() => { carregarVinculos(); setShowVinculosDropdown(true); }}
+                            onKeyDown={e => handleComboboxKeyDown(e, showVinculosDropdown, setShowVinculosDropdown, focusedVinculoIndex, setFocusedVinculoIndex, manutVinculosToShow, setManutencaoVinculo)}
                             onBlur={() => setTimeout(() => setShowVinculosDropdown(false), 200)}
                             className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                             placeholder="Ex: Docente"
                           />
-                          {showVinculosDropdown && vinculosBanco.length > 0 && (
+                          {showVinculosDropdown && (vinculosBanco.length > 0 || manutencaoVinculo.length > 0) && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
-                              {vinculosBanco.filter(v => v.nome.toLowerCase().includes(manutencaoVinculo.toLowerCase())).map(v => (
-                                <div key={v.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700'}`}
-                                  onClick={() => { setManutencaoVinculo(v.nome); setShowVinculosDropdown(false); }}>
-                                  {v.nome}
+                              {manutVinculosToShow.length === 0 ? (
+                                <div className={`px-4 py-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  Nenhuma sugestão para "{manutencaoVinculo}". Apenas salve para registrar.
                                 </div>
-                              ))}
+                              ) : (
+                                manutVinculosToShow.map((v, idx) => (
+                                  <div key={v.id}
+                                    className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedVinculoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700')}`}
+                                    onClick={() => { setManutencaoVinculo(v.nome); setShowVinculosDropdown(false); }}>
+                                    {v.nome}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
@@ -983,20 +1042,33 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                           <input
                             type="text"
                             value={manutencaoOrigem}
-                            onChange={e => { setManutencaoOrigem(e.target.value); setShowOrigensDropdown(true); }}
+                            onChange={e => {
+                              setManutencaoOrigem(e.target.value);
+                              setShowOrigensDropdown(true);
+                              setFocusedOrigemIndex(-1);
+                            }}
                             onFocus={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
+                            onClick={() => { carregarOrigens(); setShowOrigensDropdown(true); }}
+                            onKeyDown={e => handleComboboxKeyDown(e, showOrigensDropdown, setShowOrigensDropdown, focusedOrigemIndex, setFocusedOrigemIndex, manutOrigensToShow, setManutencaoOrigem)}
                             onBlur={() => setTimeout(() => setShowOrigensDropdown(false), 200)}
                             className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border`}
                             placeholder="Ex: Biblioteca"
                           />
-                          {showOrigensDropdown && origensBanco.length > 0 && (
+                          {showOrigensDropdown && (origensBanco.length > 0 || manutencaoOrigem.length > 0) && (
                             <div className={`absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-2xl z-[80] overflow-y-auto max-h-60 custom-scrollbar ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-slate-200/50'}`}>
-                              {origensBanco.filter(l => l.nome.toLowerCase().includes(manutencaoOrigem.toLowerCase())).map(l => (
-                                <div key={l.id} className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700'}`}
-                                  onClick={() => { setManutencaoOrigem(l.nome); setShowOrigensDropdown(false); }}>
-                                  {l.nome}
+                              {manutOrigensToShow.length === 0 ? (
+                                <div className={`px-4 py-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  Nenhuma sugestão para "{manutencaoOrigem}". Apenas salve para registrar.
                                 </div>
-                              ))}
+                              ) : (
+                                manutOrigensToShow.map((o, idx) => (
+                                  <div key={o.id}
+                                    className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedOrigemIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700')}`}
+                                    onClick={() => { setManutencaoOrigem(o.nome); setShowOrigensDropdown(false); }}>
+                                    {o.nome}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>

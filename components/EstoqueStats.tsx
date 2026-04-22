@@ -32,7 +32,7 @@ const EstoqueStats: React.FC<EstoqueStatsProps> = ({ estoque, theme = 'dark', on
       }
     });
 
-    const ativos = bensAtivos + disponivel + avaliacao + manutencao;
+    const ativos = bensAtivos + disponivel + avaliacao;
 
     return { total: estoque.length, ativos, bensAtivos, disponivel, avaliacao, manutencao, descartado, descarte, transferido };
   }, [estoque]);
