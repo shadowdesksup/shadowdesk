@@ -396,7 +396,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
   return (
     <div className="h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col">
       {/* Smart Header Section */}
-      <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border backdrop-blur-md shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
+      <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10">
           <div>
@@ -452,9 +452,9 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
         {/* Global Search & Filters integrated in header */}
         <div className="z-10 w-full flex flex-col lg:flex-row gap-3">
           <div className="flex-1 min-w-0">
-            <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all h-[58px] ${isDark
-              ? 'bg-slate-900/90 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
-              : 'bg-white/90 border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
+            <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl transition-colors h-[58px] ${isDark
+              ? 'bg-slate-900 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
+              : 'bg-white border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
               }`}>
               <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
               <input
@@ -479,7 +479,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
                 <select
                   value={filtroTipo}
                   onChange={e => { setFiltroTipo(e.target.value); setFiltroMarca(''); setFiltroModelo(''); }}
-                  className={`w-full px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-white hover:border-cyan-500/50' : 'bg-white/90 border-slate-300 text-slate-800 hover:border-cyan-500/50'}`}
+                  className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white hover:border-cyan-500/50' : 'bg-white border-slate-300 text-slate-800 hover:border-cyan-500/50'}`}
                 >
                   <option value="">Todos os Tipos</option>
                   {opcoesTipo.map(([t, qtd]) => <option key={t} value={t}>{t} ({qtd})</option>)}
@@ -497,7 +497,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
                   <select
                     value={filtroMarca}
                     onChange={e => { setFiltroMarca(e.target.value); setFiltroModelo(''); }}
-                    className={`w-full px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50/90 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                    className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
                   >
                     <option value="">Todas as Marcas</option>
                     {opcoesMarca.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
@@ -516,7 +516,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
                   <select
                     value={filtroModelo}
                     onChange={e => setFiltroModelo(e.target.value)}
-                    className={`w-full px-4 py-3.5 rounded-2xl border backdrop-blur-xl font-medium transition-all cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900/90 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50/90 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                    className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
                   >
                     <option value="">Todos os Modelos</option>
                     {opcoesModelo.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
@@ -536,7 +536,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
       )}
 
       {carregando && estoqueAtivo.length === 0 ? (
-        <div className={`p-16 text-center rounded-3xl border backdrop-blur-md ${isDark ? 'bg-slate-900/60 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
+        <div className={`p-16 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
           <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-cyan-500/50" />
           <p className="text-xl font-semibold tracking-wide animate-pulse">Sincronizando banco de dados...</p>
         </div>

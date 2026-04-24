@@ -106,7 +106,7 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                     onClearHighlight?.();
                   }
                 }}
-                className={`relative p-3 sm:p-4 rounded-xl cursor-pointer border transition-all flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group overflow-hidden ${
+                className={`relative p-3 sm:p-4 rounded-xl cursor-pointer border transition-[border-color,box-shadow] duration-150 flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group overflow-hidden ${
                   isHighlighted
                     ? (isDark ? 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-700/50' : 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-200')
                     : (isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400')
@@ -131,7 +131,7 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                     }}
                   >
                     {item.imagemUrl ? (
-                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${item.isImagemPrincipal
+                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer ${item.isImagemPrincipal
                         ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
                         : (isDark ? 'border-slate-600' : 'border-slate-300')
                         }`}>
@@ -194,24 +194,24 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                 </div>
 
                 {/* Premium Actions Inline */}
-                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap p-1.5 rounded-xl border shadow-sm backdrop-blur-md mt-3 xl:mt-0 ${isDark ? 'bg-slate-800/70 border-slate-700/80' : 'bg-white/80 border-slate-200'}`} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-slate-700/80 text-slate-300 hover:text-white hover:shadow-[0_0_12px_rgba(255,255,255,0.05)]' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900 hover:shadow-sm'}`} title="Editar">
+                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap p-1.5 rounded-xl border shadow-sm mt-3 xl:mt-0 ${isDark ? 'bg-slate-800 border-slate-700/80' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-slate-700/80 text-slate-300 hover:text-white' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'}`} title="Editar">
                     <Edit size={18} strokeWidth={2.5} />
                   </button>
                   {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
                     <>
                       <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
-                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]' : 'hover:bg-purple-100 text-purple-600 hover:text-purple-700 hover:shadow-sm'}`} title="Transferir Local">
+                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-purple-500/20 text-purple-400 hover:text-purple-300' : 'hover:bg-purple-100 text-purple-600 hover:text-purple-700'}`} title="Transferir Local">
                         <ArrowRightLeft size={18} strokeWidth={2.5} />
                       </button>
-                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]' : 'hover:bg-rose-100 text-rose-600 hover:text-rose-700 hover:shadow-sm'}`} title="Descarte/Laudo">
+                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-rose-500/20 text-rose-400 hover:text-rose-300' : 'hover:bg-rose-100 text-rose-600 hover:text-rose-700'}`} title="Descarte/Laudo">
                         <PackageX size={18} strokeWidth={2.5} />
                       </button>
                     </>
                   )}
                   {/* Delete Definitivo */}
                   <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
-                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 group ${isDark ? 'hover:bg-red-500/20 text-red-500 hover:text-red-400 hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]' : 'hover:bg-red-100 text-red-600 hover:text-red-700 hover:shadow-sm'}`} title="Apagar Registro Físico (Perigoso)">
+                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 group ${isDark ? 'hover:bg-red-500/20 text-red-500 hover:text-red-400' : 'hover:bg-red-100 text-red-600 hover:text-red-700'}`} title="Apagar Registro Físico (Perigoso)">
                     <Trash2 size={18} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
                   </button>
                 </div>

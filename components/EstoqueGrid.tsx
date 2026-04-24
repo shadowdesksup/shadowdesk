@@ -61,7 +61,7 @@ const EstoqueGrid: React.FC<EstoqueGridProps> = ({ estoque, busca, theme = 'dark
 
   if (grupos.length === 0) {
     return (
-      <div className={`p-12 text-center rounded-2xl border backdrop-blur-md ${isDark ? 'bg-slate-900/60 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-xl'}`}>
+      <div className={`p-12 text-center rounded-2xl border ${isDark ? 'bg-slate-900 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-xl'}`}>
         <Package size={48} className="mx-auto mb-4 opacity-50" />
         <p className="text-lg">Nenhum equipamento encontrado no estoque.</p>
         <p className="text-sm opacity-70 mt-2">Tente buscar por outro termo ou cadastre um novo item.</p>
@@ -76,8 +76,8 @@ const EstoqueGrid: React.FC<EstoqueGridProps> = ({ estoque, busca, theme = 'dark
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
-          key={grupo.id} className={`group cursor-pointer rounded-2xl overflow-hidden border backdrop-blur-md transition-all hover:shadow-2xl hover:-translate-y-1 ${
-            isDark ? 'bg-slate-900/60 border-white/10 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-lg hover:border-cyan-500'
+          key={grupo.id} className={`group cursor-pointer rounded-2xl overflow-hidden border transition-[transform,box-shadow,border-color] duration-200 hover:shadow-2xl hover:-translate-y-1 ${
+            isDark ? 'bg-slate-900 border-white/10 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-lg hover:border-cyan-500'
           }`}
           onClick={() => onSelectGroup(grupo)}
         >
@@ -90,7 +90,7 @@ const EstoqueGrid: React.FC<EstoqueGridProps> = ({ estoque, busca, theme = 'dark
             )}
             
             {/* Badge de Quantidade Flutuante */}
-            <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1.5">
+            <div className="absolute top-4 right-4 bg-slate-900/90 border border-white/20 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               {grupo.quantidade} unid.
             </div>

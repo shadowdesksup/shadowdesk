@@ -51,8 +51,8 @@ const EstoqueStats: React.FC<EstoqueStatsProps> = ({ estoque, theme = 'dark', on
         <div 
           key={i}
           onClick={card.onClick}
-          className={`relative overflow-hidden rounded-2xl p-5 border backdrop-blur-md shadow-lg transition-transform hover:-translate-y-1 ${
-            isDark ? 'bg-slate-900/60 border-white/10' : 'bg-white border-slate-200'
+          className={`relative overflow-hidden rounded-2xl p-5 border shadow-lg transition-transform duration-200 hover:-translate-y-1 ${
+            isDark ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'
           } ${card.onClick ? 'cursor-pointer hover:shadow-xl hover:border-cyan-500/50' : ''}`}
         >
           {/* Subtle gradient background glow */}
