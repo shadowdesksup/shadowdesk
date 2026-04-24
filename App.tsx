@@ -415,7 +415,7 @@ function App() {
         return <ClimaPage theme={theme} userId={usuario?.uid} />;
 
       case 'estoque':
-        return <EstoquePage theme={theme} />;
+        return <EstoquePage theme={theme} onNavigateToManutencao={() => { setPaginaAtual('manutencoes'); setRegistroEditando(null); }} />;
 
       case 'manutencoes':
         return <ManutencoesPage theme={theme} />;

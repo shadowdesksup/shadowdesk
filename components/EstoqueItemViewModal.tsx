@@ -138,7 +138,7 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
           <div className="flex-1 flex flex-col gap-5 w-full">
             <div className="flex flex-col items-start gap-2">
               <div className={`inline-flex px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border shadow-sm ${getStatusColor(item.status)}`}>
-                {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status.replace('_', ' ')}
+                {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status === 'BENS_ATIVOS' ? 'BENS E ATIVOS' : item.status.replace('_', ' ')}
               </div>
               <h1 className={`text-3xl md:text-5xl font-extrabold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {item.marca} {item.modelo}
@@ -152,8 +152,10 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
               <div className={`flex flex-col justify-center p-4 rounded-2xl border backdrop-blur-md transition-shadow hover:shadow-md ${isDark ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60' : 'bg-white/80 border-slate-200'}`}>
                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Patrimônio</p>
-                {item.patrimonio ? (
+                {item.patrimonio && item.patrimonio !== 'Sem informação' ? (
                   <p className={`font-mono font-bold text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{item.patrimonio}</p>
+                ) : item.numeroSerie && item.numeroSerie !== 'Sem informação' ? (
+                  <p className={`font-mono font-bold text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{item.numeroSerie}</p>
                 ) : item.numeroProcesso ? (
                   <p className={`font-mono font-bold text-xl ${isDark ? 'text-amber-400' : 'text-amber-700'}`}><span className="text-sm">Proc:</span> {item.numeroProcesso}</p>
                 ) : (

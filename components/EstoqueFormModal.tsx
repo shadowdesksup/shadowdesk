@@ -714,7 +714,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 } border`}
             >
               <option value="" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Selecione uma opção</option>
-              <option value="BENS_ATIVOS" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Bens Ativos</option>
+              <option value="BENS_ATIVOS" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Bens e Ativos</option>
               <option value="MANUTENCAO" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Manutenção</option>
               <option value="DESCARTE" className={isDark ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}>Descarte</option>
             </select>

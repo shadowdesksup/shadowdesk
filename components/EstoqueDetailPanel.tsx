@@ -149,18 +149,17 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     {/* Top Row: IDs e Status */}
                     <div className="flex flex-wrap items-center gap-2">
-                      {item.patrimonio ? (
+                      {item.patrimonio && item.patrimonio !== 'Sem informação' ? (
                         <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>PT: {item.patrimonio}</span>
+                      ) : item.numeroSerie && item.numeroSerie !== 'Sem informação' ? (
+                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>NS: {item.numeroSerie}</span>
                       ) : item.numeroProcesso ? (
                         <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'}`}>PR: {item.numeroProcesso}</span>
                       ) : (
                         <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500'}`}>S/ ID</span>
                       )}
-                      {item.numeroSerie && (
-                        <span className={`text-[11px] sm:text-xs font-mono font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>NS: {item.numeroSerie}</span>
-                      )}
                       <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border ml-auto sm:ml-0 ${getStatusColor(item.status)}`}>
-                        {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status.replace('_', ' ')}
+                        {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status === 'BENS_ATIVOS' ? 'BENS E ATIVOS' : item.status.replace('_', ' ')}
                       </span>
                     </div>
 
@@ -194,26 +193,26 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
                   </div>
                 </div>
 
-                {/* Actions Inline */}
-                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap gap-1 p-1 rounded-lg border mt-2 xl:mt-0 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[32px] sm:min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-200 text-slate-600'}`} title="Editar">
-                    <Edit size={16} />
+                {/* Premium Actions Inline */}
+                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap p-1.5 rounded-xl border shadow-sm backdrop-blur-md mt-3 xl:mt-0 ${isDark ? 'bg-slate-800/70 border-slate-700/80' : 'bg-white/80 border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-slate-700/80 text-slate-300 hover:text-white hover:shadow-[0_0_12px_rgba(255,255,255,0.05)]' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900 hover:shadow-sm'}`} title="Editar">
+                    <Edit size={18} strokeWidth={2.5} />
                   </button>
                   {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
                     <>
-                      <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
-                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-purple-900/50 text-purple-400' : 'hover:bg-purple-100 text-purple-600'}`} title="Transferir Local">
-                        <ArrowRightLeft size={16} />
+                      <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]' : 'hover:bg-purple-100 text-purple-600 hover:text-purple-700 hover:shadow-sm'}`} title="Transferir Local">
+                        <ArrowRightLeft size={18} strokeWidth={2.5} />
                       </button>
-                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-rose-900/50 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`} title="Descarte/Laudo">
-                        <PackageX size={16} />
+                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 ${isDark ? 'hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]' : 'hover:bg-rose-100 text-rose-600 hover:text-rose-700 hover:shadow-sm'}`} title="Descarte/Laudo">
+                        <PackageX size={18} strokeWidth={2.5} />
                       </button>
                     </>
                   )}
                   {/* Delete Definitivo */}
-                  <div className={`w-px h-6 mx-1 ${isDark ? 'bg-slate-800' : 'bg-slate-300'}`} />
-                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[36px] flex justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-red-900/50 text-red-500' : 'hover:bg-red-100 text-red-600'}`} title="Apagar Registro Físico (Perigoso)">
-                    <Trash2 size={16} />
+                  <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-all active:scale-95 group ${isDark ? 'hover:bg-red-500/20 text-red-500 hover:text-red-400 hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]' : 'hover:bg-red-100 text-red-600 hover:text-red-700 hover:shadow-sm'}`} title="Apagar Registro Físico (Perigoso)">
+                    <Trash2 size={18} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
                   </button>
                 </div>
 
