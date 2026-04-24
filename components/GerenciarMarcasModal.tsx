@@ -207,4 +207,4 @@ const GerenciarMarcasModal: React.FC<GerenciarMarcasModalProps> = ({ isOpen, onC
   );
 };
 
-export default GerenciarMarcasModal;
+export default React.memo(GerenciarMarcasModal);

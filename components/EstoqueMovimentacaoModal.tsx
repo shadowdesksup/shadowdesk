@@ -523,6 +523,6 @@ const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
   );
 };
 
-export default EstoqueMovimentacaoModal;
+export default React.memo(EstoqueMovimentacaoModal);
 
 

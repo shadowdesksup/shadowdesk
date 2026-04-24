@@ -255,4 +255,4 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
   );
 };
 
-export default EstoqueDetailPanel;
+export default React.memo(EstoqueDetailPanel);

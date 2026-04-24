@@ -178,4 +178,4 @@ const EstoqueFluxoModal: React.FC<EstoqueFluxoModalProps> = ({
   );
 };
 
-export default EstoqueFluxoModal;
+export default React.memo(EstoqueFluxoModal);

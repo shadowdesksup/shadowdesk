@@ -353,4 +353,4 @@ const CameraBarcodeScannerModal: React.FC<CameraBarcodeScannerModalProps> = ({
   );
 };
 
-export default CameraBarcodeScannerModal;
+export default React.memo(CameraBarcodeScannerModal);

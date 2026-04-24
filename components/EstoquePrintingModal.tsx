@@ -359,4 +359,4 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
   );
 };
 
-export default EstoquePrintingModal;
+export default React.memo(EstoquePrintingModal);

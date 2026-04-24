@@ -186,4 +186,4 @@ const GerenciarOrigensModal: React.FC<GerenciarOrigensModalProps> = ({ isOpen, o
   );
 };
 
-export default GerenciarOrigensModal;
+export default React.memo(GerenciarOrigensModal);

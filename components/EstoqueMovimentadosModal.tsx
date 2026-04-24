@@ -204,4 +204,4 @@ const EstoqueMovimentadosModal: React.FC<EstoqueMovimentadosModalProps> = ({
   );
 };
 
-export default EstoqueMovimentadosModal;
+export default React.memo(EstoqueMovimentadosModal);

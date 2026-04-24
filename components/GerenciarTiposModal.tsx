@@ -211,4 +211,4 @@ const GerenciarTiposModal: React.FC<GerenciarTiposModalProps> = ({ isOpen, onClo
   );
 };
 
-export default GerenciarTiposModal;
+export default React.memo(GerenciarTiposModal);

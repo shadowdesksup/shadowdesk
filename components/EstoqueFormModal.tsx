@@ -1683,4 +1683,4 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   );
 };
 
-export default EstoqueFormModal;
+export default React.memo(EstoqueFormModal);

@@ -64,4 +64,4 @@ const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, ti
   );
 };
 
-export default EstoqueSidePanel;
+export default React.memo(EstoqueSidePanel);

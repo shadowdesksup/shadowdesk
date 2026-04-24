@@ -118,4 +118,4 @@ const EstoqueGrid: React.FC<EstoqueGridProps> = ({ estoque, busca, theme = 'dark
   );
 };
 
-export default EstoqueGrid;
+export default React.memo(EstoqueGrid);

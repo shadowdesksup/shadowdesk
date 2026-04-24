@@ -417,4 +417,4 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
   );
 };
 
-export default EstoqueItemViewModal;
+export default React.memo(EstoqueItemViewModal);

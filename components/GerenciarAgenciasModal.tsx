@@ -200,4 +200,4 @@ const GerenciarAgenciasModal: React.FC<GerenciarAgenciasModalProps> = ({ isOpen,
   );
 };
 
-export default GerenciarAgenciasModal;
+export default React.memo(GerenciarAgenciasModal);

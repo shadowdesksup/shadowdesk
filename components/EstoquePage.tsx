@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useDeferredValue } from 'react';
+import React, { useState, useEffect, useDeferredValue, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, MapPin, Search, Truck, Printer, ScanLine } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -160,13 +160,13 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
     } as GrupoEstoque;
   }, [estoqueAtivo, grupoSelecionadoId]);
 
-  const handleOpenFormModal = (item?: EquipamentoEstoque) => {
+  const handleOpenFormModal = useCallback((item?: EquipamentoEstoque) => {
     setEquipamentoEditando(item || null);
     if (!item) {
       realocandoItemRef.current = null;
     }
     setIsFormModalOpen(true);
-  };
+  }, []);
 
   const handleSalvarEquipamento = async (dados: Partial<EquipamentoEstoque>) => {
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
@@ -219,11 +219,11 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
     }
   };
 
-  const openFluxo = (item: EquipamentoEstoque, modo: ModoFluxo) => {
+  const openFluxo = useCallback((item: EquipamentoEstoque, modo: ModoFluxo) => {
     setFluxoConfig({ isOpen: true, modo, item });
-  };
+  }, []);
 
-  const handleConfirmarTransferencia = async (localId: string, localNome: string, recebedor: string) => {
+  const handleConfirmarTransferencia = useCallback(async (localId: string, localNome: string, recebedor: string) => {
     const item = fluxoConfig.item;
     if (!item) return;
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
@@ -246,9 +246,9 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
         }
       ]
     });
-  };
+  }, [fluxoConfig.item, dadosUsuario, usuario, atualizarEquipamento]);
 
-  const handleConfirmarDescarte = async (motivo: string) => {
+  const handleConfirmarDescarte = useCallback(async (motivo: string) => {
     const item = fluxoConfig.item;
     if (!item) return;
     const nomeUser = dadosUsuario?.nomeCompleto || usuario?.email || 'Sistema';
@@ -269,9 +269,9 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
         }
       ]
     });
-  };
+  }, [fluxoConfig.item, dadosUsuario, usuario, atualizarEquipamento]);
 
-  const handleRealocar = (item: EquipamentoEstoque) => {
+  const handleRealocar = useCallback((item: EquipamentoEstoque) => {
     setIsMovimentadosModalOpen(false);
 
     // Ao invés de atualizar no banco de imediato, passamos o item para o formulário
@@ -297,13 +297,101 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
     setTimeout(() => {
       handleOpenFormModal(itemPreRealocacao);
     }, 150);
-  };
+  }, [handleOpenFormModal]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     if (window.confirm('Tem certeza que deseja excluir permanentemente este equipamento? ISSO DELETA DO BANCO E NÃO GERA HISTÓRICO.')) {
       deletarEquipamento(id);
     }
-  };
+  }, [deletarEquipamento]);
+
+  // ── Stable callback refs for memoized children ──
+  const handleSelectGroup = useCallback((grupo: GrupoEstoque) => setGrupoSelecionadoId(grupo.id), []);
+  const handleCloseDetailPanel = useCallback(() => setGrupoSelecionadoId(null), []);
+  const handleClearHighlight = useCallback(() => setHighlightItemId(null), []);
+
+  const handleAdicionarUnidade = useCallback(() => {
+    setEquipamentoEditando(null);
+    setGrupoPreenchido(prev => {
+      // We read grupoSelecionado via closure but it's fine since this fires on click
+      return null; // Will be set below
+    });
+  }, []);
+  // This one needs grupoSelecionado so we keep a slightly different approach
+  const handleAdicionarUnidadeFromPanel = useCallback(() => {
+    setEquipamentoEditando(null);
+    // Read current grupoSelecionadoId and compute grupo inline
+    setGrupoPreenchido({ tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '' });
+    setIsFormModalOpen(true);
+  }, [grupoSelecionado]);
+
+  const handleTransferirItem = useCallback((item: EquipamentoEstoque) => {
+    setMovimentacaoPreItem(item);
+    setIsMovimentacaoModalOpen(true);
+  }, []);
+
+  const handleDescartarItem = useCallback((item: EquipamentoEstoque) => {
+    openFluxo(item, 'DESCARTE');
+  }, [openFluxo]);
+
+  const handleCloseFormModal = useCallback(() => {
+    setIsFormModalOpen(false);
+    setEquipamentoEditando(null);
+    setGrupoPreenchido(null);
+  }, []);
+
+  const handleOpenTiposModal = useCallback(() => setIsTiposModalOpen(true), []);
+  const handleOpenMarcasModal = useCallback(() => setIsMarcasModalOpen(true), []);
+  const handleOpenModelosModal = useCallback(() => setIsModelosModalOpen(true), []);
+  const handleOpenAgenciasModal = useCallback(() => setIsAgenciasModalOpen(true), []);
+  const handleOpenVinculosModal = useCallback(() => setIsVinculosModalOpen(true), []);
+  const handleOpenOrigensModal = useCallback(() => setIsOrigensModalOpen(true), []);
+  const handleOpenLocaisModal = useCallback(() => setIsLocaisModalOpen(true), []);
+
+  const handleCloseLocaisModal = useCallback(() => setIsLocaisModalOpen(false), []);
+  const handleCloseTiposModal = useCallback(() => setIsTiposModalOpen(false), []);
+  const handleCloseMarcasModal = useCallback(() => setIsMarcasModalOpen(false), []);
+  const handleCloseModelosModal = useCallback(() => setIsModelosModalOpen(false), []);
+  const handleCloseAgenciasModal = useCallback(() => setIsAgenciasModalOpen(false), []);
+  const handleCloseVinculosModal = useCallback(() => setIsVinculosModalOpen(false), []);
+  const handleCloseOrigensModal = useCallback(() => setIsOrigensModalOpen(false), []);
+
+  const handleCloseMovimentacaoModal = useCallback(() => {
+    setIsMovimentacaoModalOpen(false);
+    setMovimentacaoPreItem(null);
+  }, []);
+
+  const handleMovimentacaoSuccess = useCallback((id: string) => {
+    setHighlightItemId(id);
+    setIsMovimentadosModalOpen(true);
+  }, []);
+
+  const handleCloseFluxoModal = useCallback(() => {
+    setFluxoConfig(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
+  const handleOpenMovimentadosModal = useCallback(() => setIsMovimentadosModalOpen(true), []);
+  const handleCloseMovimentadosModal = useCallback(() => setIsMovimentadosModalOpen(false), []);
+
+  const handleCloseScannedItem = useCallback(() => setScannedItem(null), []);
+  const handleEditarFromScan = useCallback((item: EquipamentoEstoque) => {
+    handleOpenFormModal(item);
+    setScannedItem(null);
+  }, [handleOpenFormModal]);
+  const handleMovimentarFromScan = useCallback((item: EquipamentoEstoque) => {
+    setMovimentacaoPreItem(item);
+    setIsMovimentacaoModalOpen(true);
+    setScannedItem(null);
+  }, []);
+  const handleDescartarFromScan = useCallback(() => {
+    alert('Funcionalidade de Descarte em desenvolvimento.');
+  }, []);
+  const handleManutencaoFromScan = useCallback(() => {
+    alert('Funcionalidade de Manutenção em desenvolvimento.');
+  }, []);
+
+  const handleCloseCameraScanner = useCallback(() => setIsCameraScannerOpen(false), []);
+  const handleClosePrintingModal = useCallback(() => setIsPrintingModalOpen(false), []);
 
   return (
     <div className="h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col">
@@ -458,7 +546,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
             estoque={estoqueFiltradoCascata}
             busca={deferredBuscaGeral}
             theme={theme}
-            onSelectGroup={(grupo) => setGrupoSelecionadoId(grupo.id)}
+            onSelectGroup={handleSelectGroup}
           />
         </div>
       )}
@@ -468,100 +556,92 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
       <EstoqueDetailPanel
         grupo={grupoSelecionado}
         isOpen={grupoSelecionadoId !== null}
-        onClose={() => setGrupoSelecionadoId(null)}
+        onClose={handleCloseDetailPanel}
         theme={theme}
-        onAdicionarUnidade={() => {
-          setEquipamentoEditando(null);
-          setGrupoPreenchido({ tipo: grupoSelecionado?.tipo || '', marca: grupoSelecionado?.marca || '', modelo: grupoSelecionado?.modelo || '' });
-          setIsFormModalOpen(true);
-        }}
+        onAdicionarUnidade={handleAdicionarUnidadeFromPanel}
         onEditar={handleOpenFormModal}
-        onTransferir={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); }}
-        onDescartar={(item) => openFluxo(item, 'DESCARTE')}
+        onTransferir={handleTransferirItem}
+        onDescartar={handleDescartarItem}
         onDeletar={handleDelete}
         highlightItemId={highlightItemId}
-        onClearHighlight={() => setHighlightItemId(null)}
+        onClearHighlight={handleClearHighlight}
       />
 
       <EstoqueFormModal
         isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setEquipamentoEditando(null);
-          setGrupoPreenchido(null);
-        }}
+        onClose={handleCloseFormModal}
         onSalvar={handleSalvarEquipamento}
         equipamentoEditando={equipamentoEditando}
         grupoPreenchido={grupoPreenchido}
         theme={theme}
         carregando={carregando}
         isRealocando={!!realocandoItemRef.current}
-        onAbreGerenciarTipos={() => setIsTiposModalOpen(true)}
-        onAbreGerenciarMarcas={() => setIsMarcasModalOpen(true)}
-        onAbreGerenciarModelos={() => setIsModelosModalOpen(true)}
-        onAbreGerenciarAgencias={() => setIsAgenciasModalOpen(true)}
-        onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
-        onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
-        onAbreGerenciarLocais={() => setIsLocaisModalOpen(true)}
+        onAbreGerenciarTipos={handleOpenTiposModal}
+        onAbreGerenciarMarcas={handleOpenMarcasModal}
+        onAbreGerenciarModelos={handleOpenModelosModal}
+        onAbreGerenciarAgencias={handleOpenAgenciasModal}
+        onAbreGerenciarVinculos={handleOpenVinculosModal}
+        onAbreGerenciarOrigens={handleOpenOrigensModal}
+        onAbreGerenciarLocais={handleOpenLocaisModal}
       />
 
       <GerenciarLocaisModal
         isOpen={isLocaisModalOpen}
-        onClose={() => setIsLocaisModalOpen(false)}
+        onClose={handleCloseLocaisModal}
         theme={theme}
       />
 
       <GerenciarTiposModal
         isOpen={isTiposModalOpen}
-        onClose={() => setIsTiposModalOpen(false)}
+        onClose={handleCloseTiposModal}
         theme={theme}
       />
 
       <GerenciarMarcasModal
         isOpen={isMarcasModalOpen}
-        onClose={() => setIsMarcasModalOpen(false)}
+        onClose={handleCloseMarcasModal}
         theme={theme}
       />
 
       <GerenciarModelosModal
         isOpen={isModelosModalOpen}
-        onClose={() => setIsModelosModalOpen(false)}
+        onClose={handleCloseModelosModal}
         theme={theme}
       />
 
       <GerenciarAgenciasModal
         isOpen={isAgenciasModalOpen}
-        onClose={() => setIsAgenciasModalOpen(false)}
+        onClose={handleCloseAgenciasModal}
         theme={theme}
       />
 
       <GerenciarVinculosModal
         isOpen={isVinculosModalOpen}
-        onClose={() => setIsVinculosModalOpen(false)}
+        onClose={handleCloseVinculosModal}
         theme={theme}
       />
 
       <GerenciarOrigensModal
         isOpen={isOrigensModalOpen}
-        onClose={() => setIsOrigensModalOpen(false)}
+        onClose={handleCloseOrigensModal}
         theme={theme}
       />
 
       <EstoqueMovimentacaoModal
         isOpen={isMovimentacaoModalOpen}
-        onClose={() => { setIsMovimentacaoModalOpen(false); setMovimentacaoPreItem(null); }}
+        onClose={handleCloseMovimentacaoModal}
         estoqueAtivo={estoqueAtivo}
         theme={theme}
-        onSuccess={(id) => { setHighlightItemId(id); setIsMovimentadosModalOpen(true); }}
-        onAbreGerenciarOrigens={() => setIsOrigensModalOpen(true)}
-        onAbreGerenciarVinculos={() => setIsVinculosModalOpen(true)}
+        onSuccess={handleMovimentacaoSuccess}
+        onAbreGerenciarOrigens={handleOpenOrigensModal}
+        onAbreGerenciarVinculos={handleOpenVinculosModal}
         preSelectedItem={movimentacaoPreItem}
         onAtualizarEquipamento={atualizarEquipamento}
       />
 
       <EstoqueFluxoModal
         isOpen={fluxoConfig.isOpen}
-        onClose={() => setFluxoConfig(prev => ({ ...prev, isOpen: false }))}
+        onClose={handleCloseFluxoModal}
         item={fluxoConfig.item}
         modo={fluxoConfig.modo}
         onConfirmarDescarte={handleConfirmarDescarte}
@@ -572,7 +652,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoqueMovimentadosModal
         isOpen={isMovimentadosModalOpen}
-        onClose={() => setIsMovimentadosModalOpen(false)}
+        onClose={handleCloseMovimentadosModal}
         estoque={estoque}
         theme={theme}
         onRealocar={handleRealocar}
@@ -581,26 +661,26 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
       {/* Global Barcode Scanner View Modal */}
       <EstoqueItemViewModal
         isOpen={scannedItem !== null}
-        onClose={() => setScannedItem(null)}
+        onClose={handleCloseScannedItem}
         item={scannedItem}
         theme={theme}
-        onEditar={(item) => { handleOpenFormModal(item); setScannedItem(null); }}
-        onMovimentar={(item) => { setMovimentacaoPreItem(item); setIsMovimentacaoModalOpen(true); setScannedItem(null); }}
-        onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
-        onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
+        onEditar={handleEditarFromScan}
+        onMovimentar={handleMovimentarFromScan}
+        onDescartar={handleDescartarFromScan}
+        onManutencao={handleManutencaoFromScan}
         onRealocar={handleRealocar}
       />
 
       <CameraBarcodeScannerModal
         isOpen={isCameraScannerOpen}
-        onClose={() => setIsCameraScannerOpen(false)}
+        onClose={handleCloseCameraScanner}
         onScan={handleScan}
         theme={theme}
       />
 
       <EstoquePrintingModal
         isOpen={isPrintingModalOpen}
-        onClose={() => setIsPrintingModalOpen(false)}
+        onClose={handleClosePrintingModal}
         estoque={estoqueAtivo}
         theme={theme}
       />

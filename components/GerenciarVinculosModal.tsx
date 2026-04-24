@@ -199,4 +199,4 @@ const GerenciarVinculosModal: React.FC<GerenciarVinculosModalProps> = ({ isOpen,
   );
 };
 
-export default GerenciarVinculosModal;
+export default React.memo(GerenciarVinculosModal);

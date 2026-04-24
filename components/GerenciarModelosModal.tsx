@@ -207,4 +207,4 @@ const GerenciarModelosModal: React.FC<GerenciarModelosModalProps> = ({ isOpen, o
   );
 };
 
-export default GerenciarModelosModal;
+export default React.memo(GerenciarModelosModal);

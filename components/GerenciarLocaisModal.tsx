@@ -124,4 +124,4 @@ const GerenciarLocaisModal: React.FC<GerenciarLocaisModalProps> = ({ isOpen, onC
   );
 };
 
-export default GerenciarLocaisModal;
+export default React.memo(GerenciarLocaisModal);

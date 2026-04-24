@@ -78,4 +78,4 @@ const EstoqueStats: React.FC<EstoqueStatsProps> = ({ estoque, theme = 'dark', on
   );
 };
 
-export default EstoqueStats;
+export default React.memo(EstoqueStats);
