@@ -14,7 +14,7 @@ interface GerenciarLocaisModalProps {
 const GerenciarLocaisModal: React.FC<GerenciarLocaisModalProps> = ({ isOpen, onClose, theme = 'dark' }) => {
   const isDark = theme === 'dark';
   const { usuario } = useAuth();
-  
+
   const [locais, setLocais] = useState<LocalTransferencia[]>([]);
   const [novoNome, setNovoNome] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -86,7 +86,7 @@ const GerenciarLocaisModal: React.FC<GerenciarLocaisModalProps> = ({ isOpen, onC
             placeholder="Novo local (ex: Sala 10)"
             className={`flex-1 rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500'} border`}
           />
-          <button 
+          <button
             type="submit" disabled={carregando}
             className="bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-cyan-500/30 disabled:opacity-50"
           >
@@ -97,7 +97,7 @@ const GerenciarLocaisModal: React.FC<GerenciarLocaisModalProps> = ({ isOpen, onC
         <h3 className={`font-semibold mb-3 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Locais Cadastrados</h3>
         <div className={`overflow-y-auto rounded-xl border custom-scrollbar ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
           {carregando && locais.length === 0 ? (
-             <div className="p-6 flex justify-center"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
+            <div className="p-6 flex justify-center"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : locais.length === 0 ? (
             <div className={`p-6 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               Nenhum destino cadastrado ainda.
@@ -107,7 +107,7 @@ const GerenciarLocaisModal: React.FC<GerenciarLocaisModalProps> = ({ isOpen, onC
               {locais.map(local => (
                 <li key={local.id} className={`flex items-center justify-between p-4 transition-colors ${isDark ? 'hover:bg-slate-800/80' : 'hover:bg-slate-100'}`}>
                   <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{local.nome}</span>
-                  <button 
+                  <button
                     onClick={() => handleDelete(local.id)}
                     className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
                     title="Remover Local"

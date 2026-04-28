@@ -18,10 +18,11 @@ interface EstoqueMovimentacaoModalProps {
   preSelectedItem?: EquipamentoEstoque | null;
   onSuccess?: (id: string) => void;
   onAtualizarEquipamento: (id: string, dados: Partial<EquipamentoEstoque>) => Promise<void>;
+  hidden?: boolean;
 }
 
 const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
-  isOpen, onClose, estoqueAtivo, theme = 'dark', onAbreGerenciarOrigens, onAbreGerenciarVinculos, preSelectedItem, onSuccess, onAtualizarEquipamento
+  isOpen, onClose, estoqueAtivo, theme = 'dark', onAbreGerenciarOrigens, onAbreGerenciarVinculos, preSelectedItem, onSuccess, onAtualizarEquipamento, hidden = false
 }) => {
   const isDark = theme === 'dark';
   const { usuario, dadosUsuario } = useAuth();
@@ -216,7 +217,7 @@ const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
   );
 
   return (
-    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-8rem)] lg:w-[calc(100vw-16rem)] max-w-none">
+    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-8rem)] lg:w-[calc(100vw-16rem)] max-w-none" hidden={hidden}>
       <div className="flex flex-col lg:flex-row lg:h-full overflow-y-auto lg:overflow-hidden bg-transparent">
 
         {/* Painel Esquerdo: Seleção do Item */}

@@ -9,9 +9,10 @@ interface EstoqueSidePanelProps {
   children: React.ReactNode;
   theme?: 'dark' | 'light';
   width?: string;
+  hidden?: boolean;
 }
 
-const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, title, children, theme = 'dark', width = 'max-w-xl' }) => {
+const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, title, children, theme = 'dark', width = 'max-w-xl', hidden = false }) => {
   const isDark = theme === 'dark';
 
   return (
@@ -23,10 +24,10 @@ const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, ti
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }} // Faster fade avoids locking main thread for too long
+            transition={{ duration: 0.15 }} // Rápido para não causar lag
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            style={{ willChange: 'opacity' }}
+            className="fixed inset-0 z-40 bg-slate-950/90" // Sem backdrop-blur
+            style={{ willChange: 'opacity', display: hidden ? 'none' : 'block' }}
           />
 
           {/* Panel */}
@@ -35,17 +36,16 @@ const EstoqueSidePanel: React.FC<EstoqueSidePanelProps> = ({ isOpen, onClose, ti
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            style={{ willChange: 'transform, opacity' }}
-            className={`fixed top-0 right-0 bottom-0 z-50 w-full ${width} shadow-2xl flex flex-col ${
-              isDark ? 'bg-slate-900 border-l border-slate-800' : 'bg-white border-l border-slate-200'
-            }`}
+            style={{ willChange: 'transform, opacity', display: hidden ? 'none' : 'flex' }}
+            className={`fixed top-0 right-0 bottom-0 z-50 w-full ${width} shadow-2xl flex-col ${isDark ? 'bg-slate-900 border-l border-slate-800' : 'bg-white border-l border-slate-200'
+              }`}
           >
             {/* Header */}
             <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
               <div className="flex-1">
                 {title}
               </div>
-              <button 
+              <button
                 onClick={onClose}
                 className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
               >

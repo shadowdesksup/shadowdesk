@@ -33,13 +33,15 @@ interface EstoqueFormModalProps {
   onAbreGerenciarVinculos: () => void;
   onAbreGerenciarOrigens: () => void;
   onAbreGerenciarLocais: () => void;
+  hidden?: boolean;
 }
 
 const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   isOpen, onClose, onSalvar, equipamentoEditando, grupoPreenchido, theme = 'dark', carregando = false,
   isRealocando = false,
   onAbreGerenciarTipos, onAbreGerenciarMarcas, onAbreGerenciarModelos, onAbreGerenciarAgencias,
-  onAbreGerenciarVinculos, onAbreGerenciarOrigens, onAbreGerenciarLocais
+  onAbreGerenciarVinculos, onAbreGerenciarOrigens, onAbreGerenciarLocais,
+  hidden = false
 }) => {
   const isDark = theme === 'dark';
   const isEditando = !!equipamentoEditando;
@@ -293,7 +295,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         setManutencaoOrigem(equipamentoEditando.manutencaoAtual.origem || '');
         setManutencaoEmail(equipamentoEditando.manutencaoAtual.email || '');
         setManutencaoCelular(equipamentoEditando.manutencaoAtual.celular || '');
-        setManutencaoCondicao((equipamentoEditando.manutencaoAtual.condicaoBem as 'Boa'|'Regular'|'Ruim') || 'Regular');
+        setManutencaoCondicao((equipamentoEditando.manutencaoAtual.condicaoBem as 'Boa' | 'Regular' | 'Ruim') || 'Regular');
         setManutencaoDataInicio(equipamentoEditando.manutencaoAtual.dataInicio.split('T')[0]);
         setManutencaoProblema(equipamentoEditando.manutencaoAtual.problema);
         setManutencaoTecnicoId(equipamentoEditando.manutencaoAtual.tecnicoResponsavelId);
@@ -617,7 +619,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const mostrarCheckboxCapa = !imagemUrl && !!capaGrupoUrl;
 
   return (
-    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-16rem)] max-w-none">
+    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-16rem)] max-w-none" hidden={hidden}>
       <form onSubmit={handleSave} className="p-4 sm:p-8 flex flex-col lg:flex-row items-start gap-8 sm:gap-12 relative">
 
         {/* Imagem */}
@@ -629,7 +631,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
             {imagemUrl ? (
               <>
                 <img src={imagemUrl} alt="Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-3 items-center justify-center backdrop-blur-sm">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-3 items-center justify-center ">
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-colors">
                     <Upload size={16} /> Trocar Arquivo
                   </button>
@@ -1541,7 +1543,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         </div>
 
         {/* Floating Action footer */}
-        <div className={`fixed bottom-0 left-0 right-0 p-6 flex flex-col items-end gap-3 backdrop-blur-md border-t ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'
+        <div className={`fixed bottom-0 left-0 right-0 p-6 flex flex-col items-end gap-3  border-t ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'
           }`}>
           {erroSalvar && (
             <div className="w-full text-red-500 text-sm font-bold text-center bg-red-500/10 p-3 rounded-xl border border-red-500/20 animate-pulse">
@@ -1595,7 +1597,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         <AnimatePresence>
           {confirmacaoNovoTipo && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirmacaoNovoTipo(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirmacaoNovoTipo(null)} className="absolute inset-0 bg-black/60 " />
               <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 className={`relative w-full max-w-sm p-8 rounded-3xl shadow-2xl border flex flex-col items-center text-center ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
               >
@@ -1623,7 +1625,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         <AnimatePresence>
           {showImagemObrigatoriaModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowImagemObrigatoriaModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowImagemObrigatoriaModal(false)} className="absolute inset-0 bg-black/60 " />
               <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 className={`relative w-full max-w-sm p-8 rounded-3xl shadow-2xl border flex flex-col items-center text-center ${isDark ? 'bg-slate-900 border-rose-500/30' : 'bg-white border-rose-200'}`}
               >
@@ -1632,7 +1634,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                 </div>
                 <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>Imagem Obrigatória</h3>
                 <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  {mostrarCheckboxCapa 
+                  {mostrarCheckboxCapa
                     ? 'A imagem é obrigatória. Faça upload, capture uma foto ou marque a opção "Usar imagem definida na capa".'
                     : 'A imagem é obrigatória. Faça upload ou capture uma foto do equipamento para registrar.'}
                 </p>

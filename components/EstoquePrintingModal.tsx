@@ -10,19 +10,21 @@ interface EstoquePrintingModalProps {
   onClose: () => void;
   estoque: EquipamentoEstoque[];
   theme?: 'dark' | 'light';
+  hidden?: boolean;
 }
 
-const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
+  isOpen,
+  onClose,
   estoque,
-  theme = 'dark' 
+  theme = 'dark',
+  hidden = false
 }) => {
   const isDark = theme === 'dark';
-  
-  const itensDisponiveis = useMemo(() => 
-    estoque.filter(e => e.status !== 'DESCARTADO' && e.status !== 'TRANSFERIDO' && e.status !== 'MANUTENCAO'), 
-  [estoque]);
+
+  const itensDisponiveis = useMemo(() =>
+    estoque.filter(e => e.status !== 'DESCARTADO' && e.status !== 'TRANSFERIDO' && e.status !== 'MANUTENCAO'),
+    [estoque]);
 
   const [busca, setBusca] = useState('');
   const [filaImpressao, setFilaImpressao] = useState<EquipamentoEstoque[]>([]);
@@ -36,23 +38,23 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
     if (busca.trim().length > 0) {
       const allTipos: Record<string, boolean> = {};
       const allSubs: Record<string, boolean> = {};
-      
+
       const filtered = itensDisponiveis.filter(e => {
         const lower = busca.toLowerCase();
-        return e.patrimonio?.toLowerCase().includes(lower) || 
-               e.numeroSerie?.toLowerCase().includes(lower) || 
-               e.marca?.toLowerCase().includes(lower) || 
-               e.modelo?.toLowerCase().includes(lower) ||
-               e.tipo?.toLowerCase().includes(lower);
+        return e.patrimonio?.toLowerCase().includes(lower) ||
+          e.numeroSerie?.toLowerCase().includes(lower) ||
+          e.marca?.toLowerCase().includes(lower) ||
+          e.modelo?.toLowerCase().includes(lower) ||
+          e.tipo?.toLowerCase().includes(lower);
       });
-      
+
       filtered.forEach(e => {
         const t = e.tipo || 'Outros';
         const s = `${t}-${e.marca || 'Sem Marca'} - ${e.modelo || 'Sem Modelo'}`;
         allTipos[t] = true;
         allSubs[s] = true;
       });
-      
+
       setExpandedTipos(allTipos);
       setExpandedSubgrupos(allSubs);
     }
@@ -61,10 +63,10 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
   const itensFiltrados = useMemo(() => {
     if (!busca) return itensDisponiveis;
     const lower = busca.toLowerCase();
-    return itensDisponiveis.filter(e => 
-      e.patrimonio?.toLowerCase().includes(lower) || 
-      e.numeroSerie?.toLowerCase().includes(lower) || 
-      e.marca?.toLowerCase().includes(lower) || 
+    return itensDisponiveis.filter(e =>
+      e.patrimonio?.toLowerCase().includes(lower) ||
+      e.numeroSerie?.toLowerCase().includes(lower) ||
+      e.marca?.toLowerCase().includes(lower) ||
       e.modelo?.toLowerCase().includes(lower) ||
       e.tipo?.toLowerCase().includes(lower)
     );
@@ -72,17 +74,17 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
 
   const groupedData = useMemo(() => {
     const groups: Record<string, Record<string, EquipamentoEstoque[]>> = {};
-    
+
     itensFiltrados.forEach(item => {
       const tipo = item.tipo || 'Outros';
       const subgrupo = `${item.marca || 'Sem Marca'} - ${item.modelo || 'Sem Modelo'}`;
-      
+
       if (!groups[tipo]) groups[tipo] = {};
       if (!groups[tipo][subgrupo]) groups[tipo][subgrupo] = [];
-      
+
       groups[tipo][subgrupo].push(item);
     });
-    
+
     // Sort
     const sortedGroups: Record<string, Record<string, EquipamentoEstoque[]>> = {};
     Object.keys(groups).sort().forEach(tipo => {
@@ -91,7 +93,7 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
         sortedGroups[tipo][sub] = groups[tipo][sub];
       });
     });
-    
+
     return sortedGroups;
   }, [itensFiltrados]);
 
@@ -102,11 +104,11 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
     setFilaImpressao(prev => {
       let novaFila = [...prev];
       if (forceAdd) {
-         const itensParaAdicionar = itens.filter(item => !novaFila.some(i => i.id === item.id));
-         novaFila = [...novaFila, ...itensParaAdicionar];
+        const itensParaAdicionar = itens.filter(item => !novaFila.some(i => i.id === item.id));
+        novaFila = [...novaFila, ...itensParaAdicionar];
       } else {
-         const idsParaRemover = new Set(itens.map(i => i.id));
-         novaFila = novaFila.filter(i => !idsParaRemover.has(i.id));
+        const idsParaRemover = new Set(itens.map(i => i.id));
+        novaFila = novaFila.filter(i => !idsParaRemover.has(i.id));
       }
       return novaFila;
     });
@@ -123,9 +125,9 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
   );
 
   return (
-    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-8rem)] lg:w-[calc(100vw-16rem)] max-w-none">
+    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} theme={theme} title={titleNode} width="md:w-[calc(100vw-8rem)] lg:w-[calc(100vw-16rem)] max-w-none" hidden={hidden}>
       <div className="flex flex-col lg:flex-row min-h-full h-full bg-transparent">
-        
+
         {/* LADO ESQUERDO: SELEÇÃO DE ITENS (Oculto na impressão) */}
         <div className={`w-full lg:w-1/3 p-6 flex flex-col no-print ${isDark ? 'border-r border-slate-700/50 bg-slate-900/50' : 'border-r border-slate-200 bg-slate-50'}`}>
           <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -139,11 +141,10 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
               placeholder="Buscar por Patrimônio, Série, Marca, Tipo..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className={`w-full pl-9 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all ${
-                isDark 
-                  ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' 
+              className={`w-full pl-9 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all ${isDark
+                  ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500'
                   : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
-              }`}
+                }`}
             />
           </div>
 
@@ -169,9 +170,8 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleItensNaFila(allItemsInTipo, !allInQueue); }}
-                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all border ${
-                          allInQueue ? 'bg-cyan-500 border-cyan-500 text-white' : someInQueue ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-500' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-300 text-slate-400 hover:bg-slate-100'
-                        }`}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all border ${allInQueue ? 'bg-cyan-500 border-cyan-500 text-white' : someInQueue ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-500' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-300 text-slate-400 hover:bg-slate-100'
+                          }`}
                         title={allInQueue ? "Remover todos do tipo" : "Adicionar todos do tipo"}
                       >
                         {allInQueue ? <Check size={14} /> : <Plus size={14} />}
@@ -198,9 +198,8 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
                                   </div>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); toggleItensNaFila(items, !allSubInQueue); }}
-                                    className={`w-6 h-6 flex items-center justify-center rounded-md transition-all border ${
-                                      allSubInQueue ? 'bg-cyan-500 border-cyan-500 text-white' : someSubInQueue ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-500' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-300 text-slate-400 hover:bg-slate-100'
-                                    }`}
+                                    className={`w-6 h-6 flex items-center justify-center rounded-md transition-all border ${allSubInQueue ? 'bg-cyan-500 border-cyan-500 text-white' : someSubInQueue ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-500' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-300 text-slate-400 hover:bg-slate-100'
+                                      }`}
                                   >
                                     {allSubInQueue ? <Check size={12} /> : <Plus size={12} />}
                                   </button>
@@ -215,17 +214,16 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
                                         return (
                                           <div key={item.id} className={`flex items-center justify-between p-2 pl-12 border-b last:border-0 border-dashed transition-colors ${isDark ? 'border-slate-700/30 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}>
                                             <div className="flex gap-2 text-[10px] font-mono">
-                                              {item.patrimonio 
-                                                ? <span className="text-cyan-500 font-bold">PT: {item.patrimonio}</span> 
-                                                : item.numeroSerie 
+                                              {item.patrimonio
+                                                ? <span className="text-cyan-500 font-bold">PT: {item.patrimonio}</span>
+                                                : item.numeroSerie
                                                   ? <span className="text-teal-500 font-bold">NS: {item.numeroSerie}</span>
                                                   : <span className="text-amber-500 font-bold">SEM IDENTIFICADOR</span>}
                                             </div>
                                             <button
                                               onClick={() => toggleItensNaFila([item], !inQueue)}
-                                              className={`w-5 h-5 flex items-center justify-center rounded transition-all border ${
-                                                inQueue ? 'bg-cyan-500 border-cyan-500 text-white' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-600 hover:text-white' : 'border-slate-300 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
-                                              }`}
+                                              className={`w-5 h-5 flex items-center justify-center rounded transition-all border ${inQueue ? 'bg-cyan-500 border-cyan-500 text-white' : isDark ? 'border-slate-600 text-slate-400 hover:bg-slate-600 hover:text-white' : 'border-slate-300 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                                }`}
                                             >
                                               {inQueue ? <Check size={10} /> : <Plus size={10} />}
                                             </button>
@@ -249,27 +247,26 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
 
           <div className={`pt-4 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
             <div className="flex justify-between items-center mb-3">
-               <h3 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                 Fila de Impressão <span className="bg-cyan-500 text-white text-[10px] px-2 py-0.5 rounded-full">{filaImpressao.length}</span>
-               </h3>
-               {filaImpressao.length > 0 && (
-                 <button onClick={limparFila} className="text-xs text-red-500 hover:text-red-400 transition-colors font-bold">
-                   Esvaziar fila
-                 </button>
-               )}
+              <h3 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Fila de Impressão <span className="bg-cyan-500 text-white text-[10px] px-2 py-0.5 rounded-full">{filaImpressao.length}</span>
+              </h3>
+              {filaImpressao.length > 0 && (
+                <button onClick={limparFila} className="text-xs text-red-500 hover:text-red-400 transition-colors font-bold">
+                  Esvaziar fila
+                </button>
+              )}
             </div>
 
             <button
-               onClick={handlePrint}
-               disabled={filaImpressao.length === 0}
-               className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
-                 filaImpressao.length === 0
-                   ? isDark ? 'bg-slate-800 text-slate-600 cursor-not-allowed shadow-none' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                   : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 shadow-cyan-500/25 active:scale-[0.98]'
-               }`}
+              onClick={handlePrint}
+              disabled={filaImpressao.length === 0}
+              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${filaImpressao.length === 0
+                  ? isDark ? 'bg-slate-800 text-slate-600 cursor-not-allowed shadow-none' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 shadow-cyan-500/25 active:scale-[0.98]'
+                }`}
             >
-               <Printer size={18} />
-               Imprimir Folha A4
+              <Printer size={18} />
+              Imprimir Folha A4
             </button>
           </div>
         </div>
@@ -277,10 +274,9 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
         {/* LADO DIREITO: PREVIEW A4 (Impresso de fato via @media print) */}
         <div className={`w-full lg:w-2/3 p-6 overflow-y-auto flex justify-center custom-scrollbar ${isDark ? 'bg-[#0f172a]' : 'bg-slate-100'}`}>
           <div className="a4-preview-container print-only-container">
-            <div className={`w-[210mm] min-h-[297mm] mx-auto p-[10mm] shadow-2xl relative print:shadow-none print:w-auto print:min-h-auto print:p-0 print:m-0 ${
-              isDark ? 'bg-slate-800' : 'bg-white'
-            }`}>
-              
+            <div className={`w-[210mm] min-h-[297mm] mx-auto p-[10mm] shadow-2xl relative print:shadow-none print:w-auto print:min-h-auto print:p-0 print:m-0 ${isDark ? 'bg-slate-800' : 'bg-white'
+              }`}>
+
               {filaImpressao.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full opacity-30 text-center pt-32">
                   <Printer size={64} className="mb-4" />
@@ -290,20 +286,19 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
               ) : (
                 <div className="grid grid-cols-4 gap-[4mm] print:grid-cols-4 print:gap-[2mm]">
                   {filaImpressao.map(item => (
-                    <div 
-                      key={item.id} 
-                      className={`flex flex-col items-center justify-center border border-dashed rounded p-2 text-center break-inside-avoid print:border-solid ${
-                        isDark ? 'border-slate-600 bg-slate-700/50' : 'border-slate-300 bg-white'
-                      }`}
+                    <div
+                      key={item.id}
+                      className={`flex flex-col items-center justify-center border border-dashed rounded p-2 text-center break-inside-avoid print:border-solid ${isDark ? 'border-slate-600 bg-slate-700/50' : 'border-slate-300 bg-white'
+                        }`}
                       style={{ height: '35mm' }}
                     >
                       <div className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
                         SD-ID INTERNO
                       </div>
                       <div className="bg-white rounded p-1 w-full flex justify-center text-black">
-                        <Barcode 
-                          value={`SD-${item.id.substring(0,8).toUpperCase()}`} 
-                          height={20} 
+                        <Barcode
+                          value={`SD-${item.id.substring(0, 8).toUpperCase()}`}
+                          height={20}
                           width={1.2}
                           fontSize={10}
                           margin={0}
@@ -330,7 +325,8 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           body * {
             visibility: hidden;

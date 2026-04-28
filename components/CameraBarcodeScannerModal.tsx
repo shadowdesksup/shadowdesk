@@ -184,7 +184,7 @@ const CameraBarcodeScannerModal: React.FC<CameraBarcodeScannerModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/90"
           />
 
           {/* Modal */}

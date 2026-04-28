@@ -174,7 +174,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
     if (equipamentoEditando && equipamentoEditando.id) {
       const isRealocando = realocandoItemRef.current?.id === equipamentoEditando.id;
       let acaoHistorico = 'Dados atualizados';
-      
+
       if (isRealocando) {
         const vindoDe = realocandoItemRef.current?.detalhes?.localDestinoNome || 'Último destino';
         acaoHistorico = `Item realocado no estoque\n(Vindo de: ${vindoDe})`;
@@ -272,26 +272,24 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
   }, [fluxoConfig.item, dadosUsuario, usuario, atualizarEquipamento]);
 
   const handleRealocar = useCallback((item: EquipamentoEstoque) => {
-    setIsMovimentadosModalOpen(false);
-
     // Ao invés de atualizar no banco de imediato, passamos o item para o formulário
     realocandoItemRef.current = item;
-    
+
     // Limpamos integralmente todos os resquícios da movimentação ou alocação anterior,
     // transformando-o num ativo novo e forçando o status para BENS_ATIVOS
-    const itemPreRealocacao: EquipamentoEstoque = { 
-       ...item,
-       status: 'BENS_ATIVOS',
-       bensAtivos: {
-           dataEntradaItem: new Date().toISOString(),
-           solicitante: item.detalhes?.recebedorNome || item.bensAtivos?.solicitante || '',
-           origem: item.detalhes?.localDestinoNome || item.bensAtivos?.origem || '',
-           alocadoEm: item.detalhes?.localDestinoNome || '',
-           vinculo: item.detalhes?.vinculoDestino || item.bensAtivos?.vinculo || '',
-           condicao: 'Boa'
-       },
-       // Wipe qualquer rastro de transferência antiga
-       detalhes: undefined
+    const itemPreRealocacao: EquipamentoEstoque = {
+      ...item,
+      status: 'BENS_ATIVOS',
+      bensAtivos: {
+        dataEntradaItem: new Date().toISOString(),
+        solicitante: item.detalhes?.recebedorNome || item.bensAtivos?.solicitante || '',
+        origem: item.detalhes?.localDestinoNome || item.bensAtivos?.origem || '',
+        alocadoEm: item.detalhes?.localDestinoNome || '',
+        vinculo: item.detalhes?.vinculoDestino || item.bensAtivos?.vinculo || '',
+        condicao: 'Boa'
+      },
+      // Wipe qualquer rastro de transferência antiga
+      detalhes: undefined
     };
 
     setTimeout(() => {
@@ -376,12 +374,10 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
   const handleCloseScannedItem = useCallback(() => setScannedItem(null), []);
   const handleEditarFromScan = useCallback((item: EquipamentoEstoque) => {
     handleOpenFormModal(item);
-    setScannedItem(null);
   }, [handleOpenFormModal]);
   const handleMovimentarFromScan = useCallback((item: EquipamentoEstoque) => {
     setMovimentacaoPreItem(item);
     setIsMovimentacaoModalOpen(true);
-    setScannedItem(null);
   }, []);
   const handleDescartarFromScan = useCallback(() => {
     alert('Funcionalidade de Descarte em desenvolvimento.');
@@ -393,169 +389,204 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
   const handleCloseCameraScanner = useCallback(() => setIsCameraScannerOpen(false), []);
   const handleClosePrintingModal = useCallback(() => setIsPrintingModalOpen(false), []);
 
+  const isAnyModalOpen =
+    grupoSelecionadoId !== null ||
+    isFormModalOpen ||
+    isLocaisModalOpen ||
+    isTiposModalOpen ||
+    isMarcasModalOpen ||
+    isModelosModalOpen ||
+    isAgenciasModalOpen ||
+    isVinculosModalOpen ||
+    isOrigensModalOpen ||
+    isMovimentacaoModalOpen ||
+    fluxoConfig.isOpen ||
+    isMovimentadosModalOpen ||
+    scannedItem !== null ||
+    isPrintingModalOpen ||
+    isCameraScannerOpen;
+
+  // LÓGICA ANTI-LAG: Variáveis definitivas para garantir que APENAS UM modal deslizante renderize por vez.
+  // A câmera é o nível máximo (cobre tudo).
+  const isCameraOpen = isCameraScannerOpen;
+
+  // Nível 3: Modais de formulário e fluxo (abrem por cima das fichas)
+  const isLevel3Open = isFormModalOpen || isMovimentacaoModalOpen || fluxoConfig.isOpen || isCameraOpen;
+
+  // Nível 2: Ficha do Item (EstoqueItemViewModal). Pode abrir os de Nível 3.
+  const isLevel2Open = scannedItem !== null || isLevel3Open;
+
+  // Nível 1: Modais base (DetailPanel, Movimentados, Printing). Escondem se Nível 2 ou Nível 3 abrirem.
+  const hideBaseModals = isLevel2Open;
+
   return (
-    <div className="h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col">
-      {/* Smart Header Section */}
-      <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
+    <div className="h-full overflow-hidden relative flex flex-col bg-transparent">
+      {/* Container da Página que será oculto (display: none) quando QUALQUER modal abrir para eliminar lag */}
+      <div className={`${isAnyModalOpen ? 'hidden' : 'h-full overflow-y-auto pr-0 md:pr-4 relative flex flex-col'}`}>
+        {/* Smart Header Section */}
+        <div className={`p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 rounded-3xl border shadow-xl flex flex-col gap-4 sm:gap-6 bg-cover bg-center ${isDark ? 'bg-slate-900/80 border-cyan-500/20' : 'bg-white border-cyan-500/10'}`} style={{ backgroundImage: isDark ? 'linear-gradient(to right, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' : 'linear-gradient(to right, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.93)), url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80")' }}>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10">
-          <div>
-            <h2 className={`text-2xl sm:text-4xl font-extrabold flex items-center gap-3 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl shadow-lg shadow-cyan-500/30">
-                <Package className="text-white" size={24} />
-              </div>
-              Controle de Bens e Ativos
-            </h2>
-            <p className={`mt-1 sm:mt-2 text-base sm:text-lg font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Gerenciamento dinâmico avançado do ciclo de vida dos ativos.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-2 gap-y-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-            <button
-              onClick={() => setIsCameraScannerOpen(true)}
-              className="sm:hidden order-3 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
-              title="Escanear Código por Câmera"
-            >
-              <ScanLine className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
-              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Escanear</span>
-            </button>
-            <button
-              onClick={() => setIsPrintingModalOpen(true)}
-              className="order-4 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
-              title="Gerar/Imprimir Etiquetas em Lote"
-            >
-              <Printer className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
-              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Etiquetas</span>
-            </button>
-            <button
-              onClick={() => setIsMovimentacaoModalOpen(true)}
-              className="order-1 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 sm:hover:from-purple-400 sm:hover:to-indigo-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
-            >
-              <Truck className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:translate-x-0.5 sm:group-hover:-translate-y-0.5 transition-transform shrink-0" />
-              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Movimentação</span>
-            </button>
-            <button
-              onClick={() => handleOpenFormModal()}
-              className="order-2 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 sm:hover:from-cyan-400 sm:hover:to-blue-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
-            >
-              <Package className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:rotate-12 transition-transform shrink-0" />
-              <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Nova Entrada</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Estatísticas High-End */}
-        <div className="z-10 mt-2">
-          <EstoqueStats estoque={estoque} theme={theme} onMovimentadosClick={() => setIsMovimentadosModalOpen(true)} onManutencaoClick={onNavigateToManutencao} />
-        </div>
-
-        {/* Global Search & Filters integrated in header */}
-        <div className="z-10 w-full flex flex-col lg:flex-row gap-3">
-          <div className="flex-1 min-w-0">
-            <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl transition-colors h-[58px] ${isDark
-              ? 'bg-slate-900 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
-              : 'bg-white border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
-              }`}>
-              <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
-              <input
-                type="text"
-                placeholder="Pesquisar no inventário..."
-                value={buscaGeral}
-                onChange={e => setBuscaGeral(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-lg placeholder-opacity-50"
-              />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10">
+            <div>
+              <h2 className={`text-2xl sm:text-4xl font-extrabold flex items-center gap-3 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl shadow-lg shadow-cyan-500/30">
+                  <Package className="text-white" size={24} />
+                </div>
+                Controle de Bens e Ativos
+              </h2>
+              <p className={`mt-1 sm:mt-2 text-base sm:text-lg font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Gerenciamento dinâmico avançado do ciclo de vida dos ativos.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-2 gap-y-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+              <button
+                onClick={() => setIsCameraScannerOpen(true)}
+                className="sm:hidden order-3 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
+                title="Escanear Código por Câmera"
+              >
+                <ScanLine className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
+                <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Escanear</span>
+              </button>
+              <button
+                onClick={() => setIsPrintingModalOpen(true)}
+                className="order-4 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-slate-800 border border-slate-700 sm:hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
+                title="Gerar/Imprimir Etiquetas em Lote"
+              >
+                <Printer className="w-4 h-4 sm:w-4 sm:h-4 sm:group-hover:text-cyan-400 transition-colors shrink-0" />
+                <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Etiquetas</span>
+              </button>
+              <button
+                onClick={() => setIsMovimentacaoModalOpen(true)}
+                className="order-1 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 sm:hover:from-purple-400 sm:hover:to-indigo-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
+              >
+                <Truck className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:translate-x-0.5 sm:group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Movimentação</span>
+              </button>
+              <button
+                onClick={() => handleOpenFormModal()}
+                className="order-2 sm:order-none group px-2 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 sm:hover:from-cyan-400 sm:hover:to-blue-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl font-bold transition-all shadow-sm sm:hover:shadow-md sm:hover:-translate-y-0.5 active:scale-95"
+              >
+                <Package className="w-4 h-4 sm:w-4 sm:h-4 drop-shadow-sm sm:group-hover:rotate-12 transition-transform shrink-0" />
+                <span className="tracking-wide text-[13px] sm:text-sm drop-shadow-sm truncate">Nova Entrada</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <AnimatePresence>
-              <motion.div
-                key="wrapper-tipo"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="h-[58px]"
-              >
-                <select
-                  value={filtroTipo}
-                  onChange={e => { setFiltroTipo(e.target.value); setFiltroMarca(''); setFiltroModelo(''); }}
-                  className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white hover:border-cyan-500/50' : 'bg-white border-slate-300 text-slate-800 hover:border-cyan-500/50'}`}
-                >
-                  <option value="">Todos os Tipos</option>
-                  {opcoesTipo.map(([t, qtd]) => <option key={t} value={t}>{t} ({qtd})</option>)}
-                </select>
-              </motion.div>
-
-              {filtroTipo && (
-                <motion.div
-                  key="wrapper-marca"
-                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                  className="h-[58px]"
-                >
-                  <select
-                    value={filtroMarca}
-                    onChange={e => { setFiltroMarca(e.target.value); setFiltroModelo(''); }}
-                    className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
-                  >
-                    <option value="">Todas as Marcas</option>
-                    {opcoesMarca.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
-                  </select>
-                </motion.div>
-              )}
-
-              {filtroMarca && (
-                <motion.div
-                  key="wrapper-modelo"
-                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                  className="h-[58px]"
-                >
-                  <select
-                    value={filtroModelo}
-                    onChange={e => setFiltroModelo(e.target.value)}
-                    className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
-                  >
-                    <option value="">Todos os Modelos</option>
-                    {opcoesModelo.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
-                  </select>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* Estatísticas High-End */}
+          <div className="z-10 mt-2">
+            <EstoqueStats estoque={estoque} theme={theme} onMovimentadosClick={() => setIsMovimentadosModalOpen(true)} onManutencaoClick={onNavigateToManutencao} />
           </div>
+
+          {/* Global Search & Filters integrated in header */}
+          <div className="z-10 w-full flex flex-col lg:flex-row gap-3">
+            <div className="flex-1 min-w-0">
+              <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl transition-colors h-[58px] ${isDark
+                ? 'bg-slate-900 border-cyan-500/30 text-white focus-within:border-cyan-400 focus-within:shadow-cyan-500/20'
+                : 'bg-white border-slate-300 text-slate-800 focus-within:border-cyan-500 focus-within:shadow-cyan-500/10'
+                }`}>
+                <Search size={22} className={isDark ? 'text-cyan-400' : 'text-cyan-600'} />
+                <input
+                  type="text"
+                  placeholder="Pesquisar no inventário..."
+                  value={buscaGeral}
+                  onChange={e => setBuscaGeral(e.target.value)}
+                  className="bg-transparent border-none outline-none w-full text-lg placeholder-opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <AnimatePresence>
+                <motion.div
+                  key="wrapper-tipo"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="h-[58px]"
+                >
+                  <select
+                    value={filtroTipo}
+                    onChange={e => { setFiltroTipo(e.target.value); setFiltroMarca(''); setFiltroModelo(''); }}
+                    className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-white hover:border-cyan-500/50' : 'bg-white border-slate-300 text-slate-800 hover:border-cyan-500/50'}`}
+                  >
+                    <option value="">Todos os Tipos</option>
+                    {opcoesTipo.map(([t, qtd]) => <option key={t} value={t}>{t} ({qtd})</option>)}
+                  </select>
+                </motion.div>
+
+                {filtroTipo && (
+                  <motion.div
+                    key="wrapper-marca"
+                    initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                    className="h-[58px]"
+                  >
+                    <select
+                      value={filtroMarca}
+                      onChange={e => { setFiltroMarca(e.target.value); setFiltroModelo(''); }}
+                      className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                    >
+                      <option value="">Todas as Marcas</option>
+                      {opcoesMarca.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
+                    </select>
+                  </motion.div>
+                )}
+
+                {filtroMarca && (
+                  <motion.div
+                    key="wrapper-modelo"
+                    initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                    className="h-[58px]"
+                  >
+                    <select
+                      value={filtroModelo}
+                      onChange={e => setFiltroModelo(e.target.value)}
+                      className={`w-full px-4 py-3.5 rounded-2xl border font-medium transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500/50 h-full ${isDark ? 'bg-slate-900 border-cyan-500/30 text-cyan-200 hover:border-cyan-500/50' : 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:border-cyan-500/50'}`}
+                    >
+                      <option value="">Todos os Modelos</option>
+                      {opcoesModelo.map(([m, qtd]) => <option key={m} value={m}>{m} ({qtd})</option>)}
+                    </select>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
         </div>
+
+        {erro && (
+          <div className="bg-red-500/10 text-red-500 p-4 rounded-xl border border-red-500/20 mb-6 font-medium">
+            {erro}
+          </div>
+        )}
+
+        {carregando && estoqueAtivo.length === 0 ? (
+          <div className={`p-16 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
+            <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-cyan-500/50" />
+            <p className="text-xl font-semibold tracking-wide animate-pulse">Sincronizando banco de dados...</p>
+          </div>
+        ) : (
+          <div className="flex-1 pb-10">
+            <EstoqueGrid
+              estoque={estoqueFiltradoCascata}
+              busca={deferredBuscaGeral}
+              theme={theme}
+              onSelectGroup={handleSelectGroup}
+            />
+          </div>
+        )}
 
       </div>
-
-      {erro && (
-        <div className="bg-red-500/10 text-red-500 p-4 rounded-xl border border-red-500/20 mb-6 font-medium">
-          {erro}
-        </div>
-      )}
-
-      {carregando && estoqueAtivo.length === 0 ? (
-        <div className={`p-16 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
-          <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-6 shadow-cyan-500/50" />
-          <p className="text-xl font-semibold tracking-wide animate-pulse">Sincronizando banco de dados...</p>
-        </div>
-      ) : (
-        <div className="flex-1 pb-10">
-          <EstoqueGrid
-            estoque={estoqueFiltradoCascata}
-            busca={deferredBuscaGeral}
-            theme={theme}
-            onSelectGroup={handleSelectGroup}
-          />
-        </div>
-      )}
 
       {/* Paneis / Drawers (Antigos Modais reformulados) */}
 
       <EstoqueDetailPanel
         grupo={grupoSelecionado}
         isOpen={grupoSelecionadoId !== null}
+        hidden={hideBaseModals}
         onClose={handleCloseDetailPanel}
         theme={theme}
         onAdicionarUnidade={handleAdicionarUnidadeFromPanel}
@@ -569,6 +600,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoqueFormModal
         isOpen={isFormModalOpen}
+        hidden={isCameraOpen}
         onClose={handleCloseFormModal}
         onSalvar={handleSalvarEquipamento}
         equipamentoEditando={equipamentoEditando}
@@ -629,6 +661,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoqueMovimentacaoModal
         isOpen={isMovimentacaoModalOpen}
+        hidden={isCameraOpen}
         onClose={handleCloseMovimentacaoModal}
         estoqueAtivo={estoqueAtivo}
         theme={theme}
@@ -641,6 +674,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoqueFluxoModal
         isOpen={fluxoConfig.isOpen}
+        hidden={isCameraOpen}
         onClose={handleCloseFluxoModal}
         item={fluxoConfig.item}
         modo={fluxoConfig.modo}
@@ -652,6 +686,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoqueMovimentadosModal
         isOpen={isMovimentadosModalOpen}
+        hidden={hideBaseModals}
         onClose={handleCloseMovimentadosModal}
         estoque={estoque}
         theme={theme}
@@ -661,6 +696,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
       {/* Global Barcode Scanner View Modal */}
       <EstoqueItemViewModal
         isOpen={scannedItem !== null}
+        hidden={isLevel3Open}
         onClose={handleCloseScannedItem}
         item={scannedItem}
         theme={theme}
@@ -680,6 +716,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
 
       <EstoquePrintingModal
         isOpen={isPrintingModalOpen}
+        hidden={hideBaseModals}
         onClose={handleClosePrintingModal}
         estoque={estoqueAtivo}
         theme={theme}

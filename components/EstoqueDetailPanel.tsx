@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, ArrowRightLeft, PackageX, Search, Image as ImageIcon } from 'lucide-react';
 import { EquipamentoEstoque, StatusEquipamento } from '../types';
 import EstoqueSidePanel from './EstoqueSidePanel';
@@ -17,6 +17,7 @@ interface EstoqueDetailPanelProps {
   onDeletar: (id: string) => void;
   highlightItemId?: string | null;
   onClearHighlight?: () => void;
+  hidden?: boolean;
 }
 
 const getStatusColor = (status: StatusEquipamento) => {
@@ -35,13 +36,27 @@ const getStatusColor = (status: StatusEquipamento) => {
 const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
   grupo, isOpen, onClose, theme = 'dark',
   onAdicionarUnidade, onEditar, onTransferir, onDescartar, onDeletar,
-  highlightItemId, onClearHighlight
+  highlightItemId, onClearHighlight, hidden = false
 }) => {
   const isDark = theme === 'dark';
   const [busca, setBusca] = useState('');
   const [hoverImgId, setHoverImgId] = useState<string | null>(null);
   const [viewingItem, setViewingItem] = useState<EquipamentoEstoque | null>(null);
   const [clearedDetailIds, setClearedDetailIds] = useState<Set<string>>(new Set());
+
+  // Mantém a ficha atualizada se o item for editado, ou fecha se ele for removido/movido do grupo
+  useEffect(() => {
+    if (viewingItem && grupo) {
+      const updatedItem = grupo.itens.find(i => i.id === viewingItem.id);
+      if (updatedItem) {
+        if (JSON.stringify(updatedItem) !== JSON.stringify(viewingItem)) {
+          setViewingItem(updatedItem);
+        }
+      } else {
+        setViewingItem(null);
+      }
+    }
+  }, [grupo, viewingItem]);
 
   if (!grupo) return null;
 
@@ -65,7 +80,8 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
   });
 
   return (
-    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} title={titleNode} theme={theme} width="md:w-[calc(100vw-16rem)] max-w-none">
+    <>
+    <EstoqueSidePanel isOpen={isOpen} onClose={onClose} title={titleNode} theme={theme} width="md:w-[calc(100vw-16rem)] max-w-none" hidden={hidden || viewingItem !== null}>
       <div className="p-6">
         {/* Detail Header & Actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -97,161 +113,162 @@ const EstoqueDetailPanel: React.FC<EstoqueDetailPanelProps> = ({
             filtroObj.map(item => {
               const isHighlighted = item.id === highlightItemId && !clearedDetailIds.has(item.id);
               return (
-              <div
-                key={item.id}
-                onClick={() => {
-                  setViewingItem(item);
-                  if (isHighlighted) {
-                    setClearedDetailIds(prev => new Set(prev).add(item.id));
-                    onClearHighlight?.();
-                  }
-                }}
-                className={`relative p-3 sm:p-4 rounded-xl cursor-pointer border transition-[border-color,box-shadow] duration-150 flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group overflow-hidden ${
-                  isHighlighted
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setViewingItem(item);
+                    if (isHighlighted) {
+                      setClearedDetailIds(prev => new Set(prev).add(item.id));
+                      onClearHighlight?.();
+                    }
+                  }}
+                  className={`relative p-3 sm:p-4 rounded-xl cursor-pointer border transition-[border-color,box-shadow] duration-150 flex flex-col xl:flex-row gap-3 sm:gap-4 items-start xl:items-center justify-between group overflow-hidden ${isHighlighted
                     ? (isDark ? 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-700/50' : 'bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-slate-200')
                     : (isDark ? 'bg-slate-800/50 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400')
-                }`}
-              >
-                {isHighlighted && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] z-10 animate-pulse"></div>
-                )}
-                <div className="flex flex-row items-start gap-4 w-full xl:w-auto flex-1 min-w-0">
-                  {/* Thumbnail */}
-                  <div className="flex-shrink-0 mt-0.5 relative"
-                    onMouseEnter={(e) => { if (item.imagemUrl) { setHoverImgId(item.id); } }}
-                    onMouseLeave={() => setHoverImgId(null)}
-                    onMouseMove={(e) => {
-                      if (item.imagemUrl) {
-                        const previewEl = document.getElementById(`preview-${item.id}`);
-                        if (previewEl) {
-                          previewEl.style.left = `${e.clientX + 20}px`;
-                          previewEl.style.top = `${Math.min(e.clientY - 100, window.innerHeight - 320)}px`;
+                    }`}
+                >
+                  {isHighlighted && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] z-10 animate-pulse"></div>
+                  )}
+                  <div className="flex flex-row items-start gap-4 w-full xl:w-auto flex-1 min-w-0">
+                    {/* Thumbnail */}
+                    <div className="flex-shrink-0 mt-0.5 relative"
+                      onMouseEnter={(e) => { if (item.imagemUrl) { setHoverImgId(item.id); } }}
+                      onMouseLeave={() => setHoverImgId(null)}
+                      onMouseMove={(e) => {
+                        if (item.imagemUrl) {
+                          const previewEl = document.getElementById(`preview-${item.id}`);
+                          if (previewEl) {
+                            previewEl.style.left = `${e.clientX + 20}px`;
+                            previewEl.style.top = `${Math.min(e.clientY - 100, window.innerHeight - 320)}px`;
+                          }
                         }
-                      }
-                    }}
-                  >
-                    {item.imagemUrl ? (
-                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer ${item.isImagemPrincipal
-                        ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
-                        : (isDark ? 'border-slate-600' : 'border-slate-300')
-                        }`}>
-                        <img src={item.imagemUrl} alt="Foto" className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 border-dashed flex items-center justify-center ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
-                        }`}>
-                        <ImageIcon size={20} className="text-slate-500 opacity-40" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info Principal Compacta */}
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    {/* Top Row: IDs e Status */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {item.patrimonio && item.patrimonio !== 'Sem informação' ? (
-                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>PT: {item.patrimonio}</span>
-                      ) : item.numeroSerie && item.numeroSerie !== 'Sem informação' ? (
-                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>NS: {item.numeroSerie}</span>
-                      ) : item.numeroProcesso ? (
-                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'}`}>PR: {item.numeroProcesso}</span>
+                      }}
+                    >
+                      {item.imagemUrl ? (
+                        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 overflow-hidden cursor-pointer ${item.isImagemPrincipal
+                          ? 'border-cyan-500 shadow-md shadow-cyan-500/30'
+                          : (isDark ? 'border-slate-600' : 'border-slate-300')
+                          }`}>
+                          <img src={item.imagemUrl} alt="Foto" className="w-full h-full object-cover" />
+                        </div>
                       ) : (
-                        <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500'}`}>S/ ID</span>
+                        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-2 border-dashed flex items-center justify-center ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-300 bg-slate-50'
+                          }`}>
+                          <ImageIcon size={20} className="text-slate-500 opacity-40" />
+                        </div>
                       )}
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border ml-auto sm:ml-0 ${getStatusColor(item.status)}`}>
-                        {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status === 'BENS_ATIVOS' ? 'BENS E ATIVOS' : item.status.replace('_', ' ')}
-                      </span>
                     </div>
 
-                    {/* Localização */}
-                    <div className={`text-xs sm:text-sm font-semibold truncate flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] flex-shrink-0"></div>
-                      <span className="truncate">{item.bensAtivos?.alocadoEm || item.bensAtivos?.origem || 'Local não definido'}</span>
-                    </div>
-
-                    {/* Meta Info */}
-                    <div className={`grid grid-cols-2 lg:grid-cols-4 gap-y-2 gap-x-4 text-[10px] sm:text-xs mt-1 w-full ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      <div className="truncate">
-                        <span className="opacity-70">Utilizado por:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'Não informado'}</span>
-                      </div>
-                      <div className="truncate">
-                        <span className="opacity-70">Vínculo:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.vinculo || 'Não informado'}</span>
-                      </div>
-                      <div className="truncate">
-                        <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
-                      </div>
-                      <div className="truncate">
-                        <span className="opacity-70">Entrada:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {item.bensAtivos?.dataEntradaItem
-                            ? (item.bensAtivos.dataEntradaItem.includes('/')
-                              ? item.bensAtivos.dataEntradaItem
-                              : item.bensAtivos.dataEntradaItem.substring(0, 10).split('-').reverse().join('/'))
-                            : 'Sem data'}
+                    {/* Info Principal Compacta */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                      {/* Top Row: IDs e Status */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {item.patrimonio && item.patrimonio !== 'Sem informação' ? (
+                          <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>PT: {item.patrimonio}</span>
+                        ) : item.numeroSerie && item.numeroSerie !== 'Sem informação' ? (
+                          <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>NS: {item.numeroSerie}</span>
+                        ) : item.numeroProcesso ? (
+                          <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-mono font-bold ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'}`}>PR: {item.numeroProcesso}</span>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded text-[11px] sm:text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500'}`}>S/ ID</span>
+                        )}
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border ml-auto sm:ml-0 ${getStatusColor(item.status)}`}>
+                          {item.status === 'TRANSFERIDO' ? 'MOVIDO' : item.status === 'BENS_ATIVOS' ? 'BENS E ATIVOS' : item.status.replace('_', ' ')}
                         </span>
                       </div>
+
+                      {/* Localização */}
+                      <div className={`text-xs sm:text-sm font-semibold truncate flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] flex-shrink-0"></div>
+                        <span className="truncate">{item.bensAtivos?.alocadoEm || item.bensAtivos?.origem || 'Local não definido'}</span>
+                      </div>
+
+                      {/* Meta Info */}
+                      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-y-2 gap-x-4 text-[10px] sm:text-xs mt-1 w-full ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className="truncate">
+                          <span className="opacity-70">Utilizado por:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.solicitante || 'Não informado'}</span>
+                        </div>
+                        <div className="truncate">
+                          <span className="opacity-70">Vínculo:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.bensAtivos?.vinculo || 'Não informado'}</span>
+                        </div>
+                        <div className="truncate">
+                          <span className="opacity-70">Condição:</span> <span className="font-medium text-cyan-500">{item.bensAtivos?.condicao || '-'}</span>
+                        </div>
+                        <div className="truncate">
+                          <span className="opacity-70">Entrada:</span> <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {item.bensAtivos?.dataEntradaItem
+                              ? (item.bensAtivos.dataEntradaItem.includes('/')
+                                ? item.bensAtivos.dataEntradaItem
+                                : item.bensAtivos.dataEntradaItem.substring(0, 10).split('-').reverse().join('/'))
+                              : 'Sem data'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Premium Actions Inline */}
-                <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap p-1.5 rounded-xl border shadow-sm mt-3 xl:mt-0 ${isDark ? 'bg-slate-800 border-slate-700/80' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => onEditar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-slate-700/80 text-slate-300 hover:text-white' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'}`} title="Editar">
-                    <Edit size={18} strokeWidth={2.5} />
-                  </button>
-                  {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
-                    <>
-                      <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
-                      <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-purple-500/20 text-purple-400 hover:text-purple-300' : 'hover:bg-purple-100 text-purple-600 hover:text-purple-700'}`} title="Transferir Local">
-                        <ArrowRightLeft size={18} strokeWidth={2.5} />
-                      </button>
-                      <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-rose-500/20 text-rose-400 hover:text-rose-300' : 'hover:bg-rose-100 text-rose-600 hover:text-rose-700'}`} title="Descarte/Laudo">
-                        <PackageX size={18} strokeWidth={2.5} />
-                      </button>
-                    </>
-                  )}
-                  {/* Delete Definitivo */}
-                  <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
-                  <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 group ${isDark ? 'hover:bg-red-500/20 text-red-500 hover:text-red-400' : 'hover:bg-red-100 text-red-600 hover:text-red-700'}`} title="Apagar Registro Físico (Perigoso)">
-                    <Trash2 size={18} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-                  </button>
-                </div>
-
-                {/* Hover Preview Tooltip Fixed */}
-                {hoverImgId === item.id && item.imagemUrl && (
-                  <div
-                    id={`preview-${item.id}`}
-                    className="fixed z-[9999] p-1.5 rounded-2xl border shadow-2xl pointer-events-none"
-                    style={{
-                      background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.97)',
-                      borderColor: isDark ? 'rgba(100,116,139,0.4)' : 'rgba(203,213,225,0.6)',
-                      top: 0, left: 0
-                    }}
-                  >
-                    <img src={item.imagemUrl} alt="Preview" className="max-w-[480px] max-h-[480px] w-auto h-auto object-contain rounded-xl" />
-                    {item.isImagemPrincipal && (
-                      <div className="absolute top-3 right-3 px-2 py-0.5 bg-cyan-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-lg">
-                        Capa
-                      </div>
+                  {/* Premium Actions Inline */}
+                  <div className={`w-full xl:w-auto flex-shrink-0 flex items-center md:flex-nowrap p-1.5 rounded-xl border shadow-sm mt-3 xl:mt-0 ${isDark ? 'bg-slate-800 border-slate-700/80' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => onEditar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-slate-700/80 text-slate-300 hover:text-white' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'}`} title="Editar">
+                      <Edit size={18} strokeWidth={2.5} />
+                    </button>
+                    {item.status !== 'DESCARTADO' && item.status !== 'TRANSFERIDO' && (
+                      <>
+                        <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                        <button onClick={() => onTransferir(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-purple-500/20 text-purple-400 hover:text-purple-300' : 'hover:bg-purple-100 text-purple-600 hover:text-purple-700'}`} title="Transferir Local">
+                          <ArrowRightLeft size={18} strokeWidth={2.5} />
+                        </button>
+                        <button onClick={() => onDescartar(item)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 ${isDark ? 'hover:bg-rose-500/20 text-rose-400 hover:text-rose-300' : 'hover:bg-rose-100 text-rose-600 hover:text-rose-700'}`} title="Descarte/Laudo">
+                          <PackageX size={18} strokeWidth={2.5} />
+                        </button>
+                      </>
                     )}
+                    {/* Delete Definitivo */}
+                    <div className={`w-px h-7 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                    <button onClick={() => onDeletar(item.id)} className={`flex-1 min-w-[44px] flex justify-center py-2 px-3 rounded-lg transition-colors active:scale-95 group ${isDark ? 'hover:bg-red-500/20 text-red-500 hover:text-red-400' : 'hover:bg-red-100 text-red-600 hover:text-red-700'}`} title="Apagar Registro Físico (Perigoso)">
+                      <Trash2 size={18} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                    </button>
                   </div>
-                )}
-              </div>
-             );
+
+                  {/* Hover Preview Tooltip Fixed */}
+                  {hoverImgId === item.id && item.imagemUrl && (
+                    <div
+                      id={`preview-${item.id}`}
+                      className="fixed z-[9999] p-1.5 rounded-2xl border shadow-2xl pointer-events-none"
+                      style={{
+                        background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.97)',
+                        borderColor: isDark ? 'rgba(100,116,139,0.4)' : 'rgba(203,213,225,0.6)',
+                        top: 0, left: 0
+                      }}
+                    >
+                      <img src={item.imagemUrl} alt="Preview" className="max-w-[480px] max-h-[480px] w-auto h-auto object-contain rounded-xl" />
+                      {item.isImagemPrincipal && (
+                        <div className="absolute top-3 right-3 px-2 py-0.5 bg-cyan-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-lg">
+                          Capa
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
             })
           )}
         </div>
       </div>
-      <EstoqueItemViewModal
-        isOpen={viewingItem !== null}
-        onClose={() => setViewingItem(null)}
-        item={viewingItem}
-        theme={theme}
-        onEditar={(item) => { onEditar(item); setViewingItem(null); }}
-        onMovimentar={(item) => { onTransferir(item); setViewingItem(null); }}
-        onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
-        onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
-      />
     </EstoqueSidePanel>
+    <EstoqueItemViewModal
+      isOpen={viewingItem !== null}
+      hidden={hidden}
+      onClose={() => setViewingItem(null)}
+      item={viewingItem}
+      theme={theme}
+      onEditar={(item) => { onEditar(item); }}
+      onMovimentar={(item) => { onTransferir(item); }}
+      onDescartar={() => { alert('Funcionalidade de Descarte em desenvolvimento.'); }}
+      onManutencao={() => { alert('Funcionalidade de Manutenção em desenvolvimento.'); }}
+    />
+    </>
   );
 };
 
