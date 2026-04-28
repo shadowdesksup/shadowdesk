@@ -178,12 +178,12 @@ const EstoqueItemViewModal: React.FC<EstoqueItemViewModalProps> = ({
                   <div className="text-[9px] font-bold uppercase tracking-widest mb-0.5 w-full text-center text-slate-800 print:mb-1">SD-ID INTERNO</div>
                   <Barcode
                     value={`SD-${item.id.substring(0, 8).toUpperCase()}`}
-                    height={28}
-                    width={1.2}
+                    height={45}
+                    width={1.5}
                     fontSize={10}
-                    margin={0}
+                    margin={10}
                     displayValue={true}
-                    background="transparent"
+                    background="#ffffff"
                   />
                   <div className={`text-[7px] mt-0.5 truncate w-full px-1 text-center text-slate-500`}>
                     {item.marca} {item.modelo}

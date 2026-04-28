@@ -295,12 +295,12 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
                       <div className="bg-white rounded p-0 w-full flex justify-center text-black flex-1 items-center overflow-hidden">
                         <Barcode
                           value={`SD-${item.id.substring(0, 8).toUpperCase()}`}
-                          height={20}
-                          width={1.4}
-                          fontSize={12}
-                          margin={0}
+                          height={40}
+                          width={1.5}
+                          fontSize={10}
+                          margin={5}
                           displayValue={true}
-                          background="transparent"
+                          background="#ffffff"
                         />
                       </div>
                       <div className="w-full flex flex-col justify-end mt-0.5">
