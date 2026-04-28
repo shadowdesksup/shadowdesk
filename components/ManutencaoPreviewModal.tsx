@@ -29,7 +29,7 @@ export const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: 
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: 'Inter', Arial, sans-serif; color: #333; padding: 30px; background: #fff; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-          .header img { max-height: 55px; }
+          .header img { height: 100px; width: auto; object-fit: contain; flex-shrink: 0; }
           .title { text-align: right; }
           h1 { margin: 0; font-size: 20px; color: #000; letter-spacing: -0.5px; }
           .subtitle { margin: 5px 0 0; font-size: 12px; color: #555; text-transform: uppercase; font-weight: 600; }
@@ -59,7 +59,7 @@ export const gerarHtmlFichaManutencao = (equip: Partial<EquipamentoEstoque>, m: 
         <div class="ficha-container">
           <div class="etiqueta-box">
           <div class="header">
-            <img src="/header_unesp_new.png" alt="UNESP" />
+            <img src="/unesp-50maisSD4.png" alt="UNESP" />
           <div class="title">
             <h1>FICHA DE MANUTENÇÃO</h1>
             <p class="subtitle">Controle de Ativos</p>
@@ -126,7 +126,7 @@ export const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroMa
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: 'Inter', Arial, sans-serif; color: #333; padding: 30px; background: #fff; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-          .header img { max-height: 55px; }
+          .header img { height: 100px; width: auto; object-fit: contain; flex-shrink: 0; }
           .title { text-align: right; }
           h1 { margin: 0; font-size: 20px; color: #000; letter-spacing: -0.5px; }
           .subtitle { margin: 5px 0 0; font-size: 12px; color: #555; text-transform: uppercase; font-weight: 600; }
@@ -144,7 +144,7 @@ export const gerarHtmlTermo = (equip: Partial<EquipamentoEstoque>, m: RegistroMa
       </head>
       <body>
         <div class="header">
-          <img src="/header_unesp_new.png" alt="UNESP" />
+          <img src="/unesp-50maisSD4.png" alt="UNESP" />
           <div class="title">
             <h1>ORDEM DE SERVIÇO</h1>
             <p class="subtitle">Avaliação e Manutenção Técnica</p>
@@ -241,11 +241,11 @@ export const imprimirHtml = (html: string) => {
     doc.open();
     doc.write(html);
     doc.close();
-    
+
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      
+
       // Limpeza do iframe após a impressão
       setTimeout(() => {
         if (document.body.contains(iframe)) {
@@ -318,21 +318,19 @@ const ManutencaoPreviewModal: React.FC<ManutencaoPreviewModalProps> = ({
         <div className={`flex border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
           <button
             onClick={() => setAbaAtiva('ficha')}
-            className={`flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-              abaAtiva === 'ficha'
-                ? (isDark ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/5' : 'text-amber-600 border-b-2 border-amber-500 bg-amber-50')
-                : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')
-            }`}
+            className={`flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${abaAtiva === 'ficha'
+              ? (isDark ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/5' : 'text-amber-600 border-b-2 border-amber-500 bg-amber-50')
+              : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')
+              }`}
           >
             <FileText size={16} /> Ficha de Manutenção
           </button>
           <button
             onClick={() => setAbaAtiva('termo')}
-            className={`flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-              abaAtiva === 'termo'
-                ? (isDark ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5' : 'text-cyan-600 border-b-2 border-cyan-500 bg-cyan-50')
-                : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')
-            }`}
+            className={`flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${abaAtiva === 'termo'
+              ? (isDark ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5' : 'text-cyan-600 border-b-2 border-cyan-500 bg-cyan-50')
+              : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')
+              }`}
           >
             <ClipboardCheck size={16} /> Ordem de Serviço
           </button>

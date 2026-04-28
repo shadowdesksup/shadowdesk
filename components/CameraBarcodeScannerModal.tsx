@@ -215,7 +215,7 @@ const CameraBarcodeScannerModal: React.FC<CameraBarcodeScannerModalProps> = ({
             </div>
 
             {/* Viewfinder */}
-            <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: '4/3' }}>
+            <div className="relative w-full bg-black overflow-hidden aspect-square">
               {error ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
                   <AlertCircle size={48} className="text-rose-500 opacity-80" />

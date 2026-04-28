@@ -288,33 +288,32 @@ const EstoquePrintingModal: React.FC<EstoquePrintingModalProps> = ({
                   {filaImpressao.map(item => (
                     <div
                       key={item.id}
-                      className={`flex flex-col items-center justify-center border border-dashed rounded p-2 text-center break-inside-avoid print:border-solid ${isDark ? 'border-slate-600 bg-slate-700/50' : 'border-slate-300 bg-white'
+                      className={`flex flex-col items-center justify-between border border-dashed rounded p-1 text-center break-inside-avoid print:border-solid ${isDark ? 'border-slate-600 bg-slate-700/50' : 'border-slate-300 bg-white'
                         }`}
-                      style={{ height: '35mm' }}
+                      style={{ height: '26mm', overflow: 'hidden' }}
                     >
-                      <div className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-                        SD-ID INTERNO
-                      </div>
-                      <div className="bg-white rounded p-1 w-full flex justify-center text-black">
+                      <div className="bg-white rounded p-0 w-full flex justify-center text-black flex-1 items-center overflow-hidden">
                         <Barcode
                           value={`SD-${item.id.substring(0, 8).toUpperCase()}`}
                           height={20}
-                          width={1.2}
-                          fontSize={10}
+                          width={1.4}
+                          fontSize={12}
                           margin={0}
                           displayValue={true}
                           background="transparent"
                         />
                       </div>
-                      <div className={`text-[8px] font-bold mt-1 tracking-wider truncate w-full px-1 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-                        {item.patrimonio && item.patrimonio !== 'Sem informação'
-                          ? `PT: ${item.patrimonio}`
-                          : item.numeroSerie && item.numeroSerie !== 'Sem informação'
-                            ? `S/N: ${item.numeroSerie}`
-                            : 'S/ REGISTRO'}
-                      </div>
-                      <div className={`text-[7px] truncate w-full px-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {item.marca} {item.modelo}
+                      <div className="w-full flex flex-col justify-end mt-0.5">
+                        <div className={`text-[11px] font-extrabold tracking-wider truncate w-full px-1 leading-none ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                          {item.patrimonio && item.patrimonio !== 'Sem informação'
+                            ? `PT: ${item.patrimonio}`
+                            : item.numeroSerie && item.numeroSerie !== 'Sem informação'
+                              ? `S/N: ${item.numeroSerie}`
+                              : 'S/ REGISTRO'}
+                        </div>
+                        <div className={`text-[9px] font-bold truncate w-full px-1 leading-none mt-[1px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {item.marca} {item.modelo}
+                        </div>
                       </div>
                     </div>
                   ))}

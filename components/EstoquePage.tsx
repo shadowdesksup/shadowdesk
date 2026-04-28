@@ -198,6 +198,21 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
         setGrupoSelecionadoId(`${dados.tipo}|${dados.marca}|${dados.modelo}`); // Abre o item na lista de ativos
         setHighlightItemId(equipamentoEditando.id);
       }
+
+      // GARANTIA: Se esta for a nova capa, removemos a flag dos outros itens do mesmo grupo
+      if (dados.isImagemPrincipal) {
+        const outrosParaAtualizar = estoque.filter(i => 
+          i.id !== equipamentoEditando.id &&
+          i.tipo === dados.tipo &&
+          i.marca === dados.marca &&
+          i.modelo === dados.modelo &&
+          i.isImagemPrincipal === true
+        );
+        for (const out of outrosParaAtualizar) {
+          await atualizarEquipamento(out.id, { isImagemPrincipal: false });
+        }
+      }
+
     } else {
       const novoItem: Omit<EquipamentoEstoque, 'id'> = {
         ...dados as Omit<EquipamentoEstoque, 'id' | 'historico' | 'dataEntrada' | 'usuarioCadastro' | 'usuarioCadastroId'>,
@@ -212,7 +227,22 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
         usuarioCadastroId: usuario?.uid,
       };
       const novoId = await criarEquipamento(novoItem);
+      
       if (novoId) {
+        // GARANTIA: Se o novo for a capa, removemos a flag dos outros
+        if (novoItem.isImagemPrincipal) {
+          const outrosParaAtualizar = estoque.filter(i => 
+            i.id !== novoId &&
+            i.tipo === novoItem.tipo &&
+            i.marca === novoItem.marca &&
+            i.modelo === novoItem.modelo &&
+            i.isImagemPrincipal === true
+          );
+          for (const out of outrosParaAtualizar) {
+            await atualizarEquipamento(out.id, { isImagemPrincipal: false });
+          }
+        }
+        
         setHighlightItemId(novoId);
         setGrupoSelecionadoId(`${novoItem.tipo}|${novoItem.marca}|${novoItem.modelo}`);
       }
