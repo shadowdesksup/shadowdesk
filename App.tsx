@@ -23,6 +23,7 @@ import ClimaPage from './components/ClimaPage';
 import ServiceDeskPage from './components/ServiceDeskPage';
 import EstoquePage from './components/EstoquePage';
 import ManutencoesPage from './components/ManutencoesPage';
+import { useEstoque } from './hooks/useEstoque';
 
 // Sistema de Lembretes
 import LembretesPage from './components/LembretesPage';
@@ -57,6 +58,8 @@ function App() {
     obterEstatisticas,
     carregando: registrosCarregando
   } = useRegistros(usuario?.uid);
+
+  const { estoque } = useEstoque();
 
   const {
     descritivos,
@@ -247,11 +250,54 @@ function App() {
   const renderizarConteudo = () => {
     switch (paginaAtual) {
       case 'dashboard':
-        const estatisticas = obterEstatisticas();
+        // Estatísticas do Estoque
+        const isHoje = (dataStr: string) => {
+          if (!dataStr) return false;
+          const d = new Date(dataStr);
+          const hoje = new Date();
+          return d.getDate() === hoje.getDate() && d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+        };
+
+        const isSemana = (dataStr: string) => {
+          if (!dataStr) return false;
+          const d = new Date(dataStr);
+          const hoje = new Date();
+          const diff = hoje.getTime() - d.getTime();
+          return diff <= 7 * 24 * 60 * 60 * 1000;
+        };
+
+        const isMes = (dataStr: string) => {
+          if (!dataStr) return false;
+          const d = new Date(dataStr);
+          const hoje = new Date();
+          return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+        };
+
+        const isDisponivel = (e: any) => e.status === 'BENS_ATIVOS' || e.status === 'DISPONIVEL';
+        const isManutencao = (e: any) => e.status === 'MANUTENCAO';
+        const isAtivo = (e: any) => e.status === 'BENS_ATIVOS' || e.status === 'DISPONIVEL' || e.status === 'AVALIACAO';
+        const isValid = (e: any) => e.status !== 'DESCARTADO' && e.status !== 'DESCARTE' && e.status !== 'TRANSFERIDO';
+
+        const ativos = estoque.filter(isAtivo);
+        const validos = estoque.filter(isValid);
+
+        const calcStats = (lista: any[], isTotal: boolean = false) => ({
+          total: lista.length,
+          pendentes: isTotal ? estoque.filter(isManutencao).length : lista.filter(isManutencao).length, // "Em Manutenção"
+          atendidos: isTotal ? estoque.filter(e => e.status === 'DESCARTADO' || e.status === 'DESCARTE').length : lista.filter(isDisponivel).length, 
+        });
+
+        const estatisticasEstoque = {
+          ...calcStats(ativos, true),
+          hoje: calcStats(validos.filter(e => isHoje(e.dataEntrada))),
+          semana: calcStats(validos.filter(e => isSemana(e.dataEntrada))),
+          mes: calcStats(validos.filter(e => isMes(e.dataEntrada)))
+        };
+
         return (
-          <div className="h-full flex flex-col gap-6 sm:gap-8 pr-0 sm:pr-8 overflow-y-auto pb-8">
+          <div className="h-full flex flex-col gap-6 sm:gap-8 pl-4 -ml-4 pr-0 sm:pr-8 overflow-y-auto pb-8">
             <Dashboard
-              estatisticas={estatisticas}
+              estatisticas={estatisticasEstoque}
               theme={theme}
               proximoLembrete={proximoLembrete}
               onLembreteClick={() => setPaginaAtual('lembretes')}
@@ -260,15 +306,7 @@ function App() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
               {/* Lembretes Agendados */}
-              <div className="lg:col-span-5 w-full flex flex-col gap-8">
-
-
-                {/* Weather Cards */}
-                <DashboardWeather
-                  theme={theme}
-                  onClick={() => setPaginaAtual('clima')}
-                />
-
+              <div className="lg:col-span-7 w-full flex flex-col gap-8">
                 <DashboardReminders
                   lembretes={lembretes.filter(l => l.titulo !== 'Encerramento de Chamados')}
                   theme={theme}
@@ -277,13 +315,16 @@ function App() {
                   onView={(lembrete) => setLembreteParaVisualizar(lembrete)}
                   deletingId={lembreteParaExcluir}
                 />
-
-                {/* ServiceDesk Tickets Ticker (Moved to Right Column) */}
-
               </div>
 
-              {/* ServiceDesk Tickets Ticker (Desabilitado Temporariamente - Workers offline) */}
-              <div className="lg:col-span-7 flex flex-col pb-8">
+              {/* Weather Cards & Empty Right Column */}
+              <div className="lg:col-span-5 flex flex-col gap-8 pb-8">
+                <DashboardWeather
+                  theme={theme}
+                  onClick={() => setPaginaAtual('clima')}
+                />
+                
+                {/* ServiceDesk Tickets Ticker (Desabilitado Temporariamente - Workers offline) */}
                 {/* <DashboardTicketsTicker
                   theme={theme}
                   userName={userNome}

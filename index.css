@@ -165,3 +165,17 @@ textarea,
 .transition {
   transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform !important;
 }
+
+/* ==========================================
+   UX FIXES
+   Make placeholders less visible and hide them on focus globally
+========================================== */
+input::placeholder,
+textarea::placeholder {
+  opacity: 0.4 !important;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: transparent !important;
+}

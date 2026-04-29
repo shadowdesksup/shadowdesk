@@ -465,7 +465,7 @@ const EstoquePage: React.FC<EstoquePageProps> = ({ theme = 'dark', onNavigateToM
                 Controle de Bens e Ativos
               </h2>
               <p className={`mt-1 sm:mt-2 text-base sm:text-lg font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Gerenciamento dinâmico avançado do ciclo de vida dos ativos.
+                Gerenciamento dinâmico do ciclo de vida dos ativos do suporte.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-2 gap-y-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">

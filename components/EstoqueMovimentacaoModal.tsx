@@ -409,6 +409,7 @@ const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
                             <div className={`absolute z-50 w-full mt-1 rounded-xl border shadow-2xl max-h-48 overflow-y-auto ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'} custom-scrollbar`}>
                               {locaisFilter.map((l, idx) => (
                                 <div key={l.id} onMouseDown={() => { setLocalDestinoNome(l.nome); setShowLocaisDropdown(false); }}
+                                  ref={el => { if (focusedLocalIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                   className={`px-4 py-3 cursor-pointer ${focusedLocalIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700')}`}>
                                   {l.nome}
                                 </div>
@@ -459,6 +460,7 @@ const EstoqueMovimentacaoModal: React.FC<EstoqueMovimentacaoModalProps> = ({
                             <div className={`absolute z-50 w-full mt-1 rounded-xl border shadow-2xl max-h-48 overflow-y-auto ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'} custom-scrollbar`}>
                               {vinculosFilter.map((v, idx) => (
                                 <div key={v.id} onMouseDown={() => { setVinculoDestinoNome(v.nome); setShowVinculosDropdown(false); }}
+                                  ref={el => { if (focusedVinculoIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                   className={`px-4 py-3 cursor-pointer ${focusedVinculoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700')}`}>
                                   {v.nome}
                                 </div>

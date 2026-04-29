@@ -148,7 +148,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
   const [manutencaoOrigem, setManutencaoOrigem] = useState('');
   const [manutencaoEmail, setManutencaoEmail] = useState('');
   const [manutencaoCelular, setManutencaoCelular] = useState('');
-  const [manutencaoCondicao, setManutencaoCondicao] = useState<'Boa' | 'Regular' | 'Ruim'>('Regular');
+  const [manutencaoCondicao, setManutencaoCondicao] = useState<'Boa' | 'Ruim'>('Boa');
   const [manutencaoDataInicio, setManutencaoDataInicio] = useState(new Date().toISOString().split('T')[0]);
   const [manutencaoProblema, setManutencaoProblema] = useState('');
   const [manutencaoTecnicoId, setManutencaoTecnicoId] = useState('');
@@ -283,7 +283,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         setBaVinculo(equipamentoEditando.bensAtivos.vinculo);
         setBaDataEntrada(equipamentoEditando.bensAtivos.dataEntradaItem?.split('T')[0] || new Date().toISOString().split('T')[0]);
         setBaOrigem(equipamentoEditando.bensAtivos.origem);
-        setBaAlocadoEm(equipamentoEditando.bensAtivos.alocadoEm || 'DTI - Sala 12 - Suporte');
+        setBaAlocadoEm(isRealocando ? 'DTI - Sala 12 - Suporte' : (equipamentoEditando.bensAtivos.alocadoEm || 'DTI - Sala 12 - Suporte'));
         setBaCondicao(equipamentoEditando.bensAtivos.condicao || 'Boa');
       } else {
         setBaSolicitante(''); setBaVinculo(''); setBaDataEntrada(new Date().toISOString().split('T')[0]); setBaOrigem(''); setBaAlocadoEm('DTI - Sala 12 - Suporte'); setBaCondicao('Boa');
@@ -295,7 +295,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         setManutencaoOrigem(equipamentoEditando.manutencaoAtual.origem || '');
         setManutencaoEmail(equipamentoEditando.manutencaoAtual.email || '');
         setManutencaoCelular(equipamentoEditando.manutencaoAtual.celular || '');
-        setManutencaoCondicao((equipamentoEditando.manutencaoAtual.condicaoBem as 'Boa' | 'Regular' | 'Ruim') || 'Regular');
+        setManutencaoCondicao((equipamentoEditando.manutencaoAtual.condicaoBem as 'Boa' | 'Ruim') || 'Boa');
         setManutencaoDataInicio(equipamentoEditando.manutencaoAtual.dataInicio.split('T')[0]);
         setManutencaoProblema(equipamentoEditando.manutencaoAtual.problema);
         setManutencaoTecnicoId(equipamentoEditando.manutencaoAtual.tecnicoResponsavelId);
@@ -305,7 +305,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
         setManutencaoOrigem('');
         setManutencaoEmail('');
         setManutencaoCelular('');
-        setManutencaoCondicao('Regular');
+        setManutencaoCondicao('Boa');
         setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
         setManutencaoProblema('');
         setManutencaoTecnicoId('');
@@ -327,7 +327,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
       setManutencaoOrigem('');
       setManutencaoEmail('');
       setManutencaoCelular('');
-      setManutencaoCondicao('Regular');
+      setManutencaoCondicao('Boa');
       setManutencaoDataInicio(new Date().toISOString().split('T')[0]);
       setManutencaoProblema('');
       setManutencaoTecnicoId('');
@@ -769,6 +769,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       tiposToShow.map((t, idx) => (
                         <div
                           key={t.id}
+                          ref={el => { if (focusedTipoIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                           className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedTipoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setTipo(t.nome);
@@ -852,6 +853,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                               ) : (
                                 baOrigensToShow.map((o, idx) => (
                                   <div key={o.id}
+                                    ref={el => { if (focusedOrigemIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                     className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedOrigemIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                                     onClick={() => { setBaOrigem(o.nome); setShowOrigensDropdown(false); }}>
                                     {o.nome}
@@ -930,6 +932,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                               ) : (
                                 baVinculosToShow.map((v, idx) => (
                                   <div key={v.id}
+                                    ref={el => { if (focusedVinculoIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                     className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedVinculoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                                     onClick={() => { setBaVinculo(v.nome); setShowVinculosDropdown(false); }}>
                                     {v.nome}
@@ -967,11 +970,10 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         </label>
                         <select
                           value={baCondicao}
-                          onChange={(e) => setBaCondicao(e.target.value as 'Boa' | 'Regular' | 'Ruim')}
+                          onChange={(e) => setBaCondicao(e.target.value as 'Boa' | 'Ruim')}
                           className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-cyan-500/50 text-white focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white border-cyan-300 text-slate-900 focus:border-cyan-500'} border appearance-none cursor-pointer`}
                         >
                           <option value="Boa">Boa</option>
-                          <option value="Regular">Regular</option>
                           <option value="Ruim">Ruim</option>
                         </select>
                       </div>
@@ -1048,6 +1050,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                               ) : (
                                 manutVinculosToShow.map((v, idx) => (
                                   <div key={v.id}
+                                    ref={el => { if (focusedVinculoIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                     className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedVinculoIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700')}`}
                                     onClick={() => { setManutencaoVinculo(v.nome); setShowVinculosDropdown(false); }}>
                                     {v.nome}
@@ -1096,6 +1099,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                               ) : (
                                 manutOrigensToShow.map((o, idx) => (
                                   <div key={o.id}
+                                    ref={el => { if (focusedOrigemIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                     className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedOrigemIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-[#835B1A]/10 text-slate-700')}`}
                                     onClick={() => { setManutencaoOrigem(o.nome); setShowOrigensDropdown(false); }}>
                                     {o.nome}
@@ -1161,7 +1165,6 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                         className={`w-full rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-900 border-[#835B1A]/30 text-white focus:border-[#835B1A] focus:shadow-[0_0_15px_rgba(131,91,26,0.25)]' : 'bg-white border-[#835B1A]/50 text-slate-900 focus:border-[#835B1A]'} border appearance-none cursor-pointer`}
                       >
                         <option value="Boa">Boa</option>
-                        <option value="Regular">Regular</option>
                         <option value="Ruim">Ruim</option>
                       </select>
                     </div>
@@ -1248,6 +1251,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       marcasToShow.map((t, idx) => (
                         <div
                           key={t.id}
+                          ref={el => { if (focusedMarcaIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                           className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedMarcaIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setMarca(t.nome);
@@ -1321,6 +1325,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                       modelosToShow.map((t, idx) => (
                         <div
                           key={t.id}
+                          ref={el => { if (focusedModeloIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                           className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedModeloIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                           onClick={() => {
                             setModelo(t.nome);
@@ -1480,6 +1485,7 @@ const EstoqueFormModal: React.FC<EstoqueFormModalProps> = ({
                               agenciasToShow.map((t, idx) => (
                                 <div
                                   key={t.id}
+                                  ref={el => { if (focusedAgenciaIndex === idx && el) el.scrollIntoView({ block: 'nearest' }); }}
                                   className={`px-4 py-3 cursor-pointer transition-colors text-sm font-medium ${focusedAgenciaIndex === idx ? (isDark ? 'bg-slate-700 text-white' : 'bg-cyan-50 text-cyan-700') : (isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-cyan-50 text-slate-700')}`}
                                   onClick={() => {
                                     setAgenciaFomento(t.nome);

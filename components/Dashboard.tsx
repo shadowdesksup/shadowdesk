@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Estatisticas, Lembrete } from '../types';
-import { TrendingUp, Clock, CheckCircle2, BarChart3, Calendar } from 'lucide-react';
+import { TrendingUp, Clock, CheckCircle2, BarChart3, Calendar, Wrench, Trash2 } from 'lucide-react';
 import { obterDiasRestantesEncerramento } from '../utils/helpers';
 import ReminderTicker from './ReminderTicker';
 
@@ -93,7 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
           </h2>
           <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
             }`}>
-            Visão geral dos atendimentos registrados
+            Visão geral do estoque e manutenção
           </p>
         </div>
 
@@ -123,9 +123,9 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <StatCard
-          titulo="Total Geral"
+          titulo="Equipamentos no Inventário"
           valor={estatisticas.total}
-          subtitulo="Todos os registros"
+          subtitulo="Ativos no sistema"
           icon={<BarChart3 size={24} className="text-white" />}
           cor="from-blue-500 to-cyan-500"
           sombraCor="hover:shadow-cyan-500/20"
@@ -134,10 +134,10 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
         />
 
         <StatCard
-          titulo="Pendentes"
+          titulo="Em Manutenção"
           valor={estatisticas.pendentes}
-          subtitulo="Total registrado"
-          icon={<Clock size={24} className="text-white" />}
+          subtitulo="Aguardando reparo ou avaliação"
+          icon={<Wrench size={24} className="text-white" />}
           cor="from-yellow-500 to-orange-500"
           sombraCor="hover:shadow-orange-500/20"
           delay={0.2}
@@ -145,12 +145,12 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
         />
 
         <StatCard
-          titulo="Atendidos"
+          titulo="Descartados"
           valor={estatisticas.atendidos}
-          subtitulo="Total registrado"
-          icon={<CheckCircle2 size={24} className="text-white" />}
-          cor="from-green-500 to-emerald-500"
-          sombraCor="hover:shadow-emerald-500/20"
+          subtitulo="Equipamentos baixados"
+          icon={<Trash2 size={24} className="text-white" />}
+          cor="from-rose-500 to-red-500"
+          sombraCor="hover:shadow-rose-500/20"
           delay={0.3}
           theme={theme}
         />
@@ -259,7 +259,7 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
         <h3 className={`text-xl font-bold mb-6 flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-slate-800'
           }`}>
           <span className="w-1.5 h-6 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]"></span>
-          Resumo por Período
+          Equipamentos Cadastrados
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -275,17 +275,17 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-500 text-2xl font-bold">
-                  {estatisticas.hoje.atendidos}
+                  {estatisticas.hoje.total}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Atendidos</p>
+                  }`}>{estatisticas.hoje.total === 1 ? 'Cadastrado' : 'Cadastrados'}</p>
               </div>
               <div className="text-right">
                 <p className="text-yellow-500 text-2xl font-bold">
                   {estatisticas.hoje.pendentes}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Pendentes</p>
+                  }`}>Manutenção</p>
               </div>
             </div>
           </div>
@@ -302,17 +302,17 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-500 text-2xl font-bold">
-                  {estatisticas.semana.atendidos}
+                  {estatisticas.semana.total}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Atendidos</p>
+                  }`}>{estatisticas.semana.total === 1 ? 'Cadastrado' : 'Cadastrados'}</p>
               </div>
               <div className="text-right">
                 <p className="text-yellow-500 text-2xl font-bold">
                   {estatisticas.semana.pendentes}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Pendentes</p>
+                  }`}>Manutenção</p>
               </div>
             </div>
           </div>
@@ -329,17 +329,17 @@ const Dashboard: React.FC<DashboardProps> = ({ estatisticas, theme = 'dark', pro
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-500 text-2xl font-bold">
-                  {estatisticas.mes.atendidos}
+                  {estatisticas.mes.total}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Atendidos</p>
+                  }`}>{estatisticas.mes.total === 1 ? 'Cadastrado' : 'Cadastrados'}</p>
               </div>
               <div className="text-right">
                 <p className="text-yellow-500 text-2xl font-bold">
                   {estatisticas.mes.pendentes}
                 </p>
                 <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400 font-medium'
-                  }`}>Pendentes</p>
+                  }`}>Manutenção</p>
               </div>
             </div>
           </div>
