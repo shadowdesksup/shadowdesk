@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, X, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { Camera, X, RefreshCw, Check, AlertCircle, RotateCcw } from 'lucide-react';
 
 interface WebcamCaptureModalProps {
   isOpen: boolean;
@@ -8,6 +8,11 @@ interface WebcamCaptureModalProps {
   onCapture: (base64Image: string) => void;
   theme?: 'dark' | 'light';
 }
+
+// Detecta se é um dispositivo móvel (tela touch + largura pequena)
+const isMobileDevice = (): boolean => {
+  return 'ontouchstart' in window && (window.innerWidth < 1024 || window.innerHeight < 1024);
+};
 
 const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose, onCapture, theme = 'dark' }) => {
   const isDark = theme === 'dark';
@@ -17,6 +22,36 @@ const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose
   const [error, setError] = useState<string>('');
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [capturing, setCapturing] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detecta orientação do dispositivo
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const checkOrientation = () => {
+      const mobile = isMobileDevice();
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsPortrait(window.innerHeight > window.innerWidth);
+      } else {
+        setIsPortrait(false);
+      }
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    const handleOrientationChange = () => {
+      // Pequeno delay pra dar tempo do browser atualizar as dimensões
+      setTimeout(checkOrientation, 150);
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, [isOpen]);
 
   const startCamera = useCallback(async (mode: 'environment' | 'user') => {
     setError('');
@@ -28,8 +63,8 @@ const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: mode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         },
         audio: false
       });
@@ -103,6 +138,9 @@ const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose
     }
   };
 
+  // Determina a classe de aspecto com base na orientação
+  const mobilePortrait = isMobile && isPortrait;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -121,7 +159,7 @@ const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`relative w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col ${isDark ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}
+            className={`relative w-full ${mobilePortrait ? 'max-w-sm' : 'max-w-2xl'} rounded-3xl shadow-2xl overflow-hidden flex flex-col ${isDark ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -130,16 +168,27 @@ const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose
                 <Camera size={20} />
                 <span>Tirar Foto do Equipamento</span>
               </div>
-              <button
-                onClick={handleClose}
-                className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Orientation indicator on mobile */}
+                {isMobile && (
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${isPortrait
+                    ? (isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600')
+                    : (isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600')
+                  }`}>
+                    {isPortrait ? 'Retrato' : 'Paisagem'}
+                  </span>
+                )}
+                <button
+                  onClick={handleClose}
+                  className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            {/* Camera Viewport */}
-            <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+            {/* Camera Viewport - adapts aspect ratio based on orientation */}
+            <div className={`relative w-full ${mobilePortrait ? 'aspect-[3/4]' : 'aspect-video'} bg-black flex items-center justify-center overflow-hidden`}>
               {error ? (
                 <div className="flex flex-col items-center justify-center text-rose-500 p-6 text-center gap-3">
                   <AlertCircle size={48} className="opacity-80" />

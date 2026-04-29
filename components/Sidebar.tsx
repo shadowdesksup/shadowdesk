@@ -16,8 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ paginaAtual, onNavegar, theme = 'dark
     // { icon: <Ticket size={20} />, label: 'ServiceDesk', pagina: 'servicedesk' }, // Desabilitado temporariamente (Workers offline)
     { icon: <Package size={20} />, label: 'Estoque', pagina: 'estoque' },
     { icon: <Wrench size={20} />, label: 'Manutenção', pagina: 'manutencoes' },
-    { icon: <PlusCircle size={20} />, label: 'Novo Registro', pagina: 'novo' },
-    { icon: <List size={20} />, label: 'Meus Registros', pagina: 'historico' },
+    // { icon: <PlusCircle size={20} />, label: 'Novo Registro', pagina: 'novo' }, // Desabilitado temporariamente
+    // { icon: <List size={20} />, label: 'Meus Registros', pagina: 'historico' }, // Desabilitado temporariamente
     { icon: <FileEdit size={20} />, label: 'Gerar Descritivos', pagina: 'descritivos' },
     { icon: <Bell size={20} />, label: 'Lembretes', pagina: 'lembretes' },
     { icon: <FileText size={20} />, label: 'Relatórios', pagina: 'relatorios' },
